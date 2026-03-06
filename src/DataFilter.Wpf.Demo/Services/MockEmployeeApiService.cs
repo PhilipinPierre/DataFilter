@@ -1,0 +1,57 @@
+﻿using DataFilter.Core.Abstractions;
+using DataFilter.Core.Models;
+using DataFilter.Filtering.ExcelLike.Services;
+using DataFilter.Wpf.Demo.Models;
+
+namespace DataFilter.Wpf.Demo.Services;
+
+public class MockEmployeeApiService : IMockEmployeeApiService
+{
+    private readonly List<Employee> _allData;
+    private readonly ExcelFilterEngine<Employee> _engine;
+
+    public MockEmployeeApiService()
+    {
+        _allData = EmployeeDataGenerator.Generate(1000);
+        _engine = new ExcelFilterEngine<Employee>();
+    }
+
+    public async Task<PagedResult<Employee>> FetchDataAsync(IFilterContext context, CancellationToken cancellationToken = default)
+    {
+        // Simulate network delay
+        await Task.Delay(500, cancellationToken);
+
+        var filteredData = _engine.Apply(_allData, context.Descriptors).ToList();
+
+        // Optional sorting implementation here if Context.SortProperty is set
+        // ...
+
+        var paginated = filteredData
+            .Skip((context.Page - 1) * context.PageSize)
+            .Take(context.PageSize)
+            .ToList();
+
+        return new PagedResult<Employee>
+        {
+            Items = paginated,
+            TotalCount = filteredData.Count,
+            Page = context.Page,
+            PageSize = context.PageSize
+        };
+    }
+
+    public async Task<IEnumerable<object>> FetchDistinctValuesAsync(string propertyName, string searchText = "", CancellationToken cancellationToken = default)
+    {
+        // Simulate network delay
+        await Task.Delay(300, cancellationToken);
+
+        var distincts = _engine.DistinctValuesExtractor.Extract(_allData, propertyName);
+
+        if (!string.IsNullOrWhiteSpace(searchText))
+        {
+            distincts = distincts.Where(x => x?.ToString()?.Contains(searchText, StringComparison.OrdinalIgnoreCase) == true);
+        }
+
+        return distincts.ToList();
+    }
+}

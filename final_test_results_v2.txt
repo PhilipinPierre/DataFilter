@@ -1,0 +1,6 @@
+MSBUILD : error MSB1001: Commutateur inconnu.
+ ligne de commande complète : «C:\Program Files\dotnet\sdk\10.0.102\MSBuild.dll -maxcpucount --verbosity:m -tlp:default=auto --property:EnableDefaultCompileItems=false --property:EnableDefaultEmbeddedResourceItems=false --property:EnableDefaultNoneItems=false --property:VSTestLogger="console%3bverbosity=normal" --property:NuGetInteractive=false --property:VSTestArtifactsProcessingMode=collect --property:VSTestSessionCorrelationId=37900_9392b20e-db98-4088-85db-5f9de7ea8c1b --target:Restore -tlp:verbosity=quiet -nodereuse:false -nologo d:\Workspaces\Dev\Util\DataFilter\DataFilter.slnx --ignore-failed-sources -distributedlogger:Microsoft.DotNet.Cli.Commands.MSBuild.MSBuildLogger,C:\Program Files\dotnet\sdk\10.0.102\dotnet.dll*Microsoft.DotNet.Cli.Commands.MSBuild.MSBuildForwardingLogger,C:\Program Files\dotnet\sdk\10.0.102\dotnet.dll -distributedlogger:Microsoft.DotNet.Cli.Commands.MSBuild.MSBuildLogger,C:\Program Files\dotnet\sdk\10.0.102\dotnet.dll*Microsoft.DotNet.Cli.Commands.MSBuild.MSBuildForwardingLogger,C:\Program Files\dotnet\sdk\10.0.102\dotnet.dll»
+ Commutateurs ajoutés par les fichiers réponse :
+Commutateur : --ignore-failed-sources
+
+Pour la syntaxe du commutateur, tapez "MSBuild -help"

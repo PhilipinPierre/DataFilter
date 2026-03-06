@@ -1,0 +1,22 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DataFilter.Core/DataFilter.Core.csproj" />
+    <Project Path="src/DataFilter.Filtering.ExcelLike/DataFilter.Filtering.ExcelLike.csproj" />
+    <Project Path="src/DataFilter.Expressions.Server/DataFilter.Expressions.Server.csproj" />
+    <Project Path="src/DataFilter.Wpf/DataFilter.Wpf.csproj" />
+    <Project Path="src/DataFilter.Wpf.Demo/DataFilter.Wpf.Demo.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DataFilter.Core.Tests/DataFilter.Core.Tests.csproj" />
+    <Project Path="tests/DataFilter.Filtering.ExcelLike.Tests/DataFilter.Filtering.ExcelLike.Tests.csproj" />
+    <Project Path="tests/DataFilter.Expressions.Server.Tests/DataFilter.Expressions.Server.Tests.csproj" />
+    <Project Path="tests/DataFilter.Wpf.Tests/DataFilter.Wpf.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Éléments de solution/">
+    <File Path="CUSTOMIZATION.md" />
+    <File Path="DataFilter.md" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="README.md" />
+  </Folder>
+</Solution>

@@ -1,0 +1,32 @@
+  Identification des projets à restaurer...
+d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Core\DataFilter.Core.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Expressions.Server.Tests\DataFilter.Expressions.Server.Tests.csproj::TargetFramework=net8.0]
+d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Expressions.Server.Tests\DataFilter.Expressions.Server.Tests.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [TargetFramework=net8.0]
+  Tous les projets sont à jour pour la restauration.
+d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Expressions.Server.Tests\DataFilter.Expressions.Server.Tests.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [TargetFramework=net8.0]
+d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Core\DataFilter.Core.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [TargetFramework=net8.0]
+  DataFilter.Core -> d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Core\bin\Debug\net8.0\DataFilter.Core.dll
+  DataFilter.Expressions.Server -> d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Expressions.Server\bin\Debug\net8.0\DataFilter.Expressions.Server.dll
+  DataFilter.Expressions.Server.Tests -> d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Expressions.Server.Tests\bin\Debug\net8.0\DataFilter.Expressions.Server.Tests.dll
+Série de tests pour d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Expressions.Server.Tests\bin\Debug\net8.0\DataFilter.Expressions.Server.Tests.dll (.NETCoreApp,Version=v8.0)
+Version de VSTest 18.0.1 (x64)
+
+Démarrage de l'exécution de tests, patientez...
+Au total, 1 fichiers de test ont correspondu au modèle spécifié.
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.7+8f2703126a (64-bit .NET 8.0.24)
+[xUnit.net 00:00:00.09]   Discovering: DataFilter.Expressions.Server.Tests
+[xUnit.net 00:00:00.12]   Discovered:  DataFilter.Expressions.Server.Tests
+[xUnit.net 00:00:00.12]   Starting:    DataFilter.Expressions.Server.Tests
+[xUnit.net 00:00:00.19]   Finished:    DataFilter.Expressions.Server.Tests
+  Réussi DataFilter.Expressions.Server.Tests.AverageFilterTests.AboveAverage_ReturnsItemsWithSalaryAbove57500 [16 ms]
+  Réussi DataFilter.Expressions.Server.Tests.TopNFilterTests.TopHighest_Returns_CorrectCount_SortedDescending [15 ms]
+  Réussi DataFilter.Expressions.Server.Tests.QueryableFilterEngineTests.Apply_WithContainsFilter_FiltersCorrectly [15 ms]
+  Réussi DataFilter.Expressions.Server.Tests.AverageFilterTests.BelowAverage_ReturnsItemsWithSalaryBelow57500 [1 ms]
+  Réussi DataFilter.Expressions.Server.Tests.TopNFilterTests.TopLowest_Returns_CorrectCount_SortedAscending [1 ms]
+  Réussi DataFilter.Expressions.Server.Tests.QueryableFilterEngineTests.Apply_WithGreaterThanFilter_FiltersCorrectly [1 ms]
+  Réussi DataFilter.Expressions.Server.Tests.QueryableFilterEngineTests.Apply_WithSort_SortsCorrectly [1 ms]
+  Réussi DataFilter.Expressions.Server.Tests.QueryableFilterEngineTests.Apply_NoFilters_ReturnsAllItems [< 1 ms]
+
+Série de tests réussie.
+Nombre total de tests : 8
+     Réussi(s) : 8
+ Durée totale : 1.0562 Secondes

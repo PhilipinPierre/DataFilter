@@ -1,0 +1,29 @@
+﻿<UserControl x:Class="DataFilter.Wpf.Demo.Views.CustomizationView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:controls="clr-namespace:DataFilter.Wpf.Controls;assembly=DataFilter.Wpf"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             xmlns:viewmodels="clr-namespace:DataFilter.Wpf.Demo.ViewModels"
+             d:DataContext="{d:DesignInstance Type={x:Type viewmodels:CustomizationScenarioViewModel}, IsDesignTimeCreatable=True}">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        
+        <StackPanel Grid.Column="0" Margin="10">
+            <TextBlock Text="Customization" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
+            <CheckBox Content="Dark Theme" IsChecked="{Binding IsDarkTheme}" Margin="0,5"/>
+            <!-- In a real demo, sliders for colors would go here -->
+            <TextBlock Text="Modify App.xaml generic.xaml resources to change look completely." TextWrapping="Wrap" Margin="0,20" Foreground="Gray"/>
+        </StackPanel>
+
+        <controls:FilterableDataGrid Grid.Column="1"
+                                     ViewModel="{Binding GridViewModel}"
+                                     ItemsSource="{Binding GridViewModel.FilteredItems}" 
+                                     AutoGenerateColumns="True"
+                                     FilterContext="{Binding GridViewModel.Context}" />
+    </Grid>
+</UserControl>

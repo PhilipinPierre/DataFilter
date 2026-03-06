@@ -1,0 +1,63 @@
+  Identification des projets à restaurer...
+d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Expressions.Server.Tests\DataFilter.Expressions.Server.Tests.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [d:\Workspaces\Dev\Util\DataFilter\DataFilter.slnx]
+d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Wpf\DataFilter.Wpf.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [d:\Workspaces\Dev\Util\DataFilter\DataFilter.slnx]
+d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Wpf.Tests\DataFilter.Wpf.Tests.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [d:\Workspaces\Dev\Util\DataFilter\DataFilter.slnx]
+d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Wpf.Demo\DataFilter.Wpf.Demo.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [d:\Workspaces\Dev\Util\DataFilter\DataFilter.slnx]
+d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Core\DataFilter.Core.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [d:\Workspaces\Dev\Util\DataFilter\DataFilter.slnx]
+d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Filtering.ExcelLike.Tests\DataFilter.Filtering.ExcelLike.Tests.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [d:\Workspaces\Dev\Util\DataFilter\DataFilter.slnx]
+d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Core.Tests\DataFilter.Core.Tests.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [d:\Workspaces\Dev\Util\DataFilter\DataFilter.slnx]
+  Tous les projets sont à jour pour la restauration.
+d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Core\DataFilter.Core.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [TargetFramework=net8.0]
+d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Core.Tests\DataFilter.Core.Tests.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [TargetFramework=net8.0]
+d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Expressions.Server.Tests\DataFilter.Expressions.Server.Tests.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [TargetFramework=net8.0]
+d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Filtering.ExcelLike.Tests\DataFilter.Filtering.ExcelLike.Tests.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [TargetFramework=net8.0]
+d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Wpf.Demo\DataFilter.Wpf.Demo.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [TargetFramework=net8.0-windows]
+d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Wpf\DataFilter.Wpf.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [TargetFramework=net8.0-windows]
+d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Core\DataFilter.Core.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [TargetFramework=net9.0]
+d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Wpf.Demo\DataFilter.Wpf.Demo.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [TargetFramework=net9.0-windows]
+d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Wpf\DataFilter.Wpf.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [TargetFramework=net9.0-windows]
+d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Core\DataFilter.Core.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [TargetFramework=netstandard2.0]
+d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Core\DataFilter.Core.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [TargetFramework=netstandard2.1]
+d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Wpf.Tests\DataFilter.Wpf.Tests.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [TargetFramework=net8.0]
+  DataFilter.Core -> d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Core\bin\Debug\net8.0\DataFilter.Core.dll
+  DataFilter.Core -> d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Core\bin\Debug\net9.0\DataFilter.Core.dll
+  DataFilter.Core -> d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Core\bin\Debug\netstandard2.1\DataFilter.Core.dll
+  DataFilter.Core -> d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Core\bin\Debug\netstandard2.0\DataFilter.Core.dll
+  DataFilter.Wpf.Tests -> d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Wpf.Tests\bin\Debug\net8.0\DataFilter.Wpf.Tests.dll
+Série de tests pour d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Wpf.Tests\bin\Debug\net8.0\DataFilter.Wpf.Tests.dll (.NETCoreApp,Version=v8.0)
+Version de VSTest 18.0.1 (x64)
+
+  DataFilter.Filtering.ExcelLike -> d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Filtering.ExcelLike\bin\Debug\net8.0\DataFilter.Filtering.ExcelLike.dll
+  DataFilter.Expressions.Server -> d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Expressions.Server\bin\Debug\net8.0\DataFilter.Expressions.Server.dll
+  DataFilter.Core.Tests -> d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Core.Tests\bin\Debug\net8.0\DataFilter.Core.Tests.dll
+Série de tests pour d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Core.Tests\bin\Debug\net8.0\DataFilter.Core.Tests.dll (.NETCoreApp,Version=v8.0)
+Démarrage de l'exécution de tests, patientez...
+Au total, 1 fichiers de test ont correspondu au modèle spécifié.
+Version de VSTest 18.0.1 (x64)
+
+  DataFilter.Filtering.ExcelLike.Tests -> d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Filtering.ExcelLike.Tests\bin\Debug\net8.0\DataFilter.Filtering.ExcelLike.Tests.dll
+Démarrage de l'exécution de tests, patientez...
+Série de tests pour d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Filtering.ExcelLike.Tests\bin\Debug\net8.0\DataFilter.Filtering.ExcelLike.Tests.dll (.NETCoreApp,Version=v8.0)
+Au total, 1 fichiers de test ont correspondu au modèle spécifié.
+Version de VSTest 18.0.1 (x64)
+
+  DataFilter.Expressions.Server.Tests -> d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Expressions.Server.Tests\bin\Debug\net8.0\DataFilter.Expressions.Server.Tests.dll
+Série de tests pour d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Expressions.Server.Tests\bin\Debug\net8.0\DataFilter.Expressions.Server.Tests.dll (.NETCoreApp,Version=v8.0)
+Démarrage de l'exécution de tests, patientez...
+Au total, 1 fichiers de test ont correspondu au modèle spécifié.
+Aucun test n'est disponible dans d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Wpf.Tests\bin\Debug\net8.0\DataFilter.Wpf.Tests.dll. Vérifiez que les découvreurs et exécuteurs de tests sont inscrits. Vérifiez également que les paramètres de version de plateforme et de framework sont appropriés, puis réessayez.
+Version de VSTest 18.0.1 (x64)
+
+
+Démarrage de l'exécution de tests, patientez...
+Au total, 1 fichiers de test ont correspondu au modèle spécifié.
+Aucun test n'est disponible dans d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Core.Tests\bin\Debug\net8.0\DataFilter.Core.Tests.dll. Vérifiez que les découvreurs et exécuteurs de tests sont inscrits. Vérifiez également que les paramètres de version de plateforme et de framework sont appropriés, puis réessayez.
+
+Aucun test n'est disponible dans d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Filtering.ExcelLike.Tests\bin\Debug\net8.0\DataFilter.Filtering.ExcelLike.Tests.dll. Vérifiez que les découvreurs et exécuteurs de tests sont inscrits. Vérifiez également que les paramètres de version de plateforme et de framework sont appropriés, puis réessayez.
+
+  DataFilter.Wpf -> d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Wpf\bin\Debug\net9.0-windows\DataFilter.Wpf.dll
+  DataFilter.Wpf -> d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Wpf\bin\Debug\net8.0-windows\DataFilter.Wpf.dll
+Aucun test n'est disponible dans d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Expressions.Server.Tests\bin\Debug\net8.0\DataFilter.Expressions.Server.Tests.dll. Vérifiez que les découvreurs et exécuteurs de tests sont inscrits. Vérifiez également que les paramètres de version de plateforme et de framework sont appropriés, puis réessayez.
+
+  DataFilter.Wpf.Demo -> d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Wpf.Demo\bin\Debug\net9.0-windows\DataFilter.Wpf.Demo.dll
+  DataFilter.Wpf.Demo -> d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Wpf.Demo\bin\Debug\net8.0-windows\DataFilter.Wpf.Demo.dll

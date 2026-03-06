@@ -1,0 +1,24 @@
+﻿<UserControl x:Class="DataFilter.Wpf.Demo.Views.AsyncFilterView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:controls="clr-namespace:DataFilter.Wpf.Controls;assembly=DataFilter.Wpf"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             xmlns:viewmodels="clr-namespace:DataFilter.Wpf.Demo.ViewModels"
+             d:DataContext="{d:DesignInstance Type={x:Type viewmodels:AsyncFilterScenarioViewModel}, IsDesignTimeCreatable=True}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <TextBlock Grid.Row="0" Text="Async Data Loading Enabled" FontWeight="Bold" Margin="5"/>
+        <controls:FilterableDataGrid Grid.Row="1"
+                                     ViewModel="{Binding GridViewModel}"
+                                     ItemsSource="{Binding GridViewModel.FilteredItems}" 
+                                     AutoGenerateColumns="True"
+                                     EnableAsyncFetch="True"
+                                     AsyncDataProvider="{Binding GridViewModel.AsyncDataProvider}"
+                                     FilterContext="{Binding GridViewModel.Context}" />
+    </Grid>
+</UserControl>

@@ -1,0 +1,18 @@
+  Identification des projets à restaurer...
+  Restauration effectuée de d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Expressions.Server\DataFilter.Expressions.Server.csproj (en 210 ms).
+  Restauration effectuée de d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Filtering.ExcelLike\DataFilter.Filtering.ExcelLike.csproj (en 13 ms).
+  Restauration effectuée de d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Core.Tests\DataFilter.Core.Tests.csproj (en 338 ms).
+  Restauration effectuée de d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Wpf\DataFilter.Wpf.csproj (en 317 ms).
+  Restauration effectuée de d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Expressions.Server.Tests\DataFilter.Expressions.Server.Tests.csproj (en 338 ms).
+  Restauration effectuée de d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Wpf.Demo\DataFilter.Wpf.Demo.csproj (en 328 ms).
+  Restauration effectuée de d:\Workspaces\Dev\Util\DataFilter\src\DataFilter.Core\DataFilter.Core.csproj (en 315 ms).
+  Restauration effectuée de d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Filtering.ExcelLike.Tests\DataFilter.Filtering.ExcelLike.Tests.csproj (en 339 ms).
+  Nouvelle tentative de 'FindPackagesByIdAsync' pour la source 'https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/c69aec46-763e-43bf-9533-141d23429af7/nuget/v3/flat2/moq/index.json'.
+  Response status code does not indicate success: 401 (Unauthorized).
+d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Wpf.Tests\DataFilter.Wpf.Tests.csproj : error NU1201: Le projet DataFilter.Wpf n'est pas compatible avec net8.0 (.NETCoreApp,Version=v8.0). Le projet DataFilter.Wpf prend en charge : [d:\Workspaces\Dev\Util\DataFilter\DataFilter.slnx]
+d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Wpf.Tests\DataFilter.Wpf.Tests.csproj : error NU1201:   - net8.0-windows7.0 (.NETCoreApp,Version=v8.0) [d:\Workspaces\Dev\Util\DataFilter\DataFilter.slnx]
+d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Wpf.Tests\DataFilter.Wpf.Tests.csproj : error NU1201:   - net9.0-windows7.0 (.NETCoreApp,Version=v9.0) [d:\Workspaces\Dev\Util\DataFilter\DataFilter.slnx]
+d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Wpf.Tests\DataFilter.Wpf.Tests.csproj : error NU1201: Le projet DataFilter.Wpf n'est pas compatible avec net9.0 (.NETCoreApp,Version=v9.0). Le projet DataFilter.Wpf prend en charge : [d:\Workspaces\Dev\Util\DataFilter\DataFilter.slnx]
+d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Wpf.Tests\DataFilter.Wpf.Tests.csproj : error NU1201:   - net8.0-windows7.0 (.NETCoreApp,Version=v8.0) [d:\Workspaces\Dev\Util\DataFilter\DataFilter.slnx]
+d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Wpf.Tests\DataFilter.Wpf.Tests.csproj : error NU1201:   - net9.0-windows7.0 (.NETCoreApp,Version=v9.0) [d:\Workspaces\Dev\Util\DataFilter\DataFilter.slnx]
+  Échec de la restauration de d:\Workspaces\Dev\Util\DataFilter\tests\DataFilter.Wpf.Tests\DataFilter.Wpf.Tests.csproj (en 1.16 sec).

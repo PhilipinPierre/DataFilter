@@ -1,0 +1,22 @@
+﻿<UserControl x:Class="DataFilter.Wpf.Demo.Views.ListViewFilterView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:controls="clr-namespace:DataFilter.Wpf.Controls;assembly=DataFilter.Wpf"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             xmlns:viewmodels="clr-namespace:DataFilter.Wpf.Demo.ViewModels"
+             d:DataContext="{d:DesignInstance Type={x:Type viewmodels:ListViewScenarioViewModel}, IsDesignTimeCreatable=True}">
+    <Grid>
+        <ListView ItemsSource="{Binding GridViewModel.FilteredItems}">
+            <ListView.View>
+                <controls:FilterableGridView ViewModel="{Binding GridViewModel}">
+                    <GridViewColumn Header="Id" DisplayMemberBinding="{Binding Id}" Width="50"/>
+                    <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="150"/>
+                    <GridViewColumn Header="Department" DisplayMemberBinding="{Binding Department}" Width="150"/>
+                    <GridViewColumn Header="Country" DisplayMemberBinding="{Binding Country}" Width="150"/>
+                </controls:FilterableGridView>
+            </ListView.View>
+        </ListView>
+    </Grid>
+</UserControl>
