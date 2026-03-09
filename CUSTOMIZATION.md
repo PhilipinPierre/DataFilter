@@ -1,14 +1,14 @@
-# Guide de Personnalisation Visuelle (WPF)
+# Visual Customization Guide (WPF)
 
-Le module `DataFilter.Wpf` a été conçu pour être entièrement modifiable sans retoucher le code C#.
+The `DataFilter.Wpf` module has been designed to be fully customizable without touching the C# code.
 
-## 1. Définition des Thèmes
+## 1. Theme Definition
 
-Les styles sont regroupés dans des **Resource Dictionaries**. Le projet fournit deux thèmes de base prêts à l'emploi :
+Styles are grouped in **Resource Dictionaries**. The project provides two ready-to-use base themes:
 - `pack://application:,,,/DataFilter.Wpf;component/Themes/FilterLightTheme.xaml`
 - `pack://application:,,,/DataFilter.Wpf;component/Themes/FilterDarkTheme.xaml`
 
-### Remplacer le thème globalement (App.xaml)
+### Replace the theme globally (App.xaml)
 ```xml
 <Application.Resources>
     <ResourceDictionary>
@@ -20,30 +20,30 @@ Les styles sont regroupés dans des **Resource Dictionaries**. Le projet fournit
 </Application.Resources>
 ```
 
-## 2. Remplacer les Couleurs
+## 2. Replacing Colors
 
-Vous pouvez écraser localement ou globalement les clés de couleurs définies par le thème.
+You can override color keys defined by the theme either locally or globally.
 
 ```xml
 <Color x:Key="FilterPopupBackgroundColor">#FAFAFA</Color>
 <Color x:Key="FilterPopupForegroundColor">#333333</Color>
 <Color x:Key="FilterPopupBorderColor">#E0E0E0</Color>
 
-<!-- Pinceaux utilisés par les boutons d'entonnoir -->
+<!-- Brushes used by funnel buttons -->
 <SolidColorBrush x:Key="FilterButtonActiveColor" Color="Orange" />
 <SolidColorBrush x:Key="FilterButtonInactiveColor" Color="LightGray" />
 ```
 
-## 3. Remplacer l'Icône de Filtre
+## 3. Replacing the Filter Icon
 
-Par défaut, l'icône est un entonnoir dessiné en `Path` SVG. Le contrôle `ColumnFilterButton` accepte une propriété `IconTemplate` que vous pouvez modifier via un style WPF.
+By default, the icon is a funnel drawn as an SVG `Path`. The `ColumnFilterButton` control accepts an `IconTemplate` property that you can modify via a WPF style.
 
 ```xml
 <Style TargetType="controls:ColumnFilterButton" BasedOn="{StaticResource {x:Type controls:ColumnFilterButton}}">
     <Setter Property="IconTemplate">
         <Setter.Value>
             <DataTemplate>
-                <!-- Remplacez le Path par l'icône de votre choix, ou FontAwesome, etc. -->
+                <!-- Replace the Path with the icon of your choice, or FontAwesome, etc. -->
                 <TextBlock Text="🔍" FontSize="14" 
                            Foreground="{Binding RelativeSource={RelativeSource AncestorType=controls:ColumnFilterButton}, Path=InactiveBrush}" />
             </DataTemplate>
@@ -52,14 +52,14 @@ Par défaut, l'icône est un entonnoir dessiné en `Path` SVG. Le contrôle `Col
 </Style>
 ```
 
-Pour gérer la couleur active/inactive, liez votre couleur au `ActiveBrush` ou `InactiveBrush` exposé par le `ColumnFilterButton` (qui est lui-même rattaché au converter d'état du ViewModel).
+To handle the active/inactive color, bind your color to the `ActiveBrush` or `InactiveBrush` exposed by the `ColumnFilterButton` (which is itself attached to the state converter of the ViewModel).
 
-## 4. Templating Personnalisé des Valeurs (Checkboxes)
+## 4. Custom Value Templating (Checkboxes)
 
-Pour afficher un visuel personnalisé pour les checkboxes de sélection de valeur distincte (ex: afficher l'avatar d'un utilisateur au lieu de juste son nom), vous pouvez surcharger le `ItemTemplate` au niveau du contrôle `FilterPopup`.
+To display a custom visual for distinct value selection checkboxes (e.g., displaying a user's avatar instead of just their name), you can override the `ItemTemplate` at the `FilterPopup` control level.
 
 ```xml
 <Style TargetType="ListBoxItem" x:Key="FilterValueItemContainerStyle">
-    <!-- Logique personnalisée -->
+    <!-- Custom logic -->
 </Style>
 ```
