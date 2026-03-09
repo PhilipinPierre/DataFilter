@@ -12,13 +12,13 @@ public class MockEmployeeApiService : IMockEmployeeApiService
 
     public MockEmployeeApiService(int count = 1000)
     {
-        _allData = EmployeeDataGenerator.Generate(count);
+        _allData = EmployeeDataGenerator.Employees;
         _engine = new ExcelFilterEngine<Employee>();
     }
 
     public void Regenerate(int count)
     {
-        _allData = EmployeeDataGenerator.Generate(count);
+        _allData = EmployeeDataGenerator.Employees;
     }
 
     public async Task<PagedResult<Employee>> FetchDataAsync(IFilterContext context, CancellationToken cancellationToken = default)

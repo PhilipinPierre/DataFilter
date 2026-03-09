@@ -136,7 +136,13 @@
                       BorderThickness="0" 
                       Background="Transparent"
                       Padding="0"
-                      ScrollViewer.VerticalScrollBarVisibility="Auto">
+                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                      VirtualizingStackPanel.IsVirtualizing="True">
+                <TreeView.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel />
+                    </ItemsPanelTemplate>
+                </TreeView.ItemsPanel>
                 <TreeView.ItemContainerStyle>
                     <Style TargetType="TreeViewItem">
                         <Setter Property="IsExpanded" Value="False" />

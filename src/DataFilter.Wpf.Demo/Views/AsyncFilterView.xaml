@@ -18,6 +18,7 @@
                                      ItemsSource="{Binding GridViewModel.FilteredItems}" 
                                      AutoGenerateColumns="True"
                                      EnableAsyncFetch="True"
+                                     VirtualizingPanel.IsVirtualizing="True"
                                      AsyncDataProvider="{Binding GridViewModel.AsyncDataProvider}"
                                      FilterContext="{Binding GridViewModel.Context}" />
     </Grid>

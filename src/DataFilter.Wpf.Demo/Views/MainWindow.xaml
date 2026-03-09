@@ -18,11 +18,14 @@
         
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,10,10,0">
             <TextBlock Text="Row Count:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-            <TextBox Text="{Binding RowCount}" Width="100" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <TextBox Text="{Binding RowCount, UpdateSourceTrigger=PropertyChanged}" Width="100" VerticalAlignment="Center" Margin="0,0,10,0"/>
             <Button Content="Regenerate Data" Command="{Binding RegenerateCommand}" Padding="10,2"/>
+            <Button Content="Clear filters"
+                    Command="{Binding ClearFiltersCommand}"
+                    Padding="10,2" />
         </StackPanel>
         
-        <TabControl Grid.Row="1" Margin="10">
+        <TabControl Grid.Row="1" Margin="10" SelectedItem="{Binding SelectedTabControl, Mode=TwoWay}">
             <TabItem Header="Local Filtering">
                 <views:LocalFilterView DataContext="{Binding LocalFilterScenario}" />
             </TabItem>

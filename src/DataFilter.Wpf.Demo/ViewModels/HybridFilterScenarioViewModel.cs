@@ -5,7 +5,7 @@ using DataFilter.Wpf.ViewModels;
 
 namespace DataFilter.Wpf.Demo.ViewModels;
 
-public sealed partial class HybridFilterScenarioViewModel : ObservableObject
+public sealed partial class HybridFilterScenarioViewModel : ObservableObject, IDemoItem
 {
 
     [ObservableProperty]
@@ -20,7 +20,7 @@ public sealed partial class HybridFilterScenarioViewModel : ObservableObject
 
     public void Regenerate(int count)
     {
-        Employees = EmployeeDataGenerator.Generate(count);
+        Employees = EmployeeDataGenerator.Employees;
         if (GridViewModel == null)
         {
             GridViewModel = new FilterableDataGridViewModel<Employee>
@@ -36,6 +36,6 @@ public sealed partial class HybridFilterScenarioViewModel : ObservableObject
             mockService.Regenerate(count);
         }
         
-        GridViewModel.RefreshData();
+        GridViewModel.RefreshDataAsync();
     }
 }

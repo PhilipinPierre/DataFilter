@@ -5,7 +5,7 @@ using DataFilter.Wpf.ViewModels;
 
 namespace DataFilter.Wpf.Demo.ViewModels;
 
-public partial class LocalFilterScenarioViewModel : ObservableObject
+public partial class LocalFilterScenarioViewModel : ObservableObject, IDemoItem
 {
     [ObservableProperty]
     private IFilterableDataGridViewModel<Employee> _gridViewModel;
@@ -20,12 +20,12 @@ public partial class LocalFilterScenarioViewModel : ObservableObject
 
     public void Regenerate(int count)
     {
-        Employees = EmployeeDataGenerator.Generate(count);
+        Employees = EmployeeDataGenerator.Employees;
         if (GridViewModel == null)
         {
             GridViewModel = new FilterableDataGridViewModel<Employee>();
         }
         GridViewModel.LocalDataSource = Employees;
-        GridViewModel.RefreshData();
+        GridViewModel.RefreshDataAsync();
     }
 }

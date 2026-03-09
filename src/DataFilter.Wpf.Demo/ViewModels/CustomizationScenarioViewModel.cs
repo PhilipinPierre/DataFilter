@@ -5,7 +5,7 @@ using DataFilter.Wpf.ViewModels;
 
 namespace DataFilter.Wpf.Demo.ViewModels;
 
-public sealed partial class CustomizationScenarioViewModel : ObservableObject
+public sealed partial class CustomizationScenarioViewModel : ObservableObject, IDemoItem
 {
     [ObservableProperty]
     private IFilterableDataGridViewModel<Employee> _gridViewModel;
@@ -24,13 +24,13 @@ public sealed partial class CustomizationScenarioViewModel : ObservableObject
 
     public void Regenerate(int count)
     {
-        Employees = EmployeeDataGenerator.Generate(count);
+        Employees = EmployeeDataGenerator.Employees;
         if (GridViewModel == null)
         {
             GridViewModel = new FilterableDataGridViewModel<Employee>();
         }
         GridViewModel.LocalDataSource = Employees;
-        GridViewModel.RefreshData();
+        GridViewModel.RefreshDataAsync();
     }
 
     partial void OnIsDarkThemeChanged(bool value)

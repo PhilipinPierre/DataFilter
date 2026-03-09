@@ -31,7 +31,7 @@ public partial class FilterableDataGridViewModel<T> : ObservableObject, IFiltera
     private IEnumerable<T> _filteredItems = Enumerable.Empty<T>();
 
     /// <inheritdoc />
-    public async void RefreshData()
+    public async Task RefreshDataAsync()
     {
         if (AsyncDataProvider != null)
         {
@@ -41,6 +41,9 @@ public partial class FilterableDataGridViewModel<T> : ObservableObject, IFiltera
         else
         {
             var items = FilterEngine.Apply(LocalDataSource, Context.Descriptors);
+            
+            // Materialize here as well if no sorting applied
+            IEnumerable<T> result = items;
 
             if (Context.SortDescriptors.Count > 0)
             {
@@ -67,15 +70,15 @@ public partial class FilterableDataGridViewModel<T> : ObservableObject, IFiltera
 
                 if (orderedItems != null)
                 {
-                    items = orderedItems;
+                    result = orderedItems;
                 }
             }
-
-            FilteredItems = items.ToList();
+            
+            FilteredItems = result;
         }
     }
 
-    public void ApplyColumnFilter(string propertyName, ExcelFilterState state)
+    public async void ApplyColumnFilter(string propertyName, ExcelFilterState state)
     {
         var descriptor = new ExcelFilterDescriptor(propertyName, state);
         if (Context is FilterContext ctx)
@@ -83,70 +86,73 @@ public partial class FilterableDataGridViewModel<T> : ObservableObject, IFiltera
             ctx.AddOrUpdateDescriptor(descriptor);
             ctx.Page = 1;
         }
-        RefreshData();
+        await RefreshDataAsync();
     }
 
-    public void ClearColumnFilter(string propertyName)
+    public async void ClearColumnFilter(string propertyName)
     {
         if (Context is FilterContext ctx)
         {
             ctx.RemoveDescriptor(propertyName);
             ctx.Page = 1;
         }
-        RefreshData();
+        await RefreshDataAsync();
     }
 
-    public void ApplySort(string propertyName, bool isDescending)
+    public async void ApplySort(string propertyName, bool isDescending)
     {
         if (Context is FilterContext ctx)
         {
             ctx.SetSort(propertyName, isDescending);
             ctx.Page = 1;
         }
-        RefreshData();
+        await RefreshDataAsync();
     }
 
-    public void AddSubSort(string propertyName, bool isDescending)
+    public async void AddSubSort(string propertyName, bool isDescending)
     {
         if (Context is FilterContext ctx)
         {
             ctx.AddSort(propertyName, isDescending);
             ctx.Page = 1;
         }
-        RefreshData();
+        await RefreshDataAsync();
     }
 
-    public void ClearSort()
+    public async void ClearSort()
     {
         if (Context is FilterContext ctx)
         {
             ctx.ClearSort();
             ctx.Page = 1;
         }
-        RefreshData();
+        await RefreshDataAsync();
     }
 
-    public async Task<IEnumerable<object>> GetDistinctValuesAsync(string propertyName, string searchText)
+    public Task<IEnumerable<object>> GetDistinctValuesAsync(string propertyName, string searchText)
     {
         if (AsyncDataProvider != null)
         {
-            return await AsyncDataProvider.FetchDistinctValuesAsync(propertyName, searchText);
+            return AsyncDataProvider.FetchDistinctValuesAsync(propertyName, searchText);
         }
 
-        var distincts = FilterEngine.DistinctValuesExtractor.Extract(LocalDataSource, propertyName);
-        if (!string.IsNullOrWhiteSpace(searchText))
+        return Task.Run(() =>
         {
-            var matcher = new WildcardMatcher();
-            if (matcher.ContainsWildcard(searchText))
+            var distincts = FilterEngine.DistinctValuesExtractor.Extract(LocalDataSource, propertyName);
+            if (!string.IsNullOrWhiteSpace(searchText))
             {
-                distincts = distincts.Where(x => x != null && matcher.IsMatch(x.ToString() ?? string.Empty, searchText));
+                var matcher = new WildcardMatcher();
+                if (matcher.ContainsWildcard(searchText))
+                {
+                    distincts = distincts.Where(x => x != null && matcher.IsMatch(x.ToString() ?? string.Empty, searchText));
+                }
+                else
+                {
+                    distincts = distincts.Where(x => x?.ToString()?.StartsWith(searchText, StringComparison.OrdinalIgnoreCase) == true);
+                }
             }
-            else
-            {
-                distincts = distincts.Where(x => x?.ToString()?.StartsWith(searchText, StringComparison.OrdinalIgnoreCase) == true);
-            }
-        }
-        return distincts;
+            return distincts;
+        });
     }
 
     public ExcelFilterState? GetColumnFilterState(string propertyName)
@@ -200,7 +206,7 @@ public partial class FilterableDataGridViewModel<T> : ObservableObject, IFiltera
         return valid;
     }
 
-    public void RestoreSnapshot(IFilterSnapshot snapshot)
+    public async void RestoreSnapshot(IFilterSnapshot snapshot)
     {
         var validEntries = CleanSnapshotEntries(snapshot.Entries);
         var validSorts = snapshot.SortEntries.Where(e => 
@@ -214,6 +220,6 @@ public partial class FilterableDataGridViewModel<T> : ObservableObject, IFiltera
             (IReadOnlyList<SortSnapshotEntry>)validSorts);
 
         new FilterSnapshotBuilder().RestoreSnapshot(Context, filteredSnapshot);
-        RefreshData();
+        await RefreshDataAsync();
     }
 }

@@ -68,7 +68,7 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
             nameof(ParentViewModel),
             typeof(object),
             typeof(FilterableColumnHeaderBehavior),
-            new PropertyMetadata(null, (d, e) => ((FilterableColumnHeaderBehavior)d).TryInitialize()));
+            new PropertyMetadata(null, async (d, e) => await((FilterableColumnHeaderBehavior)d).TryInitializeAsync()));
 
     public object? ParentViewModel
     {
@@ -85,7 +85,7 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
             nameof(PropertyName),
             typeof(string),
             typeof(FilterableColumnHeaderBehavior),
-            new PropertyMetadata(null, (d, e) => ((FilterableColumnHeaderBehavior)d).TryInitialize()));
+            new PropertyMetadata(null, async (d, e) => await((FilterableColumnHeaderBehavior)d).TryInitializeAsync()));
 
     public string? PropertyName
     {
@@ -113,17 +113,17 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         }
     }
 
-    private void OnAssociatedObjectLoaded(object sender, RoutedEventArgs e)
+    private async void OnAssociatedObjectLoaded(object sender, RoutedEventArgs e)
     {
         TryResolvePropertyName();
         TryResolveParentViewModel();
-        TryInitialize();
+        await TryInitializeAsync();
     }
 
-    private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+    private async void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
         TryResolveParentViewModel();
-        TryInitialize();
+        await TryInitializeAsync();
     }
 
     private void TryResolvePropertyName()
@@ -208,7 +208,7 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         }
     }
 
-    private void TryInitialize()
+    private async Task TryInitializeAsync()
     {
         if (_viewModel != null || string.IsNullOrEmpty(PropertyName) || ParentViewModel is not IFilterableDataGridViewModel parentVm)
             return;
@@ -222,17 +222,17 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
             parentVm.GetPropertyType(PropertyName)
         );
 
-        var existingState = parentVm.GetColumnFilterState(PropertyName);
-        if (existingState != null)
-        {
-            _viewModel.LoadState(existingState);
-        }
-
         BuildHeaderContent();
 
         if (ParentViewModel is IFilterableDataGridViewModel pVm && !string.IsNullOrEmpty(PropertyName))
         {
             pVm.FilterableProperties.Add(PropertyName);
+        }
+
+        var existingState = parentVm.GetColumnFilterState(PropertyName);
+        if (existingState != null)
+        {
+            await _viewModel.LoadStateAsync(existingState);
         }
     }
 

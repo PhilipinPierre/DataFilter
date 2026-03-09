@@ -16,8 +16,9 @@
         <!-- Hybrid mode: Local filtering with EnableAsyncFetch=false, but AsyncDataProvider bound to fetch distinct values -->
         <controls:FilterableDataGrid Grid.Row="1"
                                      ViewModel="{Binding GridViewModel}"
-                                     ItemsSource="{Binding GridViewModel.FilteredItems}" 
+                                     ItemsSource="{Binding GridViewModel.FilteredItems}"
                                      AutoGenerateColumns="True"
+                                     VirtualizingPanel.IsVirtualizing="True"
                                      EnableAsyncFetch="False"
                                      AsyncDataProvider="{Binding GridViewModel.AsyncDataProvider}"
                                      FilterContext="{Binding GridViewModel.Context}" />

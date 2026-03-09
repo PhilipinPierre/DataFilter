@@ -16,12 +16,22 @@ public interface IFilterContext
     IReadOnlyList<ISortDescriptor> SortDescriptors { get; }
 
     /// <summary>
-    /// Gets the current page number (1-based index).
+    /// Gets or sets the current page number (1-based index).
     /// </summary>
-    int Page { get; }
+    int Page { get; set; }
 
     /// <summary>
-    /// Gets the number of items per page.
+    /// Gets or sets the number of items per page.
     /// </summary>
-    int PageSize { get; }
+    int PageSize { get; set; }
+
+    /// <summary>
+    /// Clears all filter descriptors.
+    /// </summary>
+    void ClearDescriptors();
+
+    /// <summary>
+    /// Clears all sort criteria.
+    /// </summary>
+    void ClearSort();
 }

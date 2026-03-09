@@ -9,8 +9,9 @@
              d:DataContext="{d:DesignInstance Type={x:Type viewmodels:LocalFilterScenarioViewModel}, IsDesignTimeCreatable=True}">
     <Grid>
         <controls:FilterableDataGrid ViewModel="{Binding GridViewModel}"
-                                     ItemsSource="{Binding GridViewModel.FilteredItems}" 
+                                     ItemsSource="{Binding GridViewModel.FilteredItems}"
                                      AutoGenerateColumns="True"
+                                     VirtualizingPanel.IsVirtualizing="True"
                                      FilterContext="{Binding GridViewModel.Context}" />
     </Grid>
 </UserControl>

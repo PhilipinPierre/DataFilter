@@ -10,7 +10,7 @@ namespace DataFilter.Wpf.ViewModels;
 public interface IFilterableDataGridViewModel
 {
     IFilterContext Context { get; }
-    void RefreshData();
+    Task RefreshDataAsync();
 
     // Expose methods for the popup
     void ApplyColumnFilter(string propertyName, ExcelFilterState state);
@@ -59,7 +59,12 @@ public interface IFilterableDataGridViewModel<T> : IFilterableDataGridViewModel
     IEnumerable<T> LocalDataSource { get; set; }
 
     /// <summary>
+    /// Gets the resulting items available to the UI.
+    /// </summary>
+    IEnumerable<T> FilteredItems { get; }
+
+    /// <summary>
     /// Executes the filter pipeline, either locally or via the async data provider.
     /// </summary>
-    new void RefreshData();
+    new Task RefreshDataAsync();
 }

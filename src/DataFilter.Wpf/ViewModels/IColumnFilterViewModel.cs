@@ -51,9 +51,14 @@ public interface IColumnFilterViewModel : INotifyPropertyChanged
     ICommand SortDescendingCommand { get; }
 
     /// <summary>
-    /// Initializes the view model with distinct values.
+    /// Initializes the view model with distinct values asynchronously.
     /// </summary>
-    void Initialize(System.Collections.Generic.IEnumerable<object> distinctValues);
+    System.Threading.Tasks.Task InitializeAsync(System.Collections.Generic.IEnumerable<object> distinctValues);
+
+    /// <summary>
+    /// Loads an existing filter state into this view model asynchronously.
+    /// </summary>
+    System.Threading.Tasks.Task LoadStateAsync(ExcelFilterState state);
 
     /// <summary>
     /// Indicates if data is currently loading asynchronously.

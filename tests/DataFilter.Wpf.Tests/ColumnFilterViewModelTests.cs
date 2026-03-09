@@ -13,7 +13,7 @@ namespace DataFilter.Wpf.Tests;
 public class ColumnFilterViewModelTests
 {
     [Fact]
-    public void ApplyCommand_WithAddToExistingFilter_MergesSelectedValues()
+    public async Task ApplyCommand_WithAddToExistingFilter_MergesSelectedValuesAsync()
     {
         // Arrange
         var appliedState = new ExcelFilterState();
@@ -27,7 +27,7 @@ public class ColumnFilterViewModelTests
         );
         
         // Initialize with previous state
-        vm.LoadState(appliedState);
+        await vm.LoadStateAsync(appliedState);
         
         // Manual setup of FilterValues (items in the list)
         var item = new FilterValueItem("NewValue", "NewValue", null, false);

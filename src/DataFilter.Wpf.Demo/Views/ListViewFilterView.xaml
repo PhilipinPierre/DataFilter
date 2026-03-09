@@ -8,7 +8,8 @@
              xmlns:viewmodels="clr-namespace:DataFilter.Wpf.Demo.ViewModels"
              d:DataContext="{d:DesignInstance Type={x:Type viewmodels:ListViewScenarioViewModel}, IsDesignTimeCreatable=True}">
     <Grid>
-        <ListView ItemsSource="{Binding GridViewModel.FilteredItems}">
+        <ListView ItemsSource="{Binding GridViewModel.FilteredItems}"
+                  VirtualizingPanel.IsVirtualizing="True">
             <ListView.View>
                 <controls:FilterableGridView ViewModel="{Binding GridViewModel}">
                     <GridViewColumn Header="Id" DisplayMemberBinding="{Binding Id}" Width="50"/>

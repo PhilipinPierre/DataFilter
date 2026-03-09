@@ -1,5 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DataFilter.Wpf.Demo.Services;
+using System.Windows;
+using System.Windows.Controls;
 
 namespace DataFilter.Wpf.Demo.ViewModels;
 
@@ -7,6 +10,8 @@ public sealed partial class MainViewModel : ObservableObject
 {
     [ObservableProperty]
     private int _rowCount = 1000;
+
+    public TabItem SelectedTabControl { get; set; }
 
     public LocalFilterScenarioViewModel LocalFilterScenario { get; } = new();
     public AsyncFilterScenarioViewModel AsyncFilterScenario { get; } = new();
@@ -21,10 +26,39 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void Regenerate()
     {
+        EmployeeDataGenerator.Regenerate(RowCount);
+
         LocalFilterScenario.Regenerate(RowCount);
         AsyncFilterScenario.Regenerate(RowCount);
         HybridFilterScenario.Regenerate(RowCount);
         CustomizationScenario.Regenerate(RowCount);
         ListViewScenario.Regenerate(RowCount);
+
+        //SelectedTabControl = LocalFilterScenario;
+    }
+
+    [RelayCommand]
+    private async Task ClearFilters()
+    {
+        if (SelectedTabControl != null && SelectedTabControl.Content is FrameworkElement element && element.DataContext is IDemoItem demoItem)
+        {
+            demoItem.GridViewModel.Context.ClearDescriptors();
+            await demoItem.GridViewModel.RefreshDataAsync();
+        }
+        else
+        {
+
+            this.LocalFilterScenario.GridViewModel.Context.ClearDescriptors();
+            this.AsyncFilterScenario.GridViewModel.Context.ClearDescriptors();
+            this.HybridFilterScenario.GridViewModel.Context.ClearDescriptors();
+            this.CustomizationScenario.GridViewModel.Context.ClearDescriptors();
+            this.ListViewScenario.GridViewModel.Context.ClearDescriptors();
+
+            await this.LocalFilterScenario.GridViewModel.RefreshDataAsync();
+            await this.AsyncFilterScenario.GridViewModel.RefreshDataAsync();
+            await this.HybridFilterScenario.GridViewModel.RefreshDataAsync();
+            await this.CustomizationScenario.GridViewModel.RefreshDataAsync();
+            await this.ListViewScenario.GridViewModel.RefreshDataAsync();
+        }
     }
 }

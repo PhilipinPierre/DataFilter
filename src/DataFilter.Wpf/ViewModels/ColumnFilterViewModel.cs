@@ -2,9 +2,10 @@
 using CommunityToolkit.Mvvm.Input;
 using DataFilter.Core.Enums;
 using DataFilter.Filtering.ExcelLike.Models;
+using DataFilter.Wpf.Enums;
+using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
-using DataFilter.Wpf.Enums;
 
 namespace DataFilter.Wpf.ViewModels;
 
@@ -36,7 +37,8 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
     public FilterDataType DataType { get; }
 
     /// <inheritdoc />
-    public ObservableCollection<FilterValueItem> FilterValues { get; } = new();
+    [ObservableProperty]
+    private ObservableCollection<FilterValueItem> _filterValues = new();
 
     /// <inheritdoc />
     public ICommand ApplyCommand { get; }
@@ -152,7 +154,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
         ApplyCommand = new RelayCommand(() =>
         {
             var selectedValuesSnapshot = new HashSet<object>();
-            foreach (var item in FilterValues)
+            foreach (var item in _filterValues)
             {
                 item.GetSelectedValues(selectedValuesSnapshot);
             }
@@ -160,10 +162,10 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
             if (AddToExistingFilter)
             {
                 // In accumulation mode, we merge current selection with previous one
-                foreach (var val in selectedValuesSnapshot)
-                {
-                    FilterState.SelectedValues.Add(val);
-                }
+                //foreach (var val in selectedValuesSnapshot)
+                //{
+                //    FilterState.SelectedValues.Add(val);
+                //}
                 FilterState.SelectAll = false; // Cannot be "Select All" if we are accumulating partial results
             }
             else
@@ -174,11 +176,11 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
                 {
                     FilterState.SelectedValues.Add(val);
                 }
-                FilterState.SelectAll = SelectAll == true;
+                FilterState.SelectAll = string.IsNullOrEmpty(SearchText) && SelectAll == true;
             }
 
             FilterState.SearchText = string.Empty; // Clear search text on apply as visible items were merged
-            
+
             // Apply Custom Filter
             FilterState.CustomOperator = SelectedCustomOperator;
             FilterState.CustomValue1 = string.IsNullOrEmpty(CustomValue1) ? null : CustomValue1;
@@ -222,7 +224,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
                 try
                 {
                     var vals = await _distinctValuesProvider.Invoke(searchText);
-                    Initialize(vals);
+                    await InitializeAsync(vals);
                 }
                 finally
                 {
@@ -288,7 +290,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
     }
 
     /// <inheritdoc />
-    public void Initialize(IEnumerable<object> distinctValues)
+    public async System.Threading.Tasks.Task InitializeAsync(IEnumerable<object> distinctValues)
     {
         _internalUpdate = true;
 
@@ -296,21 +298,30 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
         {
             item.PropertyChanged -= Item_PropertyChanged;
         }
-        FilterValues.Clear();
+
         FilterState.DistinctValues.Clear();
 
-        if (DataType == FilterDataType.Date)
+        var newFilterValues = new List<FilterValueItem>();
+
+        await System.Threading.Tasks.Task.Run(() =>
         {
-            InitializeDateTree(distinctValues);
-        }
-        else if (DataType == FilterDataType.Time)
-        {
-            InitializeTimeTree(distinctValues);
-        }
-        else
-        {
-            InitializeFlatList(distinctValues);
-        }
+            if (DataType == FilterDataType.Date)
+            {
+                InitializeDateTree(distinctValues, newFilterValues);
+            }
+            else if (DataType == FilterDataType.Time)
+            {
+                // TODO: Fix TreeView for Time with 15-min intervals
+                // InitializeTimeTree(distinctValues, newFilterValues);
+                InitializeFlatList(distinctValues, newFilterValues);
+            }
+            else
+            {
+                InitializeFlatList(distinctValues, newFilterValues);
+            }
+        });
+
+        FilterValues = new ObservableCollection<FilterValueItem>(newFilterValues);
 
         foreach (var item in FilterValues)
         {
@@ -322,21 +333,21 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
         _internalUpdate = false;
     }
 
-    private void InitializeFlatList(IEnumerable<object> distinctValues)
+    private void InitializeFlatList(IEnumerable<object> distinctValues, List<FilterValueItem> newFilterValues)
     {
         foreach (var val in distinctValues)
         {
             var isSelected = FilterState.SelectAll || (val != null && FilterState.SelectedValues.Contains(val));
             var display = val?.ToString() ?? DataFilter.Wpf.Resources.FilterResources.Blanks;
             var item = new FilterValueItem(display, val, null, isSelected);
-            FilterValues.Add(item);
-            
+            newFilterValues.Add(item);
+
             if (val != null)
                 FilterState.DistinctValues.Add(val);
         }
     }
 
-    private void InitializeDateTree(IEnumerable<object> distinctValues)
+    private void InitializeDateTree(IEnumerable<object> distinctValues, List<FilterValueItem> newFilterValues)
     {
         var validDates = new List<DateTime>();
         var blankItem = (FilterValueItem?)null;
@@ -378,15 +389,16 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
             }
 
             yearNode.UpdateStateFromChildren();
-            FilterValues.Add(yearNode);
+            newFilterValues.Add(yearNode);
         }
 
         if (blankItem != null)
-            FilterValues.Add(blankItem);
+            newFilterValues.Add(blankItem);
     }
 
-    private void InitializeTimeTree(IEnumerable<object> distinctValues)
+    private void InitializeTimeTree(IEnumerable<object> distinctValues, List<FilterValueItem> newFilterValues)
     {
+        /*
         var validTimes = new List<TimeSpan>();
         bool tooPrecise = false;
         var blankItem = (FilterValueItem?)null;
@@ -442,32 +454,36 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
             }
 
             hourNode.UpdateStateFromChildren();
-            FilterValues.Add(hourNode);
+            newFilterValues.Add(hourNode);
         }
 
         if (blankItem != null)
-            FilterValues.Add(blankItem);
+            newFilterValues.Add(blankItem);
+        */
     }
 
     /// <summary>
-    /// Loads an existing filter state into this view model.
+    /// Loads an existing filter state into this view model asynchronously.
     /// </summary>
     /// <param name="state">The state to copy.</param>
-    public void LoadState(ExcelFilterState state)
+    public async System.Threading.Tasks.Task LoadStateAsync(ExcelFilterState state)
     {
         _internalUpdate = true;
-        
+
         FilterState.SearchText = state.SearchText;
         FilterState.UseWildcards = state.UseWildcards;
         FilterState.SelectAll = state.SelectAll;
-        
-        FilterState.SelectedValues.Clear();
-        foreach (var val in state.SelectedValues)
-            FilterState.SelectedValues.Add(val);
-            
-        FilterState.DistinctValues.Clear();
-        foreach (var val in state.DistinctValues)
-            FilterState.DistinctValues.Add(val);
+
+        await System.Threading.Tasks.Task.Run(() =>
+        {
+            FilterState.SelectedValues.Clear();
+            foreach (var val in state.SelectedValues)
+                FilterState.SelectedValues.Add(val);
+
+            FilterState.DistinctValues.Clear();
+            foreach (var val in state.DistinctValues)
+                FilterState.DistinctValues.Add(val);
+        });
 
         SelectedCustomOperator = state.CustomOperator;
         CustomValue1 = state.CustomValue1?.ToString() ?? string.Empty;
@@ -476,7 +492,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
 
         SearchText = FilterState.SearchText;
         SelectAll = FilterState.SelectAll;
-        
+
         _internalUpdate = false;
         OnPropertyChanged(nameof(IsFilterActive));
     }
@@ -486,7 +502,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
         if (_internalUpdate) return;
         FilterState.SearchText = value;
         OnSearchTextChangedEvent?.Invoke(this, value);
-        
+
         if (SearchCommand.CanExecute(value))
         {
             SearchCommand.Execute(value);
@@ -556,10 +572,26 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
 
     private void SyncFilterStateSelectedValues()
     {
-        FilterState.SelectedValues.Clear();
-        foreach (var item in FilterValues)
+        //FilterState.SelectedValues.Clear();
+        if (FilterValues.Count > 1000)
         {
-            item.GetSelectedValues(FilterState.SelectedValues);
+
+            var rangePartitioner = Partitioner.Create(0L, FilterValues.Count, 1000);
+            var ConcurrentSelectedValues = new ConcurrentQueue<object>(FilterState.SelectedValues);
+            Parallel.ForEach(rangePartitioner, range =>
+            {
+                for (long i = range.Item1; i < range.Item2; i++)
+                    FilterValues[(int)i].GetSelectedValues(ConcurrentSelectedValues);
+            });
+            foreach (var item in ConcurrentSelectedValues.Except(FilterState.SelectedValues).ToList())
+                FilterState.SelectedValues.Add(item);
+        }
+        else
+        {
+            foreach (var item in FilterValues)
+            {
+                item.GetSelectedValues(FilterState.SelectedValues);
+            }
         }
     }
 

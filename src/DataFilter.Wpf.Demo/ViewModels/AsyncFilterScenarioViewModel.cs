@@ -5,7 +5,7 @@ using DataFilter.Wpf.ViewModels;
 
 namespace DataFilter.Wpf.Demo.ViewModels;
 
-public sealed partial class AsyncFilterScenarioViewModel : ObservableObject
+public sealed partial class AsyncFilterScenarioViewModel : ObservableObject, IDemoItem
 {
     [ObservableProperty]
     private IFilterableDataGridViewModel<Employee> _gridViewModel;
@@ -17,7 +17,7 @@ public sealed partial class AsyncFilterScenarioViewModel : ObservableObject
             AsyncDataProvider = new MockEmployeeApiService()
         };
         // Initial load
-        GridViewModel.RefreshData();
+        GridViewModel.RefreshDataAsync();
     }
 
     public void Regenerate(int count)
@@ -25,7 +25,7 @@ public sealed partial class AsyncFilterScenarioViewModel : ObservableObject
         if (GridViewModel.AsyncDataProvider is MockEmployeeApiService mockService)
         {
             mockService.Regenerate(count);
-            GridViewModel.RefreshData();
+            GridViewModel.RefreshDataAsync();
         }
     }
 }

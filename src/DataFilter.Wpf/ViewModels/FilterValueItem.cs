@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -97,9 +98,27 @@ public partial class FilterValueItem : ObservableObject
     {
         if (Children.Count == 0)
         {
-            if (IsSelected == true && Value != null)
+            if (IsSelected == true && Value != null && !selectedValues.Any(c=> c == Value))
             {
                 selectedValues.Add(Value);
+            }
+        }
+        else
+        {
+            foreach (var child in Children)
+            {
+                child.GetSelectedValues(selectedValues);
+            }
+        }
+    }
+
+    public void GetSelectedValues(ConcurrentQueue<object> selectedValues)
+    {
+        if (Children.Count == 0)
+        {
+            if (IsSelected == true && Value != null && !selectedValues.Any(c => c == Value))
+            {
+                selectedValues.Append(Value);
             }
         }
         else

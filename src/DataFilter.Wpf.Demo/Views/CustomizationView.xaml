@@ -24,6 +24,7 @@
                                      ViewModel="{Binding GridViewModel}"
                                      ItemsSource="{Binding GridViewModel.FilteredItems}" 
                                      AutoGenerateColumns="True"
+                                     VirtualizingPanel.IsVirtualizing="True"
                                      FilterContext="{Binding GridViewModel.Context}" />
     </Grid>
 </UserControl>
