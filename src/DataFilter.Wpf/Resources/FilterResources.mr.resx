@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /><xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" /></xsd:sequence><xsd:attribute name="name" type="xsd:string" /><xsd:attribute name="type" type="xsd:string" /><xsd:attribute name="mimetype" type="xsd:string" /></xsd:complexType></xsd:element>
+          <xsd:element name="resheader"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence><xsd:attribute name="name" type="xsd:string" use="required" /></xsd:complexType></xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="SortAscending" xml:space="preserve"><value>A ते Z क्रमाने लावा</value></data>
+  <data name="SortDescending" xml:space="preserve"><value>Z ते A क्रमाने लावा</value></data>
+  <data name="AddSubSortAscending" xml:space="preserve"><value>A ते Z क्रमवारी जोडा</value></data>
+  <data name="AddSubSortDescending" xml:space="preserve"><value>Z ते A क्रमवारी जोडा</value></data>
+  <data name="AddToFilter" xml:space="preserve"><value>सध्याची निवड फिल्टरमध्ये जोडा</value></data>
+  <data name="AdvancedFilter" xml:space="preserve"><value>प्रगत फिल्टर</value></data>
+  <data name="OperatorText" xml:space="preserve"><value>ऑपरेटर:</value></data>
+  <data name="ValueText" xml:space="preserve"><value>मूल्य:</value></data>
+  <data name="ToText" xml:space="preserve"><value>पर्यंत:</value></data>
+  <data name="LoadingText" xml:space="preserve"><value>लोड होत आहे...</value></data>
+  <data name="SelectAll" xml:space="preserve"><value>(सर्व निवडा)</value></data>
+  <data name="Ok" xml:space="preserve"><value>ठीक आहे</value></data>
+  <data name="Clear" xml:space="preserve"><value>साफ करा</value></data>
+  <data name="Blanks" xml:space="preserve"><value>(रिकामे)</value></data>
+  <data name="FilterOperator_Equals" xml:space="preserve"><value>बरोबर आहे</value></data>
+  <data name="FilterOperator_NotEquals" xml:space="preserve"><value>बरोबर नाही</value></data>
+  <data name="FilterOperator_Contains" xml:space="preserve"><value>समाविष्ट आहे</value></data>
+  <data name="FilterOperator_NotContains" xml:space="preserve"><value>समाविष्ट नाही</value></data>
+  <data name="FilterOperator_StartsWith" xml:space="preserve"><value>ने सुरू होते</value></data>
+  <data name="FilterOperator_EndsWith" xml:space="preserve"><value>ने संपते</value></data>
+  <data name="FilterOperator_GreaterThan" xml:space="preserve"><value>पेक्षा मोठे</value></data>
+  <data name="FilterOperator_GreaterThanOrEqual" xml:space="preserve"><value>पेक्षा मोठे किंवा बरोबर</value></data>
+  <data name="FilterOperator_LessThan" xml:space="preserve"><value>पेक्षा लहान</value></data>
+  <data name="FilterOperator_LessThanOrEqual" xml:space="preserve"><value>पेक्षा लहान किंवा बरोबर</value></data>
+  <data name="FilterOperator_Between" xml:space="preserve"><value>च्या दरम्यान</value></data>
+  <data name="FilterOperator_In" xml:space="preserve"><value>मध्ये</value></data>
+  <data name="FilterOperator_NotIn" xml:space="preserve"><value>मध्ये नाही</value></data>
+  <data name="FilterOperator_IsNull" xml:space="preserve"><value>रिक्त आहे</value></data>
+  <data name="FilterOperator_IsNotNull" xml:space="preserve"><value>रिक्त नाही</value></data>
+</root>

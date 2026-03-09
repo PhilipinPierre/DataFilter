@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /><xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" /></xsd:sequence><xsd:attribute name="name" type="xsd:string" /><xsd:attribute name="type" type="xsd:string" /><xsd:attribute name="mimetype" type="xsd:string" /></xsd:complexType></xsd:element>
+          <xsd:element name="resheader"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence><xsd:attribute name="name" type="xsd:string" use="required" /></xsd:complexType></xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="SortAscending" xml:space="preserve"><value>A മുതൽ Z വരെ ക്രമീകരിക്കുക</value></data>
+  <data name="SortDescending" xml:space="preserve"><value>Z മുതൽ A വരെ ക്രമീകരിക്കുക</value></data>
+  <data name="AddSubSortAscending" xml:space="preserve"><value>A മുതൽ Z വരെയുള്ള ക്രമീകരണം ചേർക്കുക</value></data>
+  <data name="AddSubSortDescending" xml:space="preserve"><value>Z മുതൽ A വരെയുള്ള ക്രമീകരണം ചേർക്കുക</value></data>
+  <data name="AddToFilter" xml:space="preserve"><value>നിലവിലെ സെലക്ഷൻ ഫിൽട്ടറിലേക്ക് ചേർക്കുക</value></data>
+  <data name="AdvancedFilter" xml:space="preserve"><value>അഡ്വാൻസ്ഡ് ഫിൽറ്റർ</value></data>
+  <data name="OperatorText" xml:space="preserve"><value>ഓപ്പറേറ്റർ:</value></data>
+  <data name="ValueText" xml:space="preserve"><value>മൂല്യം:</value></data>
+  <data name="ToText" xml:space="preserve"><value>വരെ:</value></data>
+  <data name="LoadingText" xml:space="preserve"><value>ലോഡ് ചെയ്യുന്നു...</value></data>
+  <data name="SelectAll" xml:space="preserve"><value>(എല്ലാം തിരഞ്ഞെടുക്കുക)</value></data>
+  <data name="Ok" xml:space="preserve"><value>ശരി</value></data>
+  <data name="Clear" xml:space="preserve"><value>മായ്ക്കുക</value></data>
+  <data name="Blanks" xml:space="preserve"><value>(ശൂന്യമായവ)</value></data>
+  <data name="FilterOperator_Equals" xml:space="preserve"><value>തുല്യമാണ്</value></data>
+  <data name="FilterOperator_NotEquals" xml:space="preserve"><value>തുല്യമല്ല</value></data>
+  <data name="FilterOperator_Contains" xml:space="preserve"><value>ഉൾപ്പെടുന്നു</value></data>
+  <data name="FilterOperator_NotContains" xml:space="preserve"><value>ഉൾപ്പെടുന്നില്ല</value></data>
+  <data name="FilterOperator_StartsWith" xml:space="preserve"><value>തുടങ്ങുന്നത്</value></data>
+  <data name="FilterOperator_EndsWith" xml:space="preserve"><value>അവസാനിക്കുന്നത്</value></data>
+  <data name="FilterOperator_GreaterThan" xml:space="preserve"><value>ഇതിനേക്കാൾ വലുത്</value></data>
+  <data name="FilterOperator_GreaterThanOrEqual" xml:space="preserve"><value>ഇതിനേക്കാൾ വലുതോ തുല്യമോ</value></data>
+  <data name="FilterOperator_LessThan" xml:space="preserve"><value>ഇതിനേക്കാൾ ചെറുത്</value></data>
+  <data name="FilterOperator_LessThanOrEqual" xml:space="preserve"><value>ഇതിനേക്കാൾ ചെറുതോ തുല്യമോ</value></data>
+  <data name="FilterOperator_Between" xml:space="preserve"><value>ഇതിനിടയിൽ</value></data>
+  <data name="FilterOperator_In" xml:space="preserve"><value>ഇതിൽ</value></data>
+  <data name="FilterOperator_NotIn" xml:space="preserve"><value>ഇതിലില്ല</value></data>
+  <data name="FilterOperator_IsNull" xml:space="preserve"><value>ശൂന്യമാണ്</value></data>
+  <data name="FilterOperator_IsNotNull" xml:space="preserve"><value>ശൂന്യമല്ല</value></data>
+</root>

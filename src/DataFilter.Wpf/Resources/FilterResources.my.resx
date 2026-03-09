@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /><xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" /></xsd:sequence><xsd:attribute name="name" type="xsd:string" /><xsd:attribute name="type" type="xsd:string" /><xsd:attribute name="mimetype" type="xsd:string" /></xsd:complexType></xsd:element>
+          <xsd:element name="resheader"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence><xsd:attribute name="name" type="xsd:string" use="required" /></xsd:complexType></xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="SortAscending" xml:space="preserve"><value>A မှ Z သို့ စီရန်</value></data>
+  <data name="SortDescending" xml:space="preserve"><value>Z မှ A သို့ စီရန်</value></data>
+  <data name="AddSubSortAscending" xml:space="preserve"><value>A မှ Z အစီအစဉ် ထည့်ရန်</value></data>
+  <data name="AddSubSortDescending" xml:space="preserve"><value>Z မှ A အစီအစဉ် ထည့်ရန်</value></data>
+  <data name="AddToFilter" xml:space="preserve"><value>လက်ရှိရွေးချယ်မှုကို စစ်ထုတ်မှုထဲသို့ ထည့်ရန်</value></data>
+  <data name="AdvancedFilter" xml:space="preserve"><value>အဆင့်မြင့် စစ်ထုတ်မှု</value></data>
+  <data name="OperatorText" xml:space="preserve"><value>အော်ပရေတာ:</value></data>
+  <data name="ValueText" xml:space="preserve"><value>တန်ဖိုး:</value></data>
+  <data name="ToText" xml:space="preserve"><value>အထိ:</value></data>
+  <data name="LoadingText" xml:space="preserve"><value>တင်နေသည်...</value></data>
+  <data name="SelectAll" xml:space="preserve"><value>(အားလုံးကို ရွေးရန်)</value></data>
+  <data name="Ok" xml:space="preserve"><value>အိုကေ</value></data>
+  <data name="Clear" xml:space="preserve"><value>ရှင်းရန်</value></data>
+  <data name="Blanks" xml:space="preserve"><value>(ကွက်လပ်များ)</value></data>
+  <data name="FilterOperator_Equals" xml:space="preserve"><value>ညီမျှသည်</value></data>
+  <data name="FilterOperator_NotEquals" xml:space="preserve"><value>မညီမျှပါ</value></data>
+  <data name="FilterOperator_Contains" xml:space="preserve"><value>ပါဝင်သည်</value></data>
+  <data name="FilterOperator_NotContains" xml:space="preserve"><value>မပါဝင်ပါ</value></data>
+  <data name="FilterOperator_StartsWith" xml:space="preserve"><value>ဖြင့် စတင်သည်</value></data>
+  <data name="FilterOperator_EndsWith" xml:space="preserve"><value>ဖြင့် ဆုံးသည်</value></data>
+  <data name="FilterOperator_GreaterThan" xml:space="preserve"><value>ထက် ကြီးသည်</value></data>
+  <data name="FilterOperator_GreaterThanOrEqual" xml:space="preserve"><value>ထက် ကြီးခြင်း သို့မဟုတ် ညီမျှသည်</value></data>
+  <data name="FilterOperator_LessThan" xml:space="preserve"><value>ထက် ငယ်သည်</value></data>
+  <data name="FilterOperator_LessThanOrEqual" xml:space="preserve"><value>ထက် ငယ်ခြင်း သို့မဟုတ် ညီမျှသည်</value></data>
+  <data name="FilterOperator_Between" xml:space="preserve"><value>ကြားတွင်</value></data>
+  <data name="FilterOperator_In" xml:space="preserve"><value>ထဲတွင်</value></data>
+  <data name="FilterOperator_NotIn" xml:space="preserve"><value>ထဲမှာ မဟုတ်ပါ</value></data>
+  <data name="FilterOperator_IsNull" xml:space="preserve"><value>ဗላဖြစ်သည်</value></data>
+  <data name="FilterOperator_IsNotNull" xml:space="preserve"><value>ဗላမဟုတ်ပါ</value></data>
+</root>
