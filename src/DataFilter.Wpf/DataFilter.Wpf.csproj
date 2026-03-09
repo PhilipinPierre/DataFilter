@@ -15,6 +15,7 @@
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
+    <Title>$(AssemblyName)</Title>
   </PropertyGroup>
 
 </Project>
