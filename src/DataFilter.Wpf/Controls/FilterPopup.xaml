@@ -8,6 +8,7 @@
              xmlns:behaviors="clr-namespace:DataFilter.Wpf.Behaviors"
              xmlns:viewmodels="clr-namespace:DataFilter.Wpf.ViewModels"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:res="clr-namespace:DataFilter.Wpf.Resources"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=viewmodels:ColumnFilterViewModel}"
              Background="{DynamicResource FilterPopupBackground}"
@@ -23,6 +24,7 @@
         <converters:BoolToVisibilityConverter x:Key="InvertedBoolToVis"
                                               Invert="True" />
         <BooleanToVisibilityConverter x:Key="SystemBoolToVis" />
+        <converters:OperatorToLocalizedDescriptionConverter x:Key="OperatorConverter" />
     </UserControl.Resources>
 
     <Grid>
@@ -37,16 +39,16 @@
         <!-- Sort Buttons -->
         <StackPanel Grid.Row="0"
                     Margin="0,0,0,5">
-            <Button Content="Sort A to Z"
+            <Button Content="{x:Static res:FilterResources.SortAscending}"
                     Command="{Binding SortAscendingCommand}"
                     Margin="0,2" />
-            <Button Content="Sort Z to A"
+            <Button Content="{x:Static res:FilterResources.SortDescending}"
                     Command="{Binding SortDescendingCommand}"
                     Margin="0,2" />
-            <Button Content="Add Sort A to Z"
+            <Button Content="{x:Static res:FilterResources.AddSubSortAscending}"
                     Command="{Binding AddSubSortAscendingCommand}"
                     Margin="0,2" />
-            <Button Content="Add Sort Z to A"
+            <Button Content="{x:Static res:FilterResources.AddSubSortDescending}"
                     Command="{Binding AddSubSortDescendingCommand}"
                     Margin="0,2" />
             <Separator Margin="0,5" />
@@ -61,7 +63,7 @@
                     <!-- <behaviors:AsyncFilterBehavior Delay="0:0:0.3"/> -->
                 </i:Interaction.Behaviors>
             </TextBox>
-            <CheckBox Content="Add current selection to filter"
+            <CheckBox Content="{x:Static res:FilterResources.AddToFilter}"
                       IsChecked="{Binding AddToExistingFilter}"
                       Margin="0,5,0,0"
                       FontSize="11" />
@@ -69,28 +71,28 @@
 
         <!-- Custom Filter -->
         <Expander Grid.Row="2"
-                  Header="Advanced Filter"
+                  Header="{x:Static res:FilterResources.AdvancedFilter}"
                   IsExpanded="{Binding IsCustomFilterExpanded}"
                   Margin="0,0,0,5"
                   Padding="2">
             <StackPanel Margin="5">
-                <TextBlock Text="Operator:" FontSize="10" Foreground="Gray"/>
+                <TextBlock Text="{x:Static res:FilterResources.OperatorText}" FontSize="10" Foreground="Gray"/>
                 <ComboBox ItemsSource="{Binding AvailableOperators}"
                           SelectedItem="{Binding SelectedCustomOperator}"
                           Margin="0,2,0,5">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding}" />
+                            <TextBlock Text="{Binding Converter={StaticResource OperatorConverter}}" />
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
 
-                <TextBlock Text="Value:" FontSize="10" Foreground="Gray"/>
+                <TextBlock Text="{x:Static res:FilterResources.ValueText}" FontSize="10" Foreground="Gray"/>
                 <TextBox Text="{Binding CustomValue1, UpdateSourceTrigger=PropertyChanged}"
                          Margin="0,2"/>
 
                 <StackPanel Visibility="{Binding SelectedCustomOperator, Converter={StaticResource BoolToVis}, ConverterParameter=Between}">
-                    <TextBlock Text="To:" FontSize="10" Foreground="Gray" Margin="0,5,0,0"/>
+                    <TextBlock Text="{x:Static res:FilterResources.ToText}" FontSize="10" Foreground="Gray" Margin="0,5,0,0"/>
                     <TextBox Text="{Binding CustomValue2, UpdateSourceTrigger=PropertyChanged}"
                              Margin="0,2"/>
                 </StackPanel>
@@ -99,7 +101,7 @@
 
         <!-- Loading Indicator -->
         <TextBlock Grid.Row="3"
-                   Text="Loading..."
+                   Text="{x:Static res:FilterResources.LoadingText}"
                    HorizontalAlignment="Center"
                    Margin="0,5"
                    Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}" />
@@ -122,7 +124,7 @@
             </Grid.Style>
 
             <CheckBox Grid.Row="0"
-                      Content="(Select All)"
+                      Content="{x:Static res:FilterResources.SelectAll}"
                       Margin="2"
                       IsChecked="{Binding SelectAll}"
                       IsThreeState="True"
@@ -163,11 +165,11 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <Button Grid.Column="0"
-                    Content="OK"
+                    Content="{x:Static res:FilterResources.Ok}"
                     Command="{Binding ApplyCommand}"
                     Style="{DynamicResource FilterButtonStyle}" />
             <Button Grid.Column="2"
-                    Content="Clear"
+                    Content="{x:Static res:FilterResources.Clear}"
                     Command="{Binding ClearCommand}"
                     Style="{DynamicResource FilterButtonStyle}" />
         </Grid>

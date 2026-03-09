@@ -15,7 +15,7 @@
     <SolidColorBrush x:Key="FilterButtonInactiveColor" Color="#999999" />
 
     <!-- Correction : Utiliser x:Key avec une valeur littérale pour Double -->
-    <System:Double x:Key="FilterPopupMaxHeight">300</System:Double>
+    <System:Double x:Key="FilterPopupMaxHeight">450</System:Double>
 
     <!-- Specific Style Overrides -->
     <Style x:Key="FilterButtonStyle" TargetType="Button">

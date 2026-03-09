@@ -327,7 +327,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
         foreach (var val in distinctValues)
         {
             var isSelected = FilterState.SelectAll || (val != null && FilterState.SelectedValues.Contains(val));
-            var display = val?.ToString() ?? "(Blanks)";
+            var display = val?.ToString() ?? DataFilter.Wpf.Resources.FilterResources.Blanks;
             var item = new FilterValueItem(display, val, null, isSelected);
             FilterValues.Add(item);
             
@@ -348,7 +348,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
             else if (val == null)
             {
                 var isSelected = FilterState.SelectAll || FilterState.SelectedValues.Contains(val!);
-                blankItem = new FilterValueItem("(Blanks)", null, null, isSelected);
+                blankItem = new FilterValueItem(DataFilter.Wpf.Resources.FilterResources.Blanks, null, null, isSelected);
                 FilterState.DistinctValues.Add(val!);
             }
         }
@@ -400,7 +400,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
             else if (val == null)
             {
                 var isSelected = FilterState.SelectAll || FilterState.SelectedValues.Contains(val!);
-                blankItem = new FilterValueItem("(Blanks)", null, null, isSelected);
+                blankItem = new FilterValueItem(DataFilter.Wpf.Resources.FilterResources.Blanks, null, null, isSelected);
                 FilterState.DistinctValues.Add(val!);
                 continue;
             }
