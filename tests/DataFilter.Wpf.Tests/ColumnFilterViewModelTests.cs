@@ -26,6 +26,9 @@ public class ColumnFilterViewModelTests
             propertyType: typeof(string)
         );
         
+        // Initialize with previous state
+        vm.LoadState(appliedState);
+        
         // Manual setup of FilterValues (items in the list)
         var item = new FilterValueItem("NewValue", "NewValue", null, false);
         item.IsSelected = true;
