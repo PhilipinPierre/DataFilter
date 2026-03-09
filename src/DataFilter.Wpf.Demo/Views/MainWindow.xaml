@@ -11,22 +11,32 @@
         Width="1000"
         d:DataContext="{d:DesignInstance Type={x:Type viewmodels:MainViewModel}, IsDesignTimeCreatable=True}">
     <Grid>
-        <TabControl Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,10,10,0">
+            <TextBlock Text="Row Count:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+            <TextBox Text="{Binding RowCount}" Width="100" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <Button Content="Regenerate Data" Command="{Binding RegenerateCommand}" Padding="10,2"/>
+        </StackPanel>
+        
+        <TabControl Grid.Row="1" Margin="10">
             <TabItem Header="Local Filtering">
-                <views:LocalFilterView DataContext="{Binding CurrentScenario}" />
+                <views:LocalFilterView DataContext="{Binding LocalFilterScenario}" />
             </TabItem>
             <TabItem Header="Async Filtering">
-                <views:AsyncFilterView DataContext="{Binding CurrentScenario}" />
+                <views:AsyncFilterView DataContext="{Binding AsyncFilterScenario}" />
             </TabItem>
-            <!-- Other tabs follow same pattern -->
             <TabItem Header="Hybrid Filtering">
-                <views:HybridFilterView DataContext="{Binding CurrentScenario}" />
+                <views:HybridFilterView DataContext="{Binding HybridFilterScenario}" />
             </TabItem>
             <TabItem Header="Customization">
-                <views:CustomizationView DataContext="{Binding CurrentScenario}" />
+                <views:CustomizationView DataContext="{Binding CustomizationScenario}" />
             </TabItem>
             <TabItem Header="ListView Example">
-                <views:ListViewFilterView DataContext="{Binding CurrentScenario}" />
+                <views:ListViewFilterView DataContext="{Binding ListViewScenario}" />
             </TabItem>
         </TabControl>
     </Grid>

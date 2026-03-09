@@ -15,6 +15,7 @@
                     <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="150"/>
                     <GridViewColumn Header="Department" DisplayMemberBinding="{Binding Department}" Width="150"/>
                     <GridViewColumn Header="Country" DisplayMemberBinding="{Binding Country}" Width="150"/>
+                    <GridViewColumn Header="Time" DisplayMemberBinding="{Binding Time}" Width="150"/>
                 </controls:FilterableGridView>
             </ListView.View>
         </ListView>

@@ -8,5 +8,6 @@ public class Employee
     public string Country { get; set; } = string.Empty;
     public decimal Salary { get; set; }
     public DateTime HireDate { get; set; }
+    public TimeSpan Time { get; set; }
     public bool IsActive { get; set; }
 }

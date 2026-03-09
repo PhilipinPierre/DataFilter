@@ -7,13 +7,18 @@ namespace DataFilter.Wpf.Demo.Services;
 
 public class MockEmployeeApiService : IMockEmployeeApiService
 {
-    private readonly List<Employee> _allData;
+    private List<Employee> _allData;
     private readonly ExcelFilterEngine<Employee> _engine;
 
-    public MockEmployeeApiService()
+    public MockEmployeeApiService(int count = 1000)
     {
-        _allData = EmployeeDataGenerator.Generate(1000);
+        _allData = EmployeeDataGenerator.Generate(count);
         _engine = new ExcelFilterEngine<Employee>();
+    }
+
+    public void Regenerate(int count)
+    {
+        _allData = EmployeeDataGenerator.Generate(count);
     }
 
     public async Task<PagedResult<Employee>> FetchDataAsync(IFilterContext context, CancellationToken cancellationToken = default)

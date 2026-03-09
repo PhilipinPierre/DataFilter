@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using DataFilter.Wpf.Demo.Models;
 using DataFilter.Wpf.Demo.Services;
 using DataFilter.Wpf.ViewModels;
@@ -7,7 +7,8 @@ namespace DataFilter.Wpf.Demo.ViewModels;
 
 public sealed partial class AsyncFilterScenarioViewModel : ObservableObject
 {
-    public IFilterableDataGridViewModel<Employee> GridViewModel { get; }
+    [ObservableProperty]
+    private IFilterableDataGridViewModel<Employee> _gridViewModel;
 
     public AsyncFilterScenarioViewModel()
     {
@@ -17,5 +18,14 @@ public sealed partial class AsyncFilterScenarioViewModel : ObservableObject
         };
         // Initial load
         GridViewModel.RefreshData();
+    }
+
+    public void Regenerate(int count)
+    {
+        if (GridViewModel.AsyncDataProvider is MockEmployeeApiService mockService)
+        {
+            mockService.Regenerate(count);
+            GridViewModel.RefreshData();
+        }
     }
 }

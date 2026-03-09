@@ -22,6 +22,7 @@ public static class EmployeeDataGenerator
                 Country = countries[random.Next(countries.Length)],
                 Salary = random.Next(40000, 150000),
                 HireDate = DateTime.Today.AddDays(-random.Next(1, 3650)),
+                Time = new TimeSpan(random.Next(0, 24), random.Next(0, 60), random.Next(0, 60)),
                 IsActive = random.NextDouble() > 0.2
             });
         }
