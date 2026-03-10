@@ -1,4 +1,4 @@
-name: .NET Build, Test and Publish
+﻿name: .NET Build, Test and Publish
 
 on:
   push:
@@ -56,4 +56,4 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/v')
       shell: pwsh
       run: |
-        dotnet nuget push artifacts\*.nupkg --source https://api.nuget.org/v3/index.json --skip-duplicate --api-key az
+        dotnet nuget push artifacts\*.nupkg --source https://api.nuget.org/v3/index.json --skip-duplicate
