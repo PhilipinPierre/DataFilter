@@ -36,9 +36,10 @@ jobs:
         $tag = "${{ github.ref_name }}"
         if ("${{ github.ref_type }}" -eq "tag" -and $tag -match "^v") {
           $version = $tag.TrimStart('v')
-          echo "VERSION=$version" >> $env:GITHUB_ENV
+          "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
         } else {
-          echo "VERSION=1.0.0-build.$($env:GITHUB_RUN_NUMBER)" >> $env:GITHUB_ENV
+          $version = "1.0.0-build.$($env:GITHUB_RUN_NUMBER)"
+          "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
         }
 
     - name: Build
@@ -49,7 +50,7 @@ jobs:
 
     - name: Pack
       if: startsWith(github.ref, 'refs/tags/v')
-      run: dotnet pack DataFilter.slnx --configuration Release --no-build --output ./artifacts -p:PackageVersion=${{ env.VERSION }}
+      run: dotnet pack DataFilter.slnx --configuration Release --no-build --output ./artifacts -p:Version=${{ env.VERSION }} -p:PackageVersion=${{ env.VERSION }}
 
     - name: Publish to NuGet.org
       if: startsWith(github.ref, 'refs/tags/v')

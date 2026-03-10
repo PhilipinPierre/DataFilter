@@ -13,6 +13,7 @@
     <Project Path="tests/DataFilter.Wpf.Tests/DataFilter.Wpf.Tests.csproj" />
   </Folder>
   <Folder Name="/Éléments de solution/">
+    <File Path=".github/workflows/dotnet.yml" />
     <File Path="CUSTOMIZATION.md" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />
