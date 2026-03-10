@@ -56,4 +56,4 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/v')
       shell: pwsh
       run: |
-        dotnet nuget push artifacts\*.nupkg --source https://api.nuget.org/v3/index.json --skip-duplicate
+        dotnet nuget push artifacts\*.nupkg --source https://api.nuget.org/v3/index.json --skip-duplicate --api-key ${{ secrets.DataFilter_NuGet_API_Key }}
