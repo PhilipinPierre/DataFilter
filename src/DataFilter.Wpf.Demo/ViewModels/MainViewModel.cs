@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DataFilter.Wpf.Demo.Services;
 using System.Windows;
@@ -18,6 +18,7 @@ public sealed partial class MainViewModel : ObservableObject
     public HybridFilterScenarioViewModel HybridFilterScenario { get; } = new();
     public CustomizationScenarioViewModel CustomizationScenario { get; } = new();
     public ListViewScenarioViewModel ListViewScenario { get; } = new();
+    public CollectionViewScenarioViewModel CollectionViewScenario { get; } = new();
 
     public MainViewModel()
     {
@@ -33,6 +34,7 @@ public sealed partial class MainViewModel : ObservableObject
         HybridFilterScenario.Regenerate(RowCount);
         CustomizationScenario.Regenerate(RowCount);
         ListViewScenario.Regenerate(RowCount);
+        CollectionViewScenario.Regenerate(RowCount);
 
         //SelectedTabControl = LocalFilterScenario;
     }
@@ -53,12 +55,14 @@ public sealed partial class MainViewModel : ObservableObject
             this.HybridFilterScenario.GridViewModel.Context.ClearDescriptors();
             this.CustomizationScenario.GridViewModel.Context.ClearDescriptors();
             this.ListViewScenario.GridViewModel.Context.ClearDescriptors();
+            this.CollectionViewScenario.GridViewModel.Context.ClearDescriptors();
 
             await this.LocalFilterScenario.GridViewModel.RefreshDataAsync();
             await this.AsyncFilterScenario.GridViewModel.RefreshDataAsync();
             await this.HybridFilterScenario.GridViewModel.RefreshDataAsync();
             await this.CustomizationScenario.GridViewModel.RefreshDataAsync();
             await this.ListViewScenario.GridViewModel.RefreshDataAsync();
+            await this.CollectionViewScenario.GridViewModel.RefreshDataAsync();
         }
     }
 }

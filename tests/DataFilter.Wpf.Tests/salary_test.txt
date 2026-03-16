@@ -1,0 +1,42 @@
+  Identification des projets à restaurer...
+  Tous les projets sont à jour pour la restauration.
+  DataFilter.Core -> d:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Core\bin\Debug\net8.0\DataFilter.Core.dll
+  DataFilter.Filtering.ExcelLike -> d:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Filtering.ExcelLike\bin\Debug\net8.0\DataFilter.Filtering.ExcelLike.dll
+  DataFilter.Core -> d:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Core\bin\Debug\net9.0\DataFilter.Core.dll
+  DataFilter.Filtering.ExcelLike -> d:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Filtering.ExcelLike\bin\Debug\net9.0\DataFilter.Filtering.ExcelLike.dll
+d:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Wpf\ViewModels\ColumnFilterViewModel.cs(542,34): warning CS8602: Déréférencement d'une éventuelle référence null. [d:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Wpf\DataFilter.Wpf_5s5s4uzi_wpftmp.csproj::TargetFramework=net8.0-windows]
+d:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Wpf\ViewModels\ColumnFilterViewModel.cs(542,34): warning CS8602: Déréférencement d'une éventuelle référence null. [d:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Wpf\DataFilter.Wpf_thgz5qh3_wpftmp.csproj::TargetFramework=net9.0-windows]
+d:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Wpf\ViewModels\ColumnFilterViewModel.cs(542,34): warning CS8602: Déréférencement d'une éventuelle référence null. [d:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Wpf\DataFilter.Wpf.csproj::TargetFramework=net8.0-windows]
+d:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Wpf\ViewModels\ColumnFilterViewModel.cs(542,34): warning CS8602: Déréférencement d'une éventuelle référence null. [d:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Wpf\DataFilter.Wpf.csproj::TargetFramework=net9.0-windows]
+  DataFilter.Wpf -> d:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Wpf\bin\Debug\net8.0-windows\DataFilter.Wpf.dll
+  DataFilter.Wpf -> d:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Wpf\bin\Debug\net9.0-windows\DataFilter.Wpf.dll
+  DataFilter.Wpf.Tests -> d:\Workspaces_Personal\Dev\DataFilter\tests\DataFilter.Wpf.Tests\bin\Debug\net8.0-windows\DataFilter.Wpf.Tests.dll
+  DataFilter.Wpf.Tests -> d:\Workspaces_Personal\Dev\DataFilter\tests\DataFilter.Wpf.Tests\bin\Debug\net9.0-windows\DataFilter.Wpf.Tests.dll
+Série de tests pour d:\Workspaces_Personal\Dev\DataFilter\tests\DataFilter.Wpf.Tests\bin\Debug\net9.0-windows\DataFilter.Wpf.Tests.dll (.NETCoreApp,Version=v9.0)
+Série de tests pour d:\Workspaces_Personal\Dev\DataFilter\tests\DataFilter.Wpf.Tests\bin\Debug\net8.0-windows\DataFilter.Wpf.Tests.dll (.NETCoreApp,Version=v8.0)
+Version de VSTest 18.0.1 (x64)
+
+Version de VSTest 18.0.1 (x64)
+
+Démarrage de l'exécution de tests, patientez...
+Au total, 1 fichiers de test ont correspondu au modèle spécifié.
+Démarrage de l'exécution de tests, patientez...
+Au total, 1 fichiers de test ont correspondu au modèle spécifié.
+[xUnit.net 00:00:00.33]     DataFilter.Wpf.Tests.ColumnFilterViewModelTests.ApplyCommand_SalaryRange_SuccessiveFilters [FAIL]
+[xUnit.net 00:00:00.31]     DataFilter.Wpf.Tests.ColumnFilterViewModelTests.ApplyCommand_SalaryRange_SuccessiveFilters [FAIL]
+  Échoué DataFilter.Wpf.Tests.ColumnFilterViewModelTests.ApplyCommand_SalaryRange_SuccessiveFilters [66 ms]
+  Message d'erreur :
+   Got 0 items. All: 50000:False, 60000:False, 70000:False, 80000:False, 90000:False, 100000:False. Snapshot for <95000: . Previous Selected: 
+  Arborescence des appels de procédure :
+     at DataFilter.Wpf.Tests.ColumnFilterViewModelTests.ApplyCommand_SalaryRange_SuccessiveFilters() in d:\Workspaces_Personal\Dev\DataFilter\tests\DataFilter.Wpf.Tests\ColumnFilterViewModelTests.cs:line 413
+--- End of stack trace from previous location ---
+
+Échoué!  - échec :     1, réussite :     0, ignorée(s) :     0, total :     1, durée : 66 ms - DataFilter.Wpf.Tests.dll (net9.0)
+  Échoué DataFilter.Wpf.Tests.ColumnFilterViewModelTests.ApplyCommand_SalaryRange_SuccessiveFilters [60 ms]
+  Message d'erreur :
+   Got 0 items. All: 50000:False, 60000:False, 70000:False, 80000:False, 90000:False, 100000:False. Snapshot for <95000: . Previous Selected: 
+  Arborescence des appels de procédure :
+     at DataFilter.Wpf.Tests.ColumnFilterViewModelTests.ApplyCommand_SalaryRange_SuccessiveFilters() in d:\Workspaces_Personal\Dev\DataFilter\tests\DataFilter.Wpf.Tests\ColumnFilterViewModelTests.cs:line 413
+--- End of stack trace from previous location ---
+
+Échoué!  - échec :     1, réussite :     0, ignorée(s) :     0, total :     1, durée : 60 ms - DataFilter.Wpf.Tests.dll (net8.0)

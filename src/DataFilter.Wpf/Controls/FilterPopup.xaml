@@ -9,6 +9,7 @@
              xmlns:viewmodels="clr-namespace:DataFilter.Wpf.ViewModels"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              xmlns:res="clr-namespace:DataFilter.Wpf.Resources"
+             xmlns:core="clr-namespace:DataFilter.Core.Enums;assembly=DataFilter.Core"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=viewmodels:ColumnFilterViewModel}"
              Background="{DynamicResource FilterPopupBackground}"
@@ -25,6 +26,14 @@
                                               Invert="True" />
         <BooleanToVisibilityConverter x:Key="SystemBoolToVis" />
         <converters:OperatorToLocalizedDescriptionConverter x:Key="OperatorConverter" />
+        <converters:AccumulationModeToLocalizedDescriptionConverter x:Key="ModeConverter" />
+        <ObjectDataProvider x:Key="AccumulationModeValues"
+                            MethodName="GetValues"
+                            ObjectType="{x:Type core:AccumulationMode}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="core:AccumulationMode" />
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
     </UserControl.Resources>
 
     <Grid>
@@ -63,10 +72,25 @@
                     <!-- <behaviors:AsyncFilterBehavior Delay="0:0:0.3"/> -->
                 </i:Interaction.Behaviors>
             </TextBox>
-            <CheckBox Content="{x:Static res:FilterResources.AddToFilter}"
-                      IsChecked="{Binding AddToExistingFilter}"
-                      Margin="0,5,0,0"
-                      FontSize="11" />
+            <StackPanel Margin="0,5,0,0">
+                <CheckBox Content="{x:Static res:FilterResources.AddToFilter}"
+                          IsChecked="{Binding AddToExistingFilter}"
+                          VerticalAlignment="Center"
+                          FontSize="11" />
+                <ComboBox ItemsSource="{Binding Source={StaticResource AccumulationModeValues}}"
+                          SelectedItem="{Binding AccumulationMode}"
+                          Visibility="{Binding AddToExistingFilter, Converter={StaticResource BoolToVis}}"
+                          Margin="10,0,0,0"
+                          VerticalAlignment="Center"
+                          FontSize="10"
+                          Height="20">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Converter={StaticResource ModeConverter}}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
         </StackPanel>
 
         <!-- Custom Filter -->

@@ -1,0 +1,121 @@
+  Identification des projets à restaurer...
+D:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Wpf\DataFilter.Wpf.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [D:\Workspaces_Personal\Dev\DataFilter\tests\DataFilter.Wpf.Tests\DataFilter.Wpf.Tests.csproj]
+D:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Core\DataFilter.Core.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [D:\Workspaces_Personal\Dev\DataFilter\tests\DataFilter.Wpf.Tests\DataFilter.Wpf.Tests.csproj]
+D:\Workspaces_Personal\Dev\DataFilter\tests\DataFilter.Wpf.Tests\DataFilter.Wpf.Tests.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json.
+  Tous les projets sont à jour pour la restauration.
+D:\Workspaces_Personal\Dev\DataFilter\tests\DataFilter.Wpf.Tests\DataFilter.Wpf.Tests.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [TargetFramework=net8.0-windows]
+D:\Workspaces_Personal\Dev\DataFilter\tests\DataFilter.Wpf.Tests\DataFilter.Wpf.Tests.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [TargetFramework=net9.0-windows]
+D:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Wpf\DataFilter.Wpf.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [TargetFramework=net9.0-windows]
+D:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Wpf\DataFilter.Wpf.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [TargetFramework=net8.0-windows]
+D:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Core\DataFilter.Core.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [TargetFramework=net8.0]
+D:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Core\DataFilter.Core.csproj : warning NU1900: Une erreur s’est produite lors de l’obtention des données de vulnérabilité du package : Impossible de charger l'index de service pour la source https://pkgs.dev.azure.com/FaymonvilleSoftware/_packaging/FaymonvilleSoftware/nuget/v3/index.json. [TargetFramework=net9.0]
+  DataFilter.Core -> D:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Core\bin\Debug\net8.0\DataFilter.Core.dll
+  DataFilter.Core -> D:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Core\bin\Debug\net9.0\DataFilter.Core.dll
+  DataFilter.Filtering.ExcelLike -> D:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Filtering.ExcelLike\bin\Debug\net9.0\DataFilter.Filtering.ExcelLike.dll
+  DataFilter.Filtering.ExcelLike -> D:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Filtering.ExcelLike\bin\Debug\net8.0\DataFilter.Filtering.ExcelLike.dll
+  DataFilter.Wpf -> D:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Wpf\bin\Debug\net9.0-windows\DataFilter.Wpf.dll
+  DataFilter.Wpf -> D:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Wpf\bin\Debug\net8.0-windows\DataFilter.Wpf.dll
+  DataFilter.Wpf.Tests -> D:\Workspaces_Personal\Dev\DataFilter\tests\DataFilter.Wpf.Tests\bin\Debug\net9.0-windows\DataFilter.Wpf.Tests.dll
+  DataFilter.Wpf.Tests -> D:\Workspaces_Personal\Dev\DataFilter\tests\DataFilter.Wpf.Tests\bin\Debug\net8.0-windows\DataFilter.Wpf.Tests.dll
+Série de tests pour D:\Workspaces_Personal\Dev\DataFilter\tests\DataFilter.Wpf.Tests\bin\Debug\net8.0-windows\DataFilter.Wpf.Tests.dll (.NETCoreApp,Version=v8.0)
+Série de tests pour D:\Workspaces_Personal\Dev\DataFilter\tests\DataFilter.Wpf.Tests\bin\Debug\net9.0-windows\DataFilter.Wpf.Tests.dll (.NETCoreApp,Version=v9.0)
+Version de VSTest 18.0.1 (x64)
+Version de VSTest 18.0.1 (x64)
+
+
+Démarrage de l'exécution de tests, patientez...
+Démarrage de l'exécution de tests, patientez...
+Au total, 1 fichiers de test ont correspondu au modèle spécifié.
+D:\Workspaces_Personal\Dev\DataFilter\tests\DataFilter.Wpf.Tests\bin\Debug\net8.0-windows\DataFilter.Wpf.Tests.dll
+Au total, 1 fichiers de test ont correspondu au modèle spécifié.
+D:\Workspaces_Personal\Dev\DataFilter\tests\DataFilter.Wpf.Tests\bin\Debug\net9.0-windows\DataFilter.Wpf.Tests.dll
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 8.0.25)
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.14)
+[xUnit.net 00:00:00.15]   Discovering: DataFilter.Wpf.Tests
+[xUnit.net 00:00:00.11]   Discovering: DataFilter.Wpf.Tests
+[xUnit.net 00:00:00.25]   Discovered:  DataFilter.Wpf.Tests
+[xUnit.net 00:00:00.22]   Discovered:  DataFilter.Wpf.Tests
+[xUnit.net 00:00:00.22]   Starting:    DataFilter.Wpf.Tests
+[xUnit.net 00:00:00.26]   Starting:    DataFilter.Wpf.Tests
+[FilterEvaluator] Item: 50000 (System.Decimal), Op: GreaterThan, V1:  ->  ()
+[FilterEvaluator] Item: 60000 (System.Decimal), Op: GreaterThan, V1:  ->  ()
+[FilterEvaluator] Item: 70000 (System.Decimal), Op: GreaterThan, V1:  ->  ()
+[FilterEvaluator] Item: 80000 (System.Decimal), Op: GreaterThan, V1:  ->  ()
+[FilterEvaluator] Item: 90000 (System.Decimal), Op: GreaterThan, V1:  ->  ()
+[FilterEvaluator] Item: 100000 (System.Decimal), Op: GreaterThan, V1:  ->  ()
+[FilterEvaluator] Item: 50000 (System.Decimal), Op: GreaterThan, V1: 65000 -> 65000 (System.Decimal)
+[FilterEvaluator] Item: 60000 (System.Decimal), Op: GreaterThan, V1: 65000 -> 65000 (System.Decimal)
+[FilterEvaluator] Item: 70000 (System.Decimal), Op: GreaterThan, V1: 65000 -> 65000 (System.Decimal)
+[FilterEvaluator] Item: 80000 (System.Decimal), Op: GreaterThan, V1: 65000 -> 65000 (System.Decimal)
+[FilterEvaluator] Item: 90000 (System.Decimal), Op: GreaterThan, V1: 65000 -> 65000 (System.Decimal)
+[FilterEvaluator] Item: 100000 (System.Decimal), Op: GreaterThan, V1: 65000 -> 65000 (System.Decimal)
+[FilterEvaluator] Item: 50000 (System.Decimal), Op: LessThan, V1: 65000 -> 65000 (System.Decimal)
+[FilterEvaluator] Item: 60000 (System.Decimal), Op: LessThan, V1: 65000 -> 65000 (System.Decimal)
+[FilterEvaluator] Item: 70000 (System.Decimal), Op: LessThan, V1: 65000 -> 65000 (System.Decimal)
+[FilterEvaluator] Item: 50000 (System.Decimal), Op: GreaterThan, V1:  ->  ()
+[FilterEvaluator] Item: 80000 (System.Decimal), Op: LessThan, V1: 65000 -> 65000 (System.Decimal)
+[FilterEvaluator] Item: 60000 (System.Decimal), Op: GreaterThan, V1:  ->  ()
+[FilterEvaluator] Item: 90000 (System.Decimal), Op: LessThan, V1: 65000 -> 65000 (System.Decimal)
+[FilterEvaluator] Item: 70000 (System.Decimal), Op: GreaterThan, V1:  ->  ()
+[FilterEvaluator] Item: 100000 (System.Decimal), Op: LessThan, V1: 65000 -> 65000 (System.Decimal)
+[FilterEvaluator] Item: 80000 (System.Decimal), Op: GreaterThan, V1:  ->  ()
+[FilterEvaluator] Item: 50000 (System.Decimal), Op: LessThan, V1: 95000 -> 95000 (System.Decimal)
+[FilterEvaluator] Item: 90000 (System.Decimal), Op: GreaterThan, V1:  ->  ()
+[FilterEvaluator] Item: 60000 (System.Decimal), Op: LessThan, V1: 95000 -> 95000 (System.Decimal)
+[FilterEvaluator] Item: 100000 (System.Decimal), Op: GreaterThan, V1:  ->  ()
+[FilterEvaluator] Item: 50000 (System.Decimal), Op: GreaterThan, V1: 65000 -> 65000 (System.Decimal)
+[FilterEvaluator] Item: 70000 (System.Decimal), Op: LessThan, V1: 95000 -> 95000 (System.Decimal)
+[FilterEvaluator] Item: 60000 (System.Decimal), Op: GreaterThan, V1: 65000 -> 65000 (System.Decimal)
+[FilterEvaluator] Item: 80000 (System.Decimal), Op: LessThan, V1: 95000 -> 95000 (System.Decimal)
+[FilterEvaluator] Item: 70000 (System.Decimal), Op: GreaterThan, V1: 65000 -> 65000 (System.Decimal)
+[FilterEvaluator] Item: 90000 (System.Decimal), Op: LessThan, V1: 95000 -> 95000 (System.Decimal)
+[FilterEvaluator] Item: 80000 (System.Decimal), Op: GreaterThan, V1: 65000 -> 65000 (System.Decimal)
+[FilterEvaluator] Item: 100000 (System.Decimal), Op: LessThan, V1: 95000 -> 95000 (System.Decimal)
+[FilterEvaluator] Item: 90000 (System.Decimal), Op: GreaterThan, V1: 65000 -> 65000 (System.Decimal)
+[FilterEvaluator] Item: 100000 (System.Decimal), Op: GreaterThan, V1: 65000 -> 65000 (System.Decimal)
+[FilterEvaluator] Item: 50000 (System.Decimal), Op: LessThan, V1: 65000 -> 65000 (System.Decimal)
+[FilterEvaluator] Item: 60000 (System.Decimal), Op: LessThan, V1: 65000 -> 65000 (System.Decimal)
+[FilterEvaluator] Item: 70000 (System.Decimal), Op: LessThan, V1: 65000 -> 65000 (System.Decimal)
+[FilterEvaluator] Item: 80000 (System.Decimal), Op: LessThan, V1: 65000 -> 65000 (System.Decimal)
+[FilterEvaluator] Item: 90000 (System.Decimal), Op: LessThan, V1: 65000 -> 65000 (System.Decimal)
+[FilterEvaluator] Item: 100000 (System.Decimal), Op: LessThan, V1: 65000 -> 65000 (System.Decimal)
+[FilterEvaluator] Item: 50000 (System.Decimal), Op: LessThan, V1: 95000 -> 95000 (System.Decimal)
+[FilterEvaluator] Item: 60000 (System.Decimal), Op: LessThan, V1: 95000 -> 95000 (System.Decimal)
+[FilterEvaluator] Item: 70000 (System.Decimal), Op: LessThan, V1: 95000 -> 95000 (System.Decimal)
+[FilterEvaluator] Item: 80000 (System.Decimal), Op: LessThan, V1: 95000 -> 95000 (System.Decimal)
+[FilterEvaluator] Item: 90000 (System.Decimal), Op: LessThan, V1: 95000 -> 95000 (System.Decimal)
+[FilterEvaluator] Item: 100000 (System.Decimal), Op: LessThan, V1: 95000 -> 95000 (System.Decimal)
+[xUnit.net 00:00:00.63]     DataFilter.Wpf.Tests.ColumnFilterViewModelTests.ApplyCommand_SalaryRange_SuccessiveFilters [FAIL]
+[xUnit.net 00:00:00.63]       Got 0 items. All: 50000:False, 60000:False, 70000:False, 80000:False, 90000:False, 100000:False. Snapshot for <95000: . Previous Selected: 
+[xUnit.net 00:00:00.63]       Stack Trace:
+[xUnit.net 00:00:00.68]     DataFilter.Wpf.Tests.ColumnFilterViewModelTests.ApplyCommand_SalaryRange_SuccessiveFilters [FAIL]
+[xUnit.net 00:00:00.63]         D:\Workspaces_Personal\Dev\DataFilter\tests\DataFilter.Wpf.Tests\ColumnFilterViewModelTests.cs(413,0): at DataFilter.Wpf.Tests.ColumnFilterViewModelTests.ApplyCommand_SalaryRange_SuccessiveFilters()
+[xUnit.net 00:00:00.68]       Got 0 items. All: 50000:False, 60000:False, 70000:False, 80000:False, 90000:False, 100000:False. Snapshot for <95000: . Previous Selected: 
+[xUnit.net 00:00:00.63]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:00.68]       Stack Trace:
+[xUnit.net 00:00:00.65]   Finished:    DataFilter.Wpf.Tests
+[xUnit.net 00:00:00.68]         D:\Workspaces_Personal\Dev\DataFilter\tests\DataFilter.Wpf.Tests\ColumnFilterViewModelTests.cs(413,0): at DataFilter.Wpf.Tests.ColumnFilterViewModelTests.ApplyCommand_SalaryRange_SuccessiveFilters()
+[xUnit.net 00:00:00.68]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:00.70]   Finished:    DataFilter.Wpf.Tests
+  Échoué DataFilter.Wpf.Tests.ColumnFilterViewModelTests.ApplyCommand_SalaryRange_SuccessiveFilters [217 ms]
+  Message d'erreur :
+   Got 0 items. All: 50000:False, 60000:False, 70000:False, 80000:False, 90000:False, 100000:False. Snapshot for <95000: . Previous Selected: 
+  Arborescence des appels de procédure :
+     at DataFilter.Wpf.Tests.ColumnFilterViewModelTests.ApplyCommand_SalaryRange_SuccessiveFilters() in D:\Workspaces_Personal\Dev\DataFilter\tests\DataFilter.Wpf.Tests\ColumnFilterViewModelTests.cs:line 413
+--- End of stack trace from previous location ---
+
+Échec de la série de tests.
+Nombre total de tests : 1
+     Non réussi(s) : 1
+ Durée totale : 1.7330 Secondes
+  Échoué DataFilter.Wpf.Tests.ColumnFilterViewModelTests.ApplyCommand_SalaryRange_SuccessiveFilters [285 ms]
+  Message d'erreur :
+   Got 0 items. All: 50000:False, 60000:False, 70000:False, 80000:False, 90000:False, 100000:False. Snapshot for <95000: . Previous Selected: 
+  Arborescence des appels de procédure :
+     at DataFilter.Wpf.Tests.ColumnFilterViewModelTests.ApplyCommand_SalaryRange_SuccessiveFilters() in D:\Workspaces_Personal\Dev\DataFilter\tests\DataFilter.Wpf.Tests\ColumnFilterViewModelTests.cs:line 413
+--- End of stack trace from previous location ---
+
+Échec de la série de tests.
+Nombre total de tests : 1
+     Non réussi(s) : 1
+ Durée totale : 1.7614 Secondes

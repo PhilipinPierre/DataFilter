@@ -1,4 +1,4 @@
-﻿using DataFilter.Wpf.Controls;
+using DataFilter.Wpf.Controls;
 using DataFilter.Wpf.ViewModels;
 using Microsoft.Xaml.Behaviors;
 using System.Windows;
@@ -284,7 +284,7 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         header.Content = dockPanel;
     }
 
-    private void OnFilterButtonClick(object sender, RoutedEventArgs e)
+    private async void OnFilterButtonClick(object sender, RoutedEventArgs e)
     {
         e.Handled = true;
         if (_viewModel == null) return;
@@ -300,6 +300,20 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         }
         else
         {
+            if (ParentViewModel is IFilterableDataGridViewModel parentVm)
+            {
+                var existingState = parentVm.GetColumnFilterState(PropertyName!);
+                if (existingState != null)
+                {
+                    await _viewModel.LoadStateAsync(existingState);
+                }
+                else
+                {
+                    // If no state exists in context (e.g. after global Clear All), reset the UI
+                    _viewModel.ClearCommand.Execute(null);
+                }
+            }
+
             _ = _viewModel.SearchCommand.ExecuteAsync(string.Empty);
             _filterPopup.IsOpen = true;
         }

@@ -68,4 +68,6 @@
   <data name="FilterOperator_NotIn" xml:space="preserve"><value>Not In</value></data>
   <data name="FilterOperator_IsNull" xml:space="preserve"><value>Is Null</value></data>
   <data name="FilterOperator_IsNotNull" xml:space="preserve"><value>Is Not Null</value></data>
+  <data name="ModeUnion" xml:space="preserve"><value>Add (OR)</value></data>
+  <data name="ModeIntersection" xml:space="preserve"><value>Refine (AND)</value></data>
 </root>

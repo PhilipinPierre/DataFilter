@@ -14,11 +14,31 @@ This project serves as both a showcase and a reference implementation for develo
 - **UI Customization**: Examples of how to style and customize the filter popups and data grid headers.
 - **Control Integration**: Shows filtering integrated with `DataGrid`, `ListView`, and other WPF collection controls.
 
+## How to Run
+
+1. Open the solution in **Visual Studio 2022**.
+2. Set `DataFilter.Wpf.Demo` as the **Startup Project**.
+3. Press **F5** or click **Start**.
+
+## Demonstration Scenarios
+
+### 1. Local Filtering
+Standard in-memory filtering of a collection of `Employee` objects. Showcase how to use `FilterableDataGrid` with simple property binding.
+
+### 2. Async Filtering (Remote API Simulation)
+Simulates a long-running data fetch from a server. Demonstrates the use of `IAsyncDataProvider` to handle filtering and sorting on the "server side".
+
+### 3. GridView / ListView
+Shows how to add filtering capabilities to a standard `ListView` using the `FilterableColumnHeaderBehavior`.
+
+### 4. Custom Styling
+Shows how to apply the provided Light and Dark themes to the filter controls.
+
 ## Project Structure
 
 - **Views**: Different pages for each demonstration scenario.
 - **ViewModels**: Examples of how to structure your ViewModels to handle filtering logic.
-- **Services**: Mock services that simulate data providers.
+- **Services**: Mock services that simulate data providers (`EmployeeDataGenerator`).
 
 ## Target Frameworks
 - .NET 8.0-windows

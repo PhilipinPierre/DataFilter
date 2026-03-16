@@ -1,4 +1,4 @@
-﻿<Window x:Class="DataFilter.Wpf.Demo.Views.MainWindow"
+<Window x:Class="DataFilter.Wpf.Demo.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -40,6 +40,9 @@
             </TabItem>
             <TabItem Header="ListView Example">
                 <views:ListViewFilterView DataContext="{Binding ListViewScenario}" />
+            </TabItem>
+            <TabItem Header="CollectionView Example">
+                <views:CollectionViewFilterView DataContext="{Binding CollectionViewScenario}" />
             </TabItem>
         </TabControl>
     </Grid>

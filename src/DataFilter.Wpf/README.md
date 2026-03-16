@@ -15,6 +15,41 @@ A comprehensive set of WPF controls, ViewModels, and behaviors to integrate the 
 - **Behaviors**: Attachable behaviors to add filtering capabilities to existing controls like `ListView` or `GridView`.
 - **Theming**: Fully themeable using XAML resources. Supports Light and Dark modes out of the box.
 
+## Usage Examples
+
+### 1. Simple DataGrid Integration
+
+```xml
+<controls:FilterableDataGrid ItemsSource="{Binding FilteredItems}" 
+                             FilterContext="{Binding GridViewModel.Context}" />
+```
+
+### 2. ListView/GridView Integration
+
+Use the `FilterableColumnHeaderBehavior` to add Excel-like filtering to any `GridViewColumn`.
+
+```xml
+<ListView ItemsSource="{Binding FilteredItems}">
+    <ListView.View>
+        <GridView>
+            <GridViewColumn Header="Name" 
+                            DisplayMemberBinding="{Binding Name}"
+                            behaviors:FilterableColumnHeaderBehavior.IsFilterable="True" />
+        </GridView>
+    </ListView.View>
+</ListView>
+```
+
+## Advanced Features
+
+### Real-time Selection Synchronization
+
+Changing a custom operator (like **"Contains"**) automatically updates the selection list in real-time. This synchronization works recursively for tree-based filters (like Dates).
+
+### Accumulation (Add to Current Selection)
+
+Users can build complex filters by checking "Add current selection to filter". This merges successive filter results into a static selection list.
+
 ## Components
 
 ### Controls & Themes

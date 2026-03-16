@@ -1,6 +1,7 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DataFilter.Core.Enums;
+using DataFilter.Core.Engine;
 using DataFilter.Filtering.ExcelLike.Models;
 using DataFilter.Wpf.Enums;
 using System.Collections.Concurrent;
@@ -15,6 +16,8 @@ namespace DataFilter.Wpf.ViewModels;
 public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterViewModel
 {
     private bool _internalUpdate;
+    private bool _initialFilterActive;
+    private HashSet<object> _selectionSnapshot = new();
 
     /// <inheritdoc />
     public ExcelFilterState FilterState { get; } = new();
@@ -67,6 +70,21 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
     /// </summary>
     [ObservableProperty]
     private bool _addToExistingFilter;
+
+    partial void OnAddToExistingFilterChanged(bool value)
+    {
+        if (value)
+        {
+            UpdateSelectionSnapshot();
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the mode used to merge new criteria with the existing filter.
+    /// Default is Union (Logical OR).
+    /// </summary>
+    [ObservableProperty]
+    private AccumulationMode _accumulationMode = AccumulationMode.Union;
 
     /// <summary>
     /// Command to trigger a fast text search online update.
@@ -138,35 +156,74 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
     /// </summary>
     public event EventHandler<string>? OnSearchTextChangedEvent;
 
+    private readonly IFilterEvaluator _filterEvaluator;
+
     public ColumnFilterViewModel(
         Func<string, System.Threading.Tasks.Task<IEnumerable<object>>> distinctValuesProvider,
         Action<ExcelFilterState> onApply,
         Action onClear,
         Action<bool>? onSort = null,
         Action<bool>? onAddSubSort = null,
-        Type? propertyType = null)
+        Type? propertyType = null,
+        IFilterEvaluator? filterEvaluator = null)
     {
         _distinctValuesProvider = distinctValuesProvider;
         _onApplyAction = onApply;
         _onClearAction = onClear;
+        _filterEvaluator = filterEvaluator ?? new FilterEvaluator();
         DataType = DetermineDataType(propertyType);
 
         ApplyCommand = new RelayCommand(() =>
         {
             var selectedValuesSnapshot = new HashSet<object>();
-            foreach (var item in _filterValues)
+
+            if (FilterValues.Count < 1000)
             {
-                item.GetSelectedValues(selectedValuesSnapshot);
+                foreach (var item in FilterValues)
+                {
+                    item.GetSelectedValues(selectedValuesSnapshot);
+                }
+            }
+            else
+            {
+                var concurrentBag = new ConcurrentBag<object>();
+                var rangePartitioner = Partitioner.Create(0, FilterValues.Count, 1000);
+                Parallel.ForEach(rangePartitioner, range =>
+                {
+                    var localSet = new HashSet<object>();
+                    for (int i = range.Item1; i < range.Item2; i++)
+                    {
+                        FilterValues[i].GetSelectedValues(localSet);
+                    }
+                    foreach (var val in localSet) concurrentBag.Add(val);
+                });
+                selectedValuesSnapshot = concurrentBag.ToHashSet();
             }
 
-            if (AddToExistingFilter)
+
+            bool effectiveAddToExisting = AddToExistingFilter && (_initialFilterActive || IsFilterActive);
+
+            if (effectiveAddToExisting)
             {
-                // In accumulation mode, we merge current selection with previous one
-                //foreach (var val in selectedValuesSnapshot)
-                //{
-                //    FilterState.SelectedValues.Add(val);
-                //}
+                if (AccumulationMode == AccumulationMode.Intersection)
+                {
+                    // INTERSECTION (AND): Result = Current ∩ Snapshot
+                    FilterState.SelectedValues.IntersectWith(selectedValuesSnapshot);
+                }
+                else
+                {
+                    // UNION (OR): Result = Current ∪ Snapshot
+                    foreach (var val in selectedValuesSnapshot)
+                        FilterState.SelectedValues.Add(val);
+                }
+
                 FilterState.SelectAll = false; // Cannot be "Select All" if we are accumulating partial results
+
+                // Reset custom filter as it's now part of the selected values
+                SelectedCustomOperator = null;
+                CustomValue1 = string.Empty;
+                CustomValue2 = string.Empty;
+                IsCustomFilterExpanded = false;
             }
             else
             {
@@ -181,7 +238,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
 
             FilterState.SearchText = string.Empty; // Clear search text on apply as visible items were merged
 
-            // Apply Custom Filter
+            // Apply Custom Filter (will be null if effectiveAddToExisting was true)
             FilterState.CustomOperator = SelectedCustomOperator;
             FilterState.CustomValue1 = string.IsNullOrEmpty(CustomValue1) ? null : CustomValue1;
             FilterState.CustomValue2 = string.IsNullOrEmpty(CustomValue2) ? null : CustomValue2;
@@ -245,6 +302,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
         AddSubSortAscendingCommand = new RelayCommand(() => { });
         AddSubSortDescendingCommand = new RelayCommand(() => { });
         SearchCommand = new AsyncRelayCommand<string>(async (txt) => await System.Threading.Tasks.Task.CompletedTask);
+        _filterEvaluator = new FilterEvaluator();
         DataType = FilterDataType.Other;
     }
 
@@ -476,6 +534,8 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
 
         await System.Threading.Tasks.Task.Run(() =>
         {
+            if (ReferenceEquals(FilterState, state)) return;
+
             FilterState.SelectedValues.Clear();
             foreach (var val in state.SelectedValues)
                 FilterState.SelectedValues.Add(val);
@@ -485,13 +545,23 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
                 FilterState.DistinctValues.Add(val);
         });
 
+        _initialFilterActive = state != null &&
+            (!state.SelectAll || !string.IsNullOrEmpty(state.SearchText) || state.CustomOperator != null);
+
         SelectedCustomOperator = state.CustomOperator;
         CustomValue1 = state.CustomValue1?.ToString() ?? string.Empty;
         CustomValue2 = state.CustomValue2?.ToString() ?? string.Empty;
         IsCustomFilterExpanded = state.CustomOperator != null;
 
         SearchText = FilterState.SearchText;
-        SelectAll = FilterState.SelectAll;
+        
+        // Restore selection state to the items
+        foreach (var item in FilterValues)
+        {
+            ApplySelectionStateToItemsRecursive(item, state.SelectedValues);
+        }
+        UpdateSelectAllState();
+        UpdateSelectionSnapshot();
 
         _internalUpdate = false;
         OnPropertyChanged(nameof(IsFilterActive));
@@ -508,6 +578,98 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
             SearchCommand.Execute(value);
         }
     }
+
+    partial void OnSelectedCustomOperatorChanged(FilterOperator? value) => UpdateSelectionFromCustomFilter();
+    partial void OnCustomValue1Changed(string value) => UpdateSelectionFromCustomFilter();
+    partial void OnCustomValue2Changed(string value) => UpdateSelectionFromCustomFilter();
+
+    private void UpdateSelectionFromCustomFilter()
+    {
+        if (_internalUpdate || SelectedCustomOperator == null) return;
+
+        object? v1 = ConvertCustomValue(CustomValue1);
+        object? v2 = ConvertCustomValue(CustomValue2);
+
+        // Optimization/Guard: In Intersection mode, don't wipe everything if the user hasn't typed anything yet
+        if (AddToExistingFilter && AccumulationMode == AccumulationMode.Intersection && v1 == null && v2 == null)
+        {
+            // We skip the immediate UI update for intersection if no values are provided to avoid wiping the previous state
+            // as the user starts to interact with the custom filter.
+            return;
+        }
+
+        _internalUpdate = true;
+        try
+        {
+            FilterOperator op = SelectedCustomOperator.Value;
+            bool effectiveAddToExisting = AddToExistingFilter && (_initialFilterActive || IsFilterActive);
+
+            foreach (var item in FilterValues)
+            {
+                UpdateItemMatchRecursive(item, op, v1, v2, effectiveAddToExisting);
+            }
+
+            UpdateSelectAllState();
+            SyncFilterStateSelectedValues();
+        }
+        finally
+        {
+            _internalUpdate = false;
+        }
+    }
+
+    private object? ConvertCustomValue(string value)
+    {
+        if (string.IsNullOrEmpty(value)) return null;
+
+        // We return the raw string for now and let the FilterEvaluator 
+        // handle the culture-invariant conversion to the specific target type.
+        return value;
+    }
+
+    private void UpdateItemMatchRecursive(FilterValueItem item, FilterOperator op, object? v1, object? v2, bool effectiveAddToExisting)
+    {
+        if (item.Children.Count > 0)
+        {
+            foreach (var child in item.Children)
+            {
+                UpdateItemMatchRecursive(child, op, v1, v2, effectiveAddToExisting);
+            }
+            item.UpdateStateFromChildren();
+        }
+        else
+        {
+            bool matches = _filterEvaluator.EvaluateOperator(item.Value, op, v1, v2);
+
+            if (effectiveAddToExisting)
+            {
+                if (AccumulationMode == AccumulationMode.Intersection)
+                {
+                    bool wasSelected = item.Value != null && _selectionSnapshot.Contains(item.Value);
+                    item.IsSelected = wasSelected && matches;
+                }
+                else
+                {
+                    bool wasSelected = item.Value != null && _selectionSnapshot.Contains(item.Value);
+                    item.IsSelected = wasSelected || matches;
+                }
+            }
+            else
+            {
+                item.IsSelected = matches;
+            }
+        }
+    }
+
+    private void UpdateSelectionSnapshot()
+    {
+        _selectionSnapshot.Clear();
+        foreach (var item in FilterValues)
+        {
+            item.GetSelectedValues(_selectionSnapshot);
+        }
+    }
+
 
     partial void OnSelectAllChanged(bool? value)
     {
@@ -572,26 +734,44 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
 
     private void SyncFilterStateSelectedValues()
     {
-        //FilterState.SelectedValues.Clear();
-        if (FilterValues.Count > 1000)
+        // Always use sequential sync for SelectedValues to avoid thread-safety issues with HashSet.
+        // The overhead is minimal compared to the UI update frequency.
+        foreach (var item in FilterValues)
         {
+            SyncItemSelectionRecursive(item);
+        }
+    }
 
-            var rangePartitioner = Partitioner.Create(0L, FilterValues.Count, 1000);
-            var ConcurrentSelectedValues = new ConcurrentQueue<object>(FilterState.SelectedValues);
-            Parallel.ForEach(rangePartitioner, range =>
-            {
-                for (long i = range.Item1; i < range.Item2; i++)
-                    FilterValues[(int)i].GetSelectedValues(ConcurrentSelectedValues);
-            });
-            foreach (var item in ConcurrentSelectedValues.Except(FilterState.SelectedValues).ToList())
-                FilterState.SelectedValues.Add(item);
+    private void SyncItemSelectionRecursive(FilterValueItem item)
+    {
+        if (item.Children.Count > 0)
+        {
+            foreach (var child in item.Children)
+                SyncItemSelectionRecursive(child);
         }
         else
         {
-            foreach (var item in FilterValues)
-            {
-                item.GetSelectedValues(FilterState.SelectedValues);
-            }
+            if (item.Value == null) return;
+            if (item.IsSelected == true)
+                FilterState.SelectedValues.Add(item.Value);
+            else if (item.IsSelected == false)
+                FilterState.SelectedValues.Remove(item.Value);
+        }
+    }
+
+    private void ApplySelectionStateToItemsRecursive(FilterValueItem item, ICollection<object> selectedValues)
+    {
+        if (item.Children.Count > 0)
+        {
+            foreach (var child in item.Children)
+                ApplySelectionStateToItemsRecursive(child, selectedValues);
+            
+            item.UpdateStateFromChildren();
+        }
+        else
+        {
+            if (item.Value != null)
+                item.IsSelected = selectedValues.Contains(item.Value);
         }
     }
 
@@ -605,6 +785,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
             item.IsSelected = true;
         }
         SelectAll = true;
+        AddToExistingFilter = false;
         SelectedCustomOperator = null;
         CustomValue1 = string.Empty;
         CustomValue2 = string.Empty;

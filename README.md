@@ -21,16 +21,18 @@ The solution is divided into 4 main projects:
 ## Key Features
 
 ### 🚀 Advanced Filtering
-- **Excel-like Selection**: Checkboxes for selecting specific values from the dataset.
+- **Excel-like Selection**: Multi-select checkboxes with hierarchical support (e.g., Dates grouped by Year/Month/Day).
+- **Advanced Synchronization**: Changing a custom operator (like "Contains") automatically updates the selection list in real-time.
 - **Contextual Operators**: 
-  - **Text**: Contains, Starts with, Ends with, Equals, etc.
-  - **Numbers**: Greater than, Less than, Between, Equals.
-  - **Dates**: Before, After, Between, and dynamic periods (Today, This Week, Last Month, etc.).
-- **Cumulative Filtering**: Option to "Add to existing filter" to combine successive search results without resetting previous selections.
+  - **Text**: Contains, Not Contains, Starts with, Ends with, Equals, Not Equals.
+  - **Numbers/Dates/Time**: Greater than, Less than, Between, Equals, Not Equals.
+- **Additive & Refinement Modes**: 
+  - **Union (Additive)**: Merges new matches with the current selection (Logical OR).
+  - **Intersection (Refinement)**: Keeps only items that match BOTH the current selection and the new criteria (Logical AND).
+- **Cumulative Filtering**: "Add to current selection" mode allows merging successive search results.
 
 ### 📶 Multi-Column Sorting
-- Support for complex sorting scenarios.
-- **Sub-sorting**: Use the "Add Sub-Sort" commands to define a secondary order (e.g., Order by *Name*, then by *Date*).
+- **Sub-sorting**: Use the "Add Sub-Sort" commands to define a secondary order (e.g., Order by Name, then by Date).
 
 ### 🌐 Asynchronous Data Loading
 - **Server-side Filtering**: Implement `IAsyncDataProvider<T>` to offload filtering and sorting to an API or database.
@@ -38,32 +40,45 @@ The solution is divided into 4 main projects:
 
 ## Quick Start (WPF)
 
-### 1. Add `FilterableDataGrid` to your XAML
+### 1. Simple Local Filtering
 
 ```xml
-<Window xmlns:controls="clr-namespace:DataFilter.Wpf.Controls;assembly=DataFilter.Wpf">
-    <controls:FilterableDataGrid ItemsSource="{Binding FilteredItems}" 
-                                 FilterContext="{Binding FilterContext}" />
-</Window>
+<controls:FilterableDataGrid ItemsSource="{Binding FilteredItems}" 
+                             FilterContext="{Binding GridViewModel.Context}" />
 ```
 
-### 2. Connect your ViewModel
-
 ```csharp
-public class MyViewModel
+public class MyViewModel : ObservableObject
 {
-    public IFilterableDataGridViewModel<MyModel> GridViewModel { get; }
+    public FilterableDataGridViewModel<MyItem> GridViewModel { get; }
 
     public MyViewModel()
     {
-        GridViewModel = new FilterableDataGridViewModel<MyModel>
+        GridViewModel = new FilterableDataGridViewModel<MyItem>
         {
-            LocalDataSource = _myList // or assign an AsyncDataProvider
+            LocalDataSource = _myFullCollection
         };
-        GridViewModel.RefreshData();
+        // Initialization
+        _ = GridViewModel.RefreshDataAsync();
     }
 }
 ```
+
+### 2. Manual Integration (e.g. into GridView)
+
+```xml
+<GridViewColumn Header="Name" 
+                DisplayMemberBinding="{Binding Name}"
+                behaviors:FilterableColumnHeaderBehavior.IsFilterable="True" />
+```
+
+## Detailed Usage & Examples
+
+For more in-depth examples and configuration options, please refer to the project-specific documentation:
+
+- [**DataFilter.Wpf**](src/DataFilter.Wpf/README.md): Detailed UI setup, theming, and behaviors.
+- [**DataFilter.Core**](src/DataFilter.Core/README.md): Extending the filtering engine.
+- [**DataFilter.Wpf.Demo**](src/DataFilter.Wpf.Demo/README.md): Reference implementation.
 
 ## Visual Customization
 

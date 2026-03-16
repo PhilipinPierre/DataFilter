@@ -219,5 +219,15 @@ namespace DataFilter.Wpf.Resources
         public static string FilterOperator_NotIn => ResourceManager.GetString("FilterOperator_NotIn", resourceCulture);
         public static string FilterOperator_IsNull => ResourceManager.GetString("FilterOperator_IsNull", resourceCulture);
         public static string FilterOperator_IsNotNull => ResourceManager.GetString("FilterOperator_IsNotNull", resourceCulture);
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Add (OR).
+        /// </summary>
+        public static string ModeUnion => ResourceManager.GetString("ModeUnion", resourceCulture);
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Refine (AND).
+        /// </summary>
+        public static string ModeIntersection => ResourceManager.GetString("ModeIntersection", resourceCulture);
     }
 }
