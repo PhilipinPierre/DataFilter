@@ -26,6 +26,20 @@ window.DataFilterInterops = {
         const handle = document.getElementById(handleId);
         if (!element || !handle) return;
 
+        const margin = 8;
+
+        function clampToViewport() {
+            const rect = element.getBoundingClientRect();
+            const availableHeight = Math.max(0, window.innerHeight - rect.top - margin);
+            const availableWidth = Math.max(0, window.innerWidth - rect.left - margin);
+
+            // Keep popup within viewport so it isn't visually "cut off".
+            element.style.maxHeight = availableHeight + 'px';
+            element.style.maxWidth = availableWidth + 'px';
+        }
+
+        clampToViewport();
+
         handle.addEventListener('mousedown', function (e) {
             e.preventDefault();
             const startWidth = element.offsetWidth;
@@ -34,8 +48,16 @@ window.DataFilterInterops = {
             const startY = e.clientY;
 
             function doDrag(e) {
-                element.style.width = (startWidth + e.clientX - startX) + 'px';
-                element.style.height = (startHeight + e.clientY - startY) + 'px';
+                const nextWidth = (startWidth + e.clientX - startX);
+                const nextHeight = (startHeight + e.clientY - startY);
+
+                // Recompute viewport bounds so clamping stays correct while dragging.
+                const rect = element.getBoundingClientRect();
+                const availableHeight = Math.max(0, window.innerHeight - rect.top - margin);
+                const availableWidth = Math.max(0, window.innerWidth - rect.left - margin);
+
+                element.style.width = Math.min(nextWidth, availableWidth) + 'px';
+                element.style.height = Math.min(nextHeight, availableHeight) + 'px';
             }
 
             function stopDrag() {
