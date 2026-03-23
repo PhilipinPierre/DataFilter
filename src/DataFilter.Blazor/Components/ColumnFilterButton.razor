@@ -1,0 +1,84 @@
+@using DataFilter.Blazor.ViewModels
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+<div class="df-column-header-container" style="display: inline-block; position: relative;">
+    <button id="@ButtonId" 
+            class="df-column-header-button @(ViewModel.IsFilterActive ? "active" : "")" 
+            @onclick="TogglePopup">
+        <span class="df-icon">@((ViewModel.IsFilterActive ? "▼" : "▽"))</span>
+    </button>
+
+    @if (_showPopup)
+    {
+        <div id="@PopupId" style="position: fixed; z-index: 2000; top: @(_popupTop)px; left: @(_popupLeft)px;">
+            <FilterPopup ViewModel="ViewModel" 
+                         Visible="_showPopup" 
+                         VisibleChanged="OnVisibilityChanged" />
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public IBlazorColumnFilterViewModel ViewModel { get; set; } = default!;
+    
+    private string ButtonId = "df-btn-" + Guid.NewGuid().ToString("N");
+    private string PopupId = "df-pop-" + Guid.NewGuid().ToString("N");
+    private bool _showPopup;
+    private double _popupTop;
+    private double _popupLeft;
+    private DotNetObjectReference<ColumnFilterButton>? _objRef;
+
+    private async System.Threading.Tasks.Task TogglePopup()
+    {
+        if (!_showPopup)
+        {
+            // Set flag immediately to ensure the div is rendered
+            _showPopup = true;
+            StateHasChanged();
+
+            // Wait a tiny bit for the UI to be ready
+            await System.Threading.Tasks.Task.Delay(1);
+
+            var position = await JSRuntime.InvokeAsync<Position>("DataFilterInterops.getPosition", ButtonId);
+            if (position != null)
+            {
+                _popupTop = position.Top;
+                _popupLeft = position.Left;
+                StateHasChanged();
+            }
+            
+            _objRef = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("DataFilterInterops.addOutsideClickListener", _objRef, PopupId, ButtonId);
+        }
+        else
+        {
+            _showPopup = false;
+        }
+    }
+
+    private void OnVisibilityChanged(bool visible)
+    {
+        _showPopup = visible;
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public void ClosePopup()
+    {
+        _showPopup = false;
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        _objRef?.Dispose();
+    }
+
+    private class Position
+    {
+        public double Top { get; set; }
+        public double Left { get; set; }
+    }
+}

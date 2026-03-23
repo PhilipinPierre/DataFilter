@@ -1,0 +1,73 @@
+﻿@using DataFilter.Filtering.ExcelLike.Models
+@using System.ComponentModel
+
+<div class="df-value-item">
+    @for (int i = 0; i < Indent; i++)
+    {
+        <span class="df-tree-indent"></span>
+    }
+
+    @if (Item.Children.Any())
+    {
+        <button type="button"
+                class="df-expander"
+                aria-label="@(Item.IsExpanded ? "Collapse" : "Expand")"
+                @onclick="ToggleExpanded">
+            @(Item.IsExpanded ? "-" : "+")
+        </button>
+    }
+    else
+    {
+        <span class="df-tree-indent"></span>
+    }
+
+    <input type="checkbox"
+           checked="@Item.IsSelected"
+           indeterminate="@(Item.IsNull)"
+           @onchange="ToggleSelection"
+           class="df-checkbox" />
+
+    <span class="df-item-text">@Item.DisplayText</span>
+</div>
+
+@if (Item.Children.Any() && Item.IsExpanded)
+{
+    @foreach (var child in Item.Children)
+    {
+        <FilterValueItemView Item="child" Indent="Indent + 1" />
+    }
+}
+
+@code {
+    [Parameter] public FilterValueItem Item { get; set; } = default!;
+    [Parameter] public int Indent { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Item.PropertyChanged += OnItemPropertyChanged;
+    }
+
+    private void OnItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(FilterValueItem.IsSelected) ||
+            e.PropertyName == nameof(FilterValueItem.IsExpanded))
+        {
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void ToggleExpanded()
+    {
+        Item.ToggleExpanded();
+    }
+
+    private void ToggleSelection(ChangeEventArgs e)
+    {
+        Item.IsSelected = (bool?)e.Value;
+    }
+
+    public void Dispose()
+    {
+        Item.PropertyChanged -= OnItemPropertyChanged;
+    }
+}

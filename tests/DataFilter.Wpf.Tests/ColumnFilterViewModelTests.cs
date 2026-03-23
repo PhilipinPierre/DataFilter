@@ -3,7 +3,6 @@ using Moq;
 using DataFilter.Wpf.ViewModels;
 using DataFilter.Filtering.ExcelLike.Models;
 using DataFilter.Core.Enums;
-using DataFilter.Wpf.Enums;
 
 namespace DataFilter.Wpf.Tests;
 

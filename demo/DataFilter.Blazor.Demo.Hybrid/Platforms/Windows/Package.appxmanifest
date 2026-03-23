@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap rescap">
+
+  <Identity Name="maui-package-name-placeholder" Publisher="CN=User Name" Version="0.0.0.0" />
+
+  <mp:PhoneIdentity PhoneProductId="C3AFC75B-8BF8-4CCB-B0C0-D0305D8A7D49" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
+
+  <Properties>
+    <DisplayName>DataFilter.Blazor.Demo.Hybrid</DisplayName>
+    <PublisherDisplayName>PhilipinPierre</PublisherDisplayName>
+    <Logo>logo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.17763.0" MaxVersionTested="10.0.19041.0" />
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.19041.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+
+  <Applications>
+    <Application Id="App" Executable="DataFilter.Blazor.Demo.Hybrid.exe" EntryPoint="DataFilter.Blazor.Demo.Hybrid.WinUI.App">
+      <uap:VisualElements
+        DisplayName="DataFilter.Blazor.Demo.Hybrid"
+        Description="DataFilter Blazor Demo Hybrid"
+        Square150x150Logo="logo.png"
+        Square44x44Logo="logo.png"
+        BackgroundColor="transparent">
+        <uap:DefaultTile Square71x71Logo="logo.png" Wide310x150Logo="logo.png" Square310x310Logo="logo.png" />
+        <uap:SplashScreen Image="logo.png" />
+      </uap:VisualElements>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+
+</Package>

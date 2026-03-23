@@ -17,4 +17,3 @@ FOR /d /r . %%d in (bin,obj) DO (
 @echo BIN and OBJ folders successfully deleted :) Close the window.
 @echo.
 @echo.
-pause > nul

@@ -3,7 +3,6 @@ using CommunityToolkit.Mvvm.Input;
 using DataFilter.Core.Enums;
 using DataFilter.Core.Engine;
 using DataFilter.Filtering.ExcelLike.Models;
-using DataFilter.Wpf.Enums;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Windows.Input;

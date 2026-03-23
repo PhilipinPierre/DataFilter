@@ -1,0 +1,171 @@
+@using DataFilter.Blazor.ViewModels
+@using DataFilter.Core.Enums
+@using DataFilter.Filtering.ExcelLike.Models
+@using System.ComponentModel
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+
+@if (Visible)
+{
+    <div id="@ElementId" class="df-popup-container" style="@PopupStyle">
+        <div class="df-popup-body">
+            <!-- Sort Buttons -->
+            <div class="df-sort-section">
+                <button class="df-sort-button" @onclick="() => ViewModel.SortAscendingCommand.Execute(null)">Sort A to Z</button>
+                <button class="df-sort-button" @onclick="() => ViewModel.SortDescendingCommand.Execute(null)">Sort Z to A</button>
+                <button class="df-sort-button" @onclick="() => ViewModel.AddSubSortAscendingCommand.Execute(null)">Add Sort A to Z</button>
+                <button class="df-sort-button" @onclick="() => ViewModel.AddSubSortDescendingCommand.Execute(null)">Add Sort Z to A</button>
+            </div>
+
+            <hr />
+
+            <!-- Search Box -->
+            <div class="df-search-section">
+                <input type="text" 
+                       value="@ViewModel.SearchText" 
+                       @oninput="OnSearchInput" 
+                       class="df-search-input" 
+                       placeholder="Search..." />
+                
+                <div class="df-accumulation-options">
+                    <label class="df-checkbox-label">
+                        <input type="checkbox" @bind="ViewModel.AddToExistingFilter" />
+                        Add selection to filter
+                    </label>
+                    
+                    @if (ViewModel.AddToExistingFilter)
+                    {
+                        <select @bind="ViewModel.AccumulationMode" class="df-accumulation-select">
+                            @foreach (var mode in Enum.GetValues<AccumulationMode>())
+                            {
+                                <option value="@mode">@mode</option>
+                            }
+                        </select>
+                    }
+                </div>
+            </div>
+
+            <!-- Custom Filter -->
+            <div class="df-custom-filter-section">
+                <div class="df-custom-filter-header" @onclick="ToggleCustomFilter">
+                    <span>Advanced Filter</span>
+                    <span>@(ViewModel.IsCustomFilterExpanded ? "▲" : "▼")</span>
+                </div>
+                @if (ViewModel.IsCustomFilterExpanded)
+                {
+                    <div class="df-custom-filter-body">
+                        <select @bind="ViewModel.SelectedCustomOperator" class="df-custom-input">
+                            <option value="">(None)</option>
+                            @foreach (var op in ViewModel.AvailableOperators)
+                            {
+                                <option value="@op">@op</option>
+                            }
+                        </select>
+
+                        <input type="text" @bind="ViewModel.CustomValue1" class="df-custom-input" placeholder="Value 1" />
+
+                        @if (ViewModel.SelectedCustomOperator == FilterOperator.Between)
+                        {
+                            <input type="text" @bind="ViewModel.CustomValue2" class="df-custom-input" placeholder="Value 2" />
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- Loading Indicator -->
+            @if (ViewModel.IsLoading)
+            {
+                <div class="df-loading">Loading...</div>
+            }
+
+            <!-- Filter List -->
+            <div class="df-value-list-section">
+                <div class="df-value-item">
+                    <input type="checkbox" 
+                           checked="@ViewModel.SelectAll" 
+                           indeterminate="@(ViewModel.SelectAll == null)"
+                           @onchange="ToggleSelectAll" />
+                    <span>(Select All)</span>
+                </div>
+                
+                @foreach (var item in ViewModel.FilterValues)
+                {
+                    <FilterValueItemView Item="item" Indent="0" />
+                }
+            </div>
+        </div>
+
+        <!-- Footer Buttons -->
+        <div class="df-footer-buttons">
+            <button class="df-btn-primary" @onclick="Apply">OK</button>
+            <button class="df-btn-secondary" @onclick="Clear">Clear</button>
+        </div>
+
+        <div id="@_resizeHandleId" class="df-resize-handle"></div>
+    </div>
+}
+
+@code {
+    [Parameter] public IBlazorColumnFilterViewModel ViewModel { get; set; } = default!;
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+    [Parameter] public string PopupStyle { get; set; } = "";
+    [Parameter] public string ElementId { get; set; } = "df-popup-" + Guid.NewGuid().ToString("N");
+
+    private string _resizeHandleId = "resize-" + Guid.NewGuid().ToString("N");
+
+    protected override void OnInitialized()
+    {
+        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    protected override async System.Threading.Tasks.Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Visible)
+        {
+            await JSRuntime.InvokeVoidAsync("DataFilterInterops.initResizable", ElementId, _resizeHandleId);
+        }
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        ViewModel.SearchText = e.Value?.ToString() ?? "";
+    }
+
+    private void ToggleSelectAll(ChangeEventArgs e)
+    {
+        ViewModel.SelectAll = (bool?)e.Value;
+    }
+
+    private void ToggleCustomFilter()
+    {
+        ViewModel.IsCustomFilterExpanded = !ViewModel.IsCustomFilterExpanded;
+    }
+
+    private void Apply()
+    {
+        ViewModel.ApplyCommand.Execute(null);
+        Close();
+    }
+
+    private void Clear()
+    {
+        ViewModel.ClearCommand.Execute(null);
+    }
+
+    private void Close()
+    {
+        Visible = false;
+        VisibleChanged.InvokeAsync(false);
+    }
+
+    public void Dispose()
+    {
+        ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+    }
+}

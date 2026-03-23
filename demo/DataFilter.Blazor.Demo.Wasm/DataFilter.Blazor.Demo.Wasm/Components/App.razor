@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="app.css" />
+    <link rel="stylesheet" href="DataFilter.Blazor.Demo.Wasm.styles.css" />
+    <link rel="stylesheet" href="_content/DataFilter.Blazor/DataFilter.css" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <HeadOutlet />
+    <script src="_content/DataFilter.Blazor/DataFilterInterops.js"></script>
+</head>
+
+<body>
+    <DataFilter.Blazor.Demo.Wasm.Client.Routes @rendermode=RenderMode.InteractiveWebAssembly />
+    <script src="_framework/blazor.web.js"></script>
+</body>
+
+</html>

@@ -2,21 +2,21 @@
 
 A visual data filtering system for WPF, inspired by Excel filtering, with support for asynchronous data loading from external APIs.
 
-## Architecture
+The solution is divided into several main projects:
 
-The solution is divided into 4 main projects:
-
-1.  **`DataFilter.Core`** (.NET 8 / .NET Standard 2.1)
+1.  **`DataFilter.Core`** (.NET 8 / 9 / .NET Standard 2.0 & 2.1)
     - Contains pure filtering logic and abstractions (`IFilterEngine`, `IFilterDescriptor`).
     - UI-independent.
-2.  **`DataFilter.Filtering.ExcelLike`** (.NET 8)
+2.  **`DataFilter.Filtering.ExcelLike`** (.NET 8 / 9)
     - Implements advanced filtering engine with distinct value selection formatted like Excel.
     - Handles complex composite filters (manual selection + contextual operators).
 3.  **`DataFilter.Wpf`** (.NET 8 / 9 Windows)
     - Provides WPF controls (`FilterableDataGrid`, `FilterableGridView`, `FilterPopup`) and attachable behaviors.
-    - Supports multi-targeting and modern WPF features.
-4.  **`DataFilter.Wpf.Demo`** (.NET 8 / 9 Windows)
-    - Demonstration application highlighting various filtering scenarios (Local, Async, Hybrid, Customization, ListView).
+4.  **`DataFilter.Blazor`** (.NET 8 / 9)
+    - Provides Blazor components (`ColumnFilterButton`, `FilterPopup`) for WebAssembly, Server-side, and Hybrid.
+    - Modern and fully customizable UI via CSS classes.
+5.  **`DataFilter.Expressions.Server`** (.NET 8 / 9)
+    - Extension for converting filter snapshots into LINQ Expressions for server-side evaluation.
 
 ## Key Features
 
@@ -32,15 +32,13 @@ The solution is divided into 4 main projects:
 - **Cumulative Filtering**: "Add to current selection" mode allows merging successive search results.
 
 ### 📶 Multi-Column Sorting
-- **Sub-sorting**: Use the "Add Sub-Sort" commands to define a secondary order (e.g., Order by Name, then by Date).
+- **Sub-sorting**: Define secondary and tertiary order (e.g., Order by Name, then by Date).
 
 ### 🌐 Asynchronous Data Loading
 - **Server-side Filtering**: Implement `IAsyncDataProvider<T>` to offload filtering and sorting to an API or database.
 - **On-demand Distinct Values**: Fetch unique values for the filter popup only when needed.
 
 ## Quick Start (WPF)
-
-### 1. Simple Local Filtering
 
 ```xml
 <controls:FilterableDataGrid ItemsSource="{Binding FilteredItems}" 
@@ -76,20 +74,31 @@ public class MyViewModel : ObservableObject
 
 For more in-depth examples and configuration options, please refer to the project-specific documentation:
 
-- [**DataFilter.Wpf**](src/DataFilter.Wpf/README.md): Detailed UI setup, theming, and behaviors.
-- [**DataFilter.Core**](src/DataFilter.Core/README.md): Extending the filtering engine.
-- [**DataFilter.Wpf.Demo**](src/DataFilter.Wpf.Demo/README.md): Reference implementation.
+- [**DataFilter.Wpf**](src/DataFilter.Wpf/README.md): Detailed UI setup, theming, and behaviors for WPF.
+- [**DataFilter.Blazor**](src/DataFilter.Blazor/README.md): Component usage, styling, and host configuration for Blazor.
+- [**DataFilter.Core**](src/DataFilter.Core/README.md): Extending the filtering engine and understanding abstractions.
+- [**DataFilter.Expressions.Server**](src/DataFilter.Expressions.Server/README.md): Integrating server-side filtering with LINQ.
 
 ## Visual Customization
 
-The controls are designed using `Generic.xaml` with no hardcoded styles, making them fully themeable.
+### WPF
+The WPF controls are designed using `Generic.xaml` with no hardcoded styles.
 Two base themes are provided: `FilterLightTheme.xaml` and `FilterDarkTheme.xaml`.
 
-For more details on customizing colors, icons, and templates, see [CUSTOMIZATION.md](CUSTOMIZATION.md).
+### Blazor
+The Blazor components use modern Vanilla CSS with explicit classes (prefix `df-`).
+Customization is done by overriding these classes in your app's stylesheet.
+
+See [CUSTOMIZATION.md](CUSTOMIZATION.md) for full details on both platforms.
 
 ## Unit Testing
-The solution includes a comprehensive test suite covering:
+The solution includes a comprehensive test suite (75+ tests) covering:
 - Core expression building logic.
 - Excel-like descriptor combinations.
 - Server-side queryable integration.
-- ViewModel commands and state management.
+- WPF & Blazor ViewModel commands and state management.
+
+To run all tests:
+```bash
+dotnet test
+```

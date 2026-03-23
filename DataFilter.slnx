@@ -1,12 +1,22 @@
 <Solution>
+  <Folder Name="/demo/">
+    <Project Path="demo/DataFilter.Blazor.Demo.Hybrid/DataFilter.Blazor.Demo.Hybrid.csproj" />
+    <Project Path="demo/DataFilter.Blazor.Demo.Server/DataFilter.Blazor.Demo.Server.csproj" />
+    <Project Path="demo/DataFilter.Blazor.Demo.Shared/DataFilter.Blazor.Demo.Shared.csproj" />
+    <Project Path="demo/DataFilter.Demo.Shared/DataFilter.Demo.Shared.csproj" />
+    <Project Path="demo/DataFilter.Blazor.Demo.Wasm/DataFilter.Blazor.Demo.Wasm.Client/DataFilter.Blazor.Demo.Wasm.Client.csproj" />
+    <Project Path="demo/DataFilter.Blazor.Demo.Wasm/DataFilter.Blazor.Demo.Wasm/DataFilter.Blazor.Demo.Wasm.csproj" />
+    <Project Path="demo/DataFilter.Wpf.Demo/DataFilter.Wpf.Demo.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/DataFilter.Core/DataFilter.Core.csproj" />
     <Project Path="src/DataFilter.Expressions.Server/DataFilter.Expressions.Server.csproj" />
     <Project Path="src/DataFilter.Filtering.ExcelLike/DataFilter.Filtering.ExcelLike.csproj" />
-    <Project Path="src/DataFilter.Wpf.Demo/DataFilter.Wpf.Demo.csproj" />
+    <Project Path="src/DataFilter.Blazor/DataFilter.Blazor.csproj" />
     <Project Path="src/DataFilter.Wpf/DataFilter.Wpf.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/DataFilter.Blazor.Tests/DataFilter.Blazor.Tests.csproj" />
     <Project Path="tests/DataFilter.Core.Tests/DataFilter.Core.Tests.csproj" />
     <Project Path="tests/DataFilter.Expressions.Server.Tests/DataFilter.Expressions.Server.Tests.csproj" />
     <Project Path="tests/DataFilter.Filtering.ExcelLike.Tests/DataFilter.Filtering.ExcelLike.Tests.csproj" />

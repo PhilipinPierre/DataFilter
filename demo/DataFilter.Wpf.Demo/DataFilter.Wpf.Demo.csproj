@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFrameworks>net8.0-windows;net9.0-windows</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\DataFilter.Core\DataFilter.Core.csproj" />
+    <ProjectReference Include="..\..\src\DataFilter.Filtering.ExcelLike\DataFilter.Filtering.ExcelLike.csproj" />
+    <ProjectReference Include="..\..\src\DataFilter.Wpf\DataFilter.Wpf.csproj" />
+    <ProjectReference Include="..\DataFilter.Demo.Shared\DataFilter.Demo.Shared.csproj" />
+  </ItemGroup>
+
+</Project>
