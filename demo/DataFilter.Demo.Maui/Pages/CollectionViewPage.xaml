@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:DataFilter.Maui.Controls;assembly=DataFilter.Maui"
+             xmlns:vm="clr-namespace:DataFilter.Maui.Demo.ViewModels"
+             x:Class="DataFilter.Maui.Demo.Pages.CollectionViewPage"
+             Title="CollectionViewPage">
+
+    <Grid>
+        <controls:FilterableDataGrid ViewModel="{Binding ViewModel.GridViewModel}" />
+    </Grid>
+</ContentPage>

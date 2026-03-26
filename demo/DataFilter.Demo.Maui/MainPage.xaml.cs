@@ -1,4 +1,4 @@
-﻿namespace DataFilter.Maui
+namespace DataFilter.Maui
 {
     public partial class MainPage : ContentPage
     {

@@ -23,9 +23,28 @@ namespace DataFilter.WinUI3
     /// </summary>
     public sealed partial class MainWindow : Window
     {
+        public DataFilter.WinUI3.Demo.ViewModels.MainViewModel ViewModel { get; } = new();
+
         public MainWindow()
         {
             InitializeComponent();
+            NavView.SelectedItem = NavView.MenuItems[0];
+        }
+
+        private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
+        {
+            if (args.SelectedItem is NavigationViewItem item)
+            {
+                switch (item.Tag?.ToString())
+                {
+                    case "Local": ContentFrame.Navigate(typeof(DataFilter.WinUI3.Demo.Pages.LocalFilterPage), ViewModel.LocalFilterScenario); break;
+                    case "Async": ContentFrame.Navigate(typeof(DataFilter.WinUI3.Demo.Pages.AsyncFilterPage), ViewModel.AsyncFilterScenario); break;
+                    case "Hybrid": ContentFrame.Navigate(typeof(DataFilter.WinUI3.Demo.Pages.HybridFilterPage), ViewModel.HybridFilterScenario); break;
+                    case "Customization": ContentFrame.Navigate(typeof(DataFilter.WinUI3.Demo.Pages.CustomizationPage), ViewModel.CustomizationScenario); break;
+                    case "ListView": ContentFrame.Navigate(typeof(DataFilter.WinUI3.Demo.Pages.ListViewPage), ViewModel.ListViewScenario); break;
+                    case "CollectionView": ContentFrame.Navigate(typeof(DataFilter.WinUI3.Demo.Pages.CollectionViewPage), ViewModel.CollectionViewScenario); break;
+                }
+            }
         }
     }
 }

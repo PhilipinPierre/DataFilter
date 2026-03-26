@@ -19,7 +19,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Maui.Controls"/>
+		<PackageReference Include="Microsoft.Maui.Controls" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\DataFilter.PlatformShared\DataFilter.PlatformShared.csproj" />
 	</ItemGroup>
 
 </Project>

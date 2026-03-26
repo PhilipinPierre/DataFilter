@@ -4,11 +4,36 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:DataFilter.Maui"
+    xmlns:pages="clr-namespace:DataFilter.Maui.Demo.Pages"
     Title="DataFilter.Maui">
+    <Shell.TitleView>
+        <HorizontalStackLayout VerticalOptions="Center" Spacing="20" Margin="0,0,20,0"
+                               BindingContext="{Binding Source={x:RelativeSource AncestorType={x:Type local:AppShell}}, Path=BindingContext}">
+            <Label Text="Rows:" VerticalOptions="Center" />
+            <Entry Text="{Binding RowCount}" Keyboard="Numeric" WidthRequest="100" />
+            <Button Text="Regenerate" Command="{Binding RegenerateDataCommand}" />
+            <Button Text="Clear Filters" Command="{Binding ClearFiltersCommand}" />
+        </HorizontalStackLayout>
+    </Shell.TitleView>
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
-
+    <TabBar>
+        <Tab Title="Local">
+            <ShellContent Route="LocalFilterPage" ContentTemplate="{DataTemplate pages:LocalFilterPage}" />
+        </Tab>
+        <Tab Title="Async">
+            <ShellContent Route="AsyncFilterPage" ContentTemplate="{DataTemplate pages:AsyncFilterPage}" />
+        </Tab>
+        <Tab Title="Hybrid">
+            <ShellContent Route="HybridFilterPage" ContentTemplate="{DataTemplate pages:HybridFilterPage}" />
+        </Tab>
+        <Tab Title="Customization">
+            <ShellContent Route="CustomizationPage" ContentTemplate="{DataTemplate pages:CustomizationPage}" />
+        </Tab>
+        <Tab Title="ListView">
+            <ShellContent Route="ListViewPage" ContentTemplate="{DataTemplate pages:ListViewPage}" />
+        </Tab>
+        <Tab Title="CollectionView">
+            <ShellContent Route="CollectionViewPage" ContentTemplate="{DataTemplate pages:CollectionViewPage}" />
+        </Tab>
+    </TabBar>
 </Shell>

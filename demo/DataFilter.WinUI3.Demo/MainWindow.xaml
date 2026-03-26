@@ -14,6 +14,30 @@
     </Window.SystemBackdrop>
 
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
+        <!-- Top Control Bar -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Padding="10" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+            <TextBlock Text="Row Count:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+            <NumberBox Value="{x:Bind ViewModel.RowCount, Mode=TwoWay}" Minimum="1" Maximum="100000" SpinButtonPlacementMode="Inline" Width="120" VerticalAlignment="Center"/>
+            <Button Content="Regenerate Data" Command="{x:Bind ViewModel.RegenerateCommand}" VerticalAlignment="Center"/>
+            <Button Content="Clear filters" Command="{x:Bind ViewModel.ClearFiltersCommand}" VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <!-- Navigation View -->
+        <NavigationView Grid.Row="1" x:Name="NavView" PaneDisplayMode="Left" IsSettingsVisible="False" SelectionChanged="NavView_SelectionChanged">
+            <NavigationView.MenuItems>
+                <NavigationViewItem Content="Local Filtering" Tag="Local" />
+                <NavigationViewItem Content="Async Filtering" Tag="Async" />
+                <NavigationViewItem Content="Hybrid Filtering" Tag="Hybrid" />
+                <NavigationViewItem Content="Customization" Tag="Customization" />
+                <NavigationViewItem Content="ListView Example" Tag="ListView" />
+                <NavigationViewItem Content="CollectionView Example" Tag="CollectionView" />
+            </NavigationView.MenuItems>
+            <Frame x:Name="ContentFrame" Padding="10" />
+        </NavigationView>
     </Grid>
 </Window>
