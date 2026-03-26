@@ -1,10 +1,11 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DataFilter.Core.Enums;
 using DataFilter.Core.Engine;
+using DataFilter.Core.Enums;
 using DataFilter.Filtering.ExcelLike.Models;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Windows.Input;
 
 namespace DataFilter.Wpf.ViewModels;
@@ -584,7 +585,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
 
     private void UpdateSelectionFromCustomFilter()
     {
-        if (_internalUpdate || SelectedCustomOperator == null) return;
+        if (_internalUpdate || SelectedCustomOperator == null || !FilterValues.Any()) return;
 
         object? v1 = ConvertCustomValue(CustomValue1);
         object? v2 = ConvertCustomValue(CustomValue2);
@@ -601,11 +602,14 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
         try
         {
             FilterOperator op = SelectedCustomOperator.Value;
+            
+            var v1Typed = v1!= null ? Convert.ChangeType(v1, FilterValues.First().GetType(), CultureInfo.CurrentCulture): null;
+            var v2Typed = v2 != null ? Convert.ChangeType(v2, FilterValues.First().GetType(), CultureInfo.CurrentCulture) : null;
             bool effectiveAddToExisting = AddToExistingFilter && (_initialFilterActive || IsFilterActive);
 
             foreach (var item in FilterValues)
             {
-                UpdateItemMatchRecursive(item, op, v1, v2, effectiveAddToExisting);
+                UpdateItemMatchRecursive(item, op, v1Typed, v2Typed, effectiveAddToExisting);
             }
 
             UpdateSelectAllState();

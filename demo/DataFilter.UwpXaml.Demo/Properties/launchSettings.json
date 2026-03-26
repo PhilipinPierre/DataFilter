@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "DataFilter.UwpXaml.Demo": {
+      "commandName": "MsixPackage"
+    }
+  }
+}

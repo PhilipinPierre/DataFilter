@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "DataFilter.WinUI3 (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "DataFilter.WinUI3 (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
