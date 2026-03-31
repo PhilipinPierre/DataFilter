@@ -7,19 +7,41 @@
     xmlns:controls="using:DataFilter.UwpXaml.Controls"
     mc:Ignorable="d">
 
+    <Page.Resources>
+        <CollectionViewSource x:Name="EmployeeCVS" Source="{x:Bind ViewModel.GridViewModel.FilteredItems, Mode=OneWay}" />
+    </Page.Resources>
+
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="10" Spacing="5">
+            <TextBlock Text="Scenario 6 — Collection View Integration" FontSize="20" FontWeight="Bold" />
+            <TextBlock Text="Demonstrating integration with CollectionViewSource, a standard XAML abstraction for data views." FontSize="14" Foreground="{ThemeResource SystemControlPageTextBaseMediumBrush}" />
+        </StackPanel>
+
         <controls:FilterableDataGrid 
+            Grid.Row="1"
             ViewModel="{x:Bind ViewModel.GridViewModel, Mode=OneWay}"
-            ItemsSource="{x:Bind ViewModel.Employees, Mode=OneWay}">
+            ItemsSource="{x:Bind EmployeeCVS.View, Mode=OneWay}">
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <TextBlock Text="{Binding Id}" Width="50" />
-                        <TextBlock Text="{Binding Name}" Width="150" />
-                        <TextBlock Text="{Binding Department}" Width="150" />
-                        <TextBlock Text="{Binding Country}" Width="150" />
-                        <TextBlock Text="{Binding Time}" Width="100" />
-                    </StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="80"/>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="100"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding Id}" />
+                        <TextBlock Grid.Column="1" Text="{Binding Name}" />
+                        <TextBlock Grid.Column="2" Text="{Binding Department}" />
+                        <TextBlock Grid.Column="3" Text="{Binding Country}" />
+                        <TextBlock Grid.Column="4" Text="{Binding Time}" />
+                    </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>
         </controls:FilterableDataGrid>

@@ -114,4 +114,9 @@ public interface IBlazorColumnFilterViewModel : INotifyPropertyChanged
     /// Indicates if data is currently loading asynchronously.
     /// </summary>
     bool IsLoading { get; }
+
+    /// <summary>
+    /// Clears the filter and resets the UI state.
+    /// </summary>
+    void ClearFilter();
 }

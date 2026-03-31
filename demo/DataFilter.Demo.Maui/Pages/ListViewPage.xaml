@@ -2,11 +2,51 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:DataFilter.Maui.Controls;assembly=DataFilter.Maui"
-             xmlns:vm="clr-namespace:DataFilter.Maui.Demo.ViewModels"
              x:Class="DataFilter.Maui.Demo.Pages.ListViewPage"
-             Title="ListViewPage">
+             Title="List View">
 
-    <Grid>
-        <controls:FilterableDataGrid ViewModel="{Binding ViewModel.GridViewModel}" />
+    <Grid RowDefinitions="Auto,Auto,*">
+        <VerticalStackLayout Grid.Row="0" Padding="16,12" Spacing="2">
+            <Label Text="Scenario 5 — Native List View Integration"
+                   FontSize="16" FontAttributes="Bold" />
+            <Label Text="Demonstrating local filtering integrated with a standard MAUI ListView instead of a DataGrid."
+                   FontSize="13" TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
+        </VerticalStackLayout>
+
+        <!-- Custom Header Row for ListView -->
+        <Border Grid.Row="1" Margin="8,0" Padding="0" BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#333333}" StrokeThickness="0">
+            <HorizontalStackLayout HeightRequest="45" VerticalOptions="Center">
+                <Button Text="ID 🔍" WidthRequest="80" Clicked="OnFilterId" BackgroundColor="Transparent" TextColor="{AppThemeBinding Light=Black, Dark=White}" FontSize="12" />
+                <Button Text="Name 🔍" WidthRequest="150" Clicked="OnFilterName" BackgroundColor="Transparent" TextColor="{AppThemeBinding Light=Black, Dark=White}" FontSize="12" />
+                <Button Text="Dept 🔍" WidthRequest="120" Clicked="OnFilterDept" BackgroundColor="Transparent" TextColor="{AppThemeBinding Light=Black, Dark=White}" FontSize="12" />
+            </HorizontalStackLayout>
+        </Border>
+
+        <ListView Grid.Row="2" Margin="8"
+                  ItemsSource="{Binding ViewModel.GridViewModel.FilteredItems}"
+                  SeparatorVisibility="Default"
+                  SelectionMode="None">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <ViewCell>
+                        <HorizontalStackLayout Spacing="20" Padding="10">
+                            <Label Text="{Binding Id}" WidthRequest="60" VerticalOptions="Center" />
+                            <Label Text="{Binding Name}" WidthRequest="130" VerticalOptions="Center" FontAttributes="Bold" />
+                            <Label Text="{Binding Department}" WidthRequest="100" VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                    </ViewCell>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <!-- Overlay for Filter Popup -->
+        <BoxView x:Name="PopupOverlay" Grid.Row="0" Grid.RowSpan="3" BackgroundColor="#80000000" IsVisible="False">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnClosePopup" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
+        <Frame x:Name="PopupFrame" Grid.Row="2" VerticalOptions="Start" HorizontalOptions="Center" Margin="20" Padding="0" IsVisible="False" HasShadow="True" CornerRadius="8">
+            <ContentView x:Name="PopupContainer" />
+        </Frame>
     </Grid>
 </ContentPage>

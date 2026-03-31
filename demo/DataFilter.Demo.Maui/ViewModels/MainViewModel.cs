@@ -8,49 +8,64 @@ namespace DataFilter.Maui.Demo.ViewModels;
 public partial class MainViewModel : ObservableObject
 {
     [ObservableProperty]
-    private double _rowCount = 1000;
+    private int _rowCount = 1000;
 
-    public LocalFilterScenarioViewModel LocalFilterScenario { get; } = new();
-    public AsyncFilterScenarioViewModel AsyncFilterScenario { get; } = new();
-    public HybridFilterScenarioViewModel HybridFilterScenario { get; } = new();
-    public CustomizationScenarioViewModel CustomizationScenario { get; } = new();
-    public ListViewScenarioViewModel ListViewScenario { get; } = new();
-    public CollectionViewScenarioViewModel CollectionViewScenario { get; } = new();
+    public LocalFilterScenarioViewModel LocalFilterScenario { get; }
+    public AsyncFilterScenarioViewModel AsyncFilterScenario { get; }
+    public HybridFilterScenarioViewModel HybridFilterScenario { get; }
+    public CustomizationScenarioViewModel CustomizationScenario { get; }
+    public ListViewScenarioViewModel ListViewScenario { get; }
+    public CollectionViewScenarioViewModel CollectionViewScenario { get; }
 
-    public MainViewModel()
+    public MainViewModel(
+        LocalFilterScenarioViewModel localFilterScenario,
+        AsyncFilterScenarioViewModel asyncFilterScenario,
+        HybridFilterScenarioViewModel hybridFilterScenario,
+        CustomizationScenarioViewModel customizationScenario,
+        ListViewScenarioViewModel listViewScenario,
+        CollectionViewScenarioViewModel collectionViewScenario)
     {
+        LocalFilterScenario = localFilterScenario;
+        AsyncFilterScenario = asyncFilterScenario;
+        HybridFilterScenario = hybridFilterScenario;
+        CustomizationScenario = customizationScenario;
+        ListViewScenario = listViewScenario;
+        CollectionViewScenario = collectionViewScenario;
+
         Regenerate();
     }
 
     [RelayCommand]
     private void Regenerate()
     {
-        int count = (int)RowCount;
-        EmployeeDataGenerator.Regenerate(count);
+        EmployeeDataGenerator.Regenerate(RowCount);
 
-        LocalFilterScenario.Regenerate(count);
-        AsyncFilterScenario.Regenerate(count);
-        HybridFilterScenario.Regenerate(count);
-        CustomizationScenario.Regenerate(count);
-        ListViewScenario.Regenerate(count);
-        CollectionViewScenario.Regenerate(count);
+        LocalFilterScenario.Regenerate(RowCount);
+        AsyncFilterScenario.Regenerate(RowCount);
+        HybridFilterScenario.Regenerate(RowCount);
+        CustomizationScenario.Regenerate(RowCount);
+        ListViewScenario.Regenerate(RowCount);
+        CollectionViewScenario.Regenerate(RowCount);
     }
 
     [RelayCommand]
     private async Task ClearFilters()
     {
-        LocalFilterScenario.GridViewModel.Context.ClearDescriptors();
-        AsyncFilterScenario.GridViewModel.Context.ClearDescriptors();
-        HybridFilterScenario.GridViewModel.Context.ClearDescriptors();
-        CustomizationScenario.GridViewModel.Context.ClearDescriptors();
-        ListViewScenario.GridViewModel.Context.ClearDescriptors();
-        CollectionViewScenario.GridViewModel.Context.ClearDescriptors();
+        LocalFilterScenario.GridViewModel?.Context.ClearDescriptors();
+        AsyncFilterScenario.GridViewModel?.Context.ClearDescriptors();
+        HybridFilterScenario.GridViewModel?.Context.ClearDescriptors();
+        CustomizationScenario.GridViewModel?.Context.ClearDescriptors();
+        ListViewScenario.GridViewModel?.Context.ClearDescriptors();
+        CollectionViewScenario.GridViewModel?.Context.ClearDescriptors();
 
-        await LocalFilterScenario.GridViewModel.RefreshDataAsync();
-        await AsyncFilterScenario.GridViewModel.RefreshDataAsync();
-        await HybridFilterScenario.GridViewModel.RefreshDataAsync();
-        await CustomizationScenario.GridViewModel.RefreshDataAsync();
-        await ListViewScenario.GridViewModel.RefreshDataAsync();
-        await CollectionViewScenario.GridViewModel.RefreshDataAsync();
+        var tasks = new List<Task>();
+        if (LocalFilterScenario.GridViewModel != null) tasks.Add(LocalFilterScenario.GridViewModel.RefreshDataAsync());
+        if (AsyncFilterScenario.GridViewModel != null) tasks.Add(AsyncFilterScenario.GridViewModel.RefreshDataAsync());
+        if (HybridFilterScenario.GridViewModel != null) tasks.Add(HybridFilterScenario.GridViewModel.RefreshDataAsync());
+        if (CustomizationScenario.GridViewModel != null) tasks.Add(CustomizationScenario.GridViewModel.RefreshDataAsync());
+        if (ListViewScenario.GridViewModel != null) tasks.Add(ListViewScenario.GridViewModel.RefreshDataAsync());
+        if (CollectionViewScenario.GridViewModel != null) tasks.Add(CollectionViewScenario.GridViewModel.RefreshDataAsync());
+
+        await Task.WhenAll(tasks);
     }
 }

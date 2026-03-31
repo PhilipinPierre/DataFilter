@@ -12,7 +12,13 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <TextBlock Grid.Row="0" Text="Local Filter + Async Distinct Values Fetching" FontWeight="SemiBold" Margin="5"/>
+        <StackPanel Grid.Row="0" Margin="10" Spacing="5">
+            <TextBlock Text="Scenario 3 — Hybrid Filtering" FontSize="20" FontWeight="Bold" />
+            <TextBlock Text="Combines local filtering logic with asynchronous fetching of distinct values for the filter UI." FontSize="14" Foreground="{ThemeResource SystemControlPageTextBaseMediumBrush}" />
+            <Border Background="DarkGreen" CornerRadius="4" Padding="10,5">
+                <TextBlock Text="🔀  Hybrid mode — local results + async distinct values" Foreground="White" FontWeight="SemiBold" />
+            </Border>
+        </StackPanel>
         <controls:FilterableDataGrid 
             Grid.Row="1"
             ViewModel="{x:Bind ViewModel.GridViewModel, Mode=OneWay}"

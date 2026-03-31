@@ -7,15 +7,19 @@ namespace DataFilter.Maui.Demo.ViewModels;
 
 public partial class AsyncFilterScenarioViewModel : ObservableObject
 {
+    private readonly IMockEmployeeApiService _apiService;
+
     [ObservableProperty]
-    private FilterableDataGridViewModel<Employee> _gridViewModel;
+    private FilterableDataGridViewModel<Employee> _gridViewModel = new();
+
+    public AsyncFilterScenarioViewModel(IMockEmployeeApiService apiService)
+    {
+        _apiService = apiService;
+    }
 
     public void Regenerate(int count)
     {
-        GridViewModel = new FilterableDataGridViewModel<Employee>
-        {
-            AsyncDataProvider = new MockEmployeeApiService(count)
-        };
+        GridViewModel.AsyncDataProvider = _apiService;
         GridViewModel.RefreshDataAsync();
     }
 }

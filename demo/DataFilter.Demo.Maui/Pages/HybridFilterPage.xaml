@@ -2,11 +2,25 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:DataFilter.Maui.Controls;assembly=DataFilter.Maui"
-             xmlns:vm="clr-namespace:DataFilter.Maui.Demo.ViewModels"
              x:Class="DataFilter.Maui.Demo.Pages.HybridFilterPage"
-             Title="HybridFilterPage">
+             Title="Hybrid Filtering">
 
-    <Grid>
-        <controls:FilterableDataGrid ViewModel="{Binding ViewModel.GridViewModel}" />
+    <Grid RowDefinitions="Auto,Auto,*">
+        <VerticalStackLayout Grid.Row="0" Padding="16,12" Spacing="2">
+            <Label Text="Scenario 3 — Hybrid Filtering"
+                   FontSize="16" FontAttributes="Bold" />
+            <Label Text="Local data for instant row filtering; async API for distinct filter values in the popup."
+                   FontSize="13" TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
+        </VerticalStackLayout>
+        <Frame Grid.Row="1" Margin="16,0,16,8" Padding="10,6"
+               BackgroundColor="{AppThemeBinding Light=#E8F5E9, Dark=#1A3D2B}"
+               BorderColor="{AppThemeBinding Light=#A5D6A7, Dark=#2E7D55}"
+               CornerRadius="6">
+            <Label Text="🔀  Hybrid mode — local results + async distinct values from API"
+                   FontSize="13"
+                   TextColor="{AppThemeBinding Light=#2E7D32, Dark=#A5D6A7}" />
+        </Frame>
+        <controls:FilterableDataGrid Grid.Row="2"
+                                     ViewModel="{Binding ViewModel.GridViewModel}" />
     </Grid>
 </ContentPage>

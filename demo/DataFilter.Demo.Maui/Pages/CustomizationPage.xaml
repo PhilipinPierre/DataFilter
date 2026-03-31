@@ -2,11 +2,25 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:DataFilter.Maui.Controls;assembly=DataFilter.Maui"
-             xmlns:vm="clr-namespace:DataFilter.Maui.Demo.ViewModels"
              x:Class="DataFilter.Maui.Demo.Pages.CustomizationPage"
-             Title="CustomizationPage">
+             Title="Customization">
 
-    <Grid>
-        <controls:FilterableDataGrid ViewModel="{Binding ViewModel.GridViewModel}" />
+    <Grid RowDefinitions="Auto,Auto,*">
+        <VerticalStackLayout Grid.Row="0" Padding="16,12" Spacing="2">
+            <Label Text="Scenario 4 — Theme Customization"
+                   FontSize="16" FontAttributes="Bold" />
+            <Label Text="Toggle light/dark theme at runtime. The filter popup adapts to the active theme."
+                   FontSize="13" TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
+        </VerticalStackLayout>
+
+        <HorizontalStackLayout Grid.Row="1" Padding="16,0,16,12" Spacing="12" VerticalOptions="Center">
+            <Label Text="Dark Theme" VerticalOptions="Center" FontSize="14" />
+            <Switch x:Name="ThemeSwitch"
+                    IsToggled="{Binding ViewModel.IsDarkTheme, Mode=TwoWay}"
+                    Toggled="OnThemeSwitchToggled" />
+        </HorizontalStackLayout>
+
+        <controls:FilterableDataGrid Grid.Row="2"
+                                     ViewModel="{Binding ViewModel.GridViewModel}" />
     </Grid>
 </ContentPage>

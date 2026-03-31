@@ -2,11 +2,25 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:DataFilter.Maui.Controls;assembly=DataFilter.Maui"
-             xmlns:vm="clr-namespace:DataFilter.Maui.Demo.ViewModels"
              x:Class="DataFilter.Maui.Demo.Pages.AsyncFilterPage"
-             Title="AsyncFilterPage">
+             Title="Async Filtering">
 
-    <Grid>
-        <controls:FilterableDataGrid ViewModel="{Binding ViewModel.GridViewModel}" />
+    <Grid RowDefinitions="Auto,Auto,*">
+        <VerticalStackLayout Grid.Row="0" Padding="16,12" Spacing="2">
+            <Label Text="Scenario 2 — Async Data Loading"
+                   FontSize="16" FontAttributes="Bold" />
+            <Label Text="Data is fetched asynchronously from an API. A loading indicator appears during each request."
+                   FontSize="13" TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
+        </VerticalStackLayout>
+        <Frame Grid.Row="1" Margin="16,0,16,8" Padding="10,6"
+               BackgroundColor="{AppThemeBinding Light=#E3F2FD, Dark=#1A3A5C}"
+               BorderColor="{AppThemeBinding Light=#90CAF9, Dark=#2C5F8A}"
+               CornerRadius="6">
+            <Label Text="⚡  Async Data Loading Enabled — results are fetched on each filter change"
+                   FontSize="13"
+                   TextColor="{AppThemeBinding Light=#1565C0, Dark=#90CAF9}" />
+        </Frame>
+        <controls:FilterableDataGrid Grid.Row="2"
+                                     ViewModel="{Binding ViewModel.GridViewModel}" />
     </Grid>
 </ContentPage>

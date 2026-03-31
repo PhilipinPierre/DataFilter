@@ -1,0 +1,107 @@
+@page "/demo/customization"
+@using DataFilter.Blazor.Demo.Shared.State
+@using DataFilter.Blazor.Demo.Shared.Helpers
+@inject DemoState State
+@inject IJSRuntime JSRuntime
+
+<DemoShell OnClearFilters="HandleClearFilters" />
+
+<div class="scenario-header">
+    <h3>Scenario 4 — Theme Customization</h3>
+    <p class="text-muted">Toggle light/dark theme at runtime. The filter popup adapts via CSS custom properties.</p>
+</div>
+
+<div class="theme-toggle">
+    <label class="switch">
+        <input type="checkbox" @onchange="ToggleTheme">
+        <span class="slider round"></span>
+    </label>
+    <span>Dark Theme</span>
+</div>
+
+<div class="grid-container @(_isDark ? "df-theme-dark" : "df-theme-light")">
+    <DataFilterGrid @ref="_grid" Items="@_data" Columns="@_columns" />
+</div>
+
+<style>
+    .theme-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        padding-left: 1rem;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 20px;
+    }
+    .switch input { 
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      -webkit-transition: .4s;
+      transition: .4s;
+      border-radius: 20px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      -webkit-transition: .4s;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #2196F3;
+    }
+    input:checked + .slider:before {
+      -webkit-transform: translateX(20px);
+      -ms-transform: translateX(20px);
+      transform: translateX(20px);
+    }
+</style>
+
+@code {
+    private DataFilterGrid<Employee>? _grid;
+    private IEnumerable<Employee> _data => EmployeeDataGenerator.Employees;
+    private List<DataFilterGrid<Employee>.ColumnDefinition<Employee>> _columns = ColumnHelper.GetDefaultColumns();
+    private bool _isDark;
+
+    protected override void OnInitialized()
+    {
+        State.OnChange += StateChanged;
+    }
+
+    private void StateChanged() => StateHasChanged();
+
+    private async Task ToggleTheme()
+    {
+        _isDark = !_isDark;
+        await JSRuntime.InvokeVoidAsync("console.log", $"Theme toggled to: {(_isDark ? "Dark" : "Light")}");
+    }
+
+    private void HandleClearFilters()
+    {
+        _grid?.ClearFilters();
+    }
+
+    public void Dispose()
+    {
+        State.OnChange -= StateChanged;
+    }
+}

@@ -12,7 +12,13 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <TextBlock Grid.Row="0" Text="Async Data Loading Enabled" FontWeight="SemiBold" Margin="5"/>
+        <StackPanel Grid.Row="0" Margin="10" Spacing="5">
+            <TextBlock Text="Scenario 2 — Async Filtering" FontSize="20" FontWeight="Bold" />
+            <TextBlock Text="Fetches data from a mock API service, demonstrating background loading and UI responsiveness." FontSize="14" Foreground="{ThemeResource SystemControlPageTextBaseMediumBrush}" />
+            <Border Background="{ThemeResource SystemAccentColor}" CornerRadius="4" Padding="10,5">
+                <TextBlock Text="⏳  Async Data Loading Enabled" Foreground="White" FontWeight="SemiBold" />
+            </Border>
+        </StackPanel>
         <controls:FilterableDataGrid 
             Grid.Row="1"
             ViewModel="{x:Bind ViewModel.GridViewModel, Mode=OneWay}"

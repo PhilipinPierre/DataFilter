@@ -14,7 +14,7 @@ public partial class CustomizationView : UserControl
         var sidePanel = new Panel { Dock = DockStyle.Left, Width = 200, Padding = new Padding(10) };
         var title = new Label { Text = "Customization", Font = new Font(Font.FontFamily, 12, FontStyle.Bold), Dock = DockStyle.Top, Height = 30 };
         _themeToggle = new CheckBox { Text = "Dark Theme", Dock = DockStyle.Top, Height = 30 };
-        var helpText = new Label { Text = "Change the toggle to customize colors dynamically.", ForeColor = Color.Gray, Dock = DockStyle.Top, Height = 60 };
+        var helpText = new Label { Text = "Scenario 4 — UI Customization. Change the toggle to customize colors dynamically. This demonstrates how the filtering UI can be themed to match your application's appearance.", ForeColor = Color.Gray, Dock = DockStyle.Top, Height = 80 };
 
         sidePanel.Controls.Add(helpText);
         sidePanel.Controls.Add(_themeToggle);

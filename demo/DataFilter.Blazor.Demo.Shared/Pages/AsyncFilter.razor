@@ -1,0 +1,38 @@
+@page "/demo/async"
+@using DataFilter.Blazor.Demo.Shared.State
+@using DataFilter.Blazor.Demo.Shared.Helpers
+@inject DemoState State
+@inject IMockEmployeeApiService ApiService
+
+<DemoShell OnClearFilters="HandleClearFilters" />
+
+<div class="scenario-header">
+    <h3>Scenario 2 — Async Filtering (API)</h3>
+    <p class="text-muted">Data is fetched from an asynchronous service. Filtering and sorting are performed server-side (simulated).</p>
+</div>
+
+<div class="grid-container">
+    <DataFilterGrid @ref="_grid" DataProvider="@ApiService" Columns="@_columns" />
+</div>
+
+@code {
+    private DataFilterGrid<Employee>? _grid;
+    private List<DataFilterGrid<Employee>.ColumnDefinition<Employee>> _columns = ColumnHelper.GetDefaultColumns();
+
+    protected override void OnInitialized()
+    {
+        State.OnChange += StateChanged;
+    }
+
+    private void StateChanged() => StateHasChanged();
+
+    private void HandleClearFilters()
+    {
+        _grid?.ClearFilters();
+    }
+
+    public void Dispose()
+    {
+        State.OnChange -= StateChanged;
+    }
+}

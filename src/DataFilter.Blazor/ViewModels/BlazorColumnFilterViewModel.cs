@@ -592,7 +592,8 @@ public partial class BlazorColumnFilterViewModel : ObservableObject, IBlazorColu
         }
     }
 
-    private void ClearFilter()
+    /// <inheritdoc />
+    public void ClearFilter()
     {
         FilterState.Clear();
         SearchText = string.Empty;

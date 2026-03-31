@@ -9,13 +9,25 @@ public partial class HybridFilterView : UserControl
 
     public HybridFilterView()
     {
-        var banner = new Label
+        var title = new Label
         {
-            Text = "Local Filter + Async Distinct Values Fetching",
+            Text = "Scenario 3 — Hybrid Filtering",
             Dock = DockStyle.Top,
             Height = 30,
-            Font = new Font(Font.FontFamily, 10, FontStyle.Bold),
-            TextAlign = ContentAlignment.MiddleLeft
+            Font = new Font(Font.FontFamily, 11, FontStyle.Bold),
+            Padding = new Padding(10, 5, 0, 0)
+        };
+
+        var banner = new Label
+        {
+            Text = "🔀  Hybrid mode — local results + async distinct values from API",
+            Dock = DockStyle.Top,
+            Height = 35,
+            BackColor = Color.Honeydew,
+            ForeColor = Color.DarkGreen,
+            Font = new Font(Font.FontFamily, 9, FontStyle.Regular),
+            TextAlign = ContentAlignment.MiddleLeft,
+            Padding = new Padding(10, 0, 0, 0)
         };
 
         _grid = new FilterableDataGrid

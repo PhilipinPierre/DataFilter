@@ -8,17 +8,20 @@ namespace DataFilter.Maui.Demo.ViewModels;
 
 public partial class HybridFilterScenarioViewModel : ObservableObject
 {
+    private readonly IMockEmployeeApiService _apiService;
+
     [ObservableProperty]
-    private FilterableDataGridViewModel<Employee> _gridViewModel;
+    private FilterableDataGridViewModel<Employee> _gridViewModel = new();
+
+    public HybridFilterScenarioViewModel(IMockEmployeeApiService apiService)
+    {
+        _apiService = apiService;
+    }
 
     public void Regenerate(int count)
     {
-        GridViewModel = new FilterableDataGridViewModel<Employee>
-        {
-            LocalDataSource = EmployeeDataGenerator.Employees,
-            AsyncDataProvider = new MockEmployeeApiService(count) // Only used for distinct values in Hybrid
-        };
-        
+        GridViewModel.LocalDataSource = EmployeeDataGenerator.Employees;
+        GridViewModel.AsyncDataProvider = _apiService;
         GridViewModel.RefreshDataAsync();
     }
 }

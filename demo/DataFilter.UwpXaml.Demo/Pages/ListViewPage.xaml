@@ -8,20 +8,66 @@
     mc:Ignorable="d">
 
     <Grid>
-        <controls:FilterableDataGrid 
-            ViewModel="{x:Bind ViewModel.GridViewModel, Mode=OneWay}"
-            ItemsSource="{x:Bind ViewModel.GridViewModel.FilteredItems, Mode=OneWay}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="10" Spacing="5">
+            <TextBlock Text="Scenario 5 — Native ListView Integration" FontSize="20" FontWeight="Bold" />
+            <TextBlock Text="Demonstrating DataFilter integration with a standard UWP ListView control using manual filter triggers." FontSize="14" Foreground="{ThemeResource SystemControlPageTextBaseMediumBrush}" />
+        </StackPanel>
+
+        <!-- Manual Header with Filter Buttons -->
+        <Border Grid.Row="1" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" Padding="10,5">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <Button Content="Filter ID" Click="FilterButton_Click" Tag="Id" />
+                <Button Content="Filter Name" Click="FilterButton_Click" Tag="Name" />
+                <Button Content="Filter Dept" Click="FilterButton_Click" Tag="Department" />
+                <Button Content="Filter Country" Click="FilterButton_Click" Tag="Country" />
+            </StackPanel>
+        </Border>
+
+        <ListView x:Name="DataListView" Grid.Row="2"
+                  ItemsSource="{x:Bind ViewModel.GridViewModel.FilteredItems, Mode=OneWay}"
+                  SelectionMode="None">
+            <ListView.HeaderTemplate>
+                <DataTemplate>
+                    <Grid Padding="12,0,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="80"/>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="100"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="ID" FontWeight="Bold"/>
+                        <TextBlock Grid.Column="1" Text="Name" FontWeight="Bold"/>
+                        <TextBlock Grid.Column="2" Text="Dept" FontWeight="Bold"/>
+                        <TextBlock Grid.Column="3" Text="Country" FontWeight="Bold"/>
+                        <TextBlock Grid.Column="4" Text="Time" FontWeight="Bold"/>
+                    </Grid>
+                </DataTemplate>
+            </ListView.HeaderTemplate>
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <TextBlock Text="{Binding Id}" Width="80" />
-                        <TextBlock Text="{Binding Name}" Width="150" />
-                        <TextBlock Text="{Binding Department}" Width="150" />
-                        <TextBlock Text="{Binding Country}" Width="150" />
-                        <TextBlock Text="{Binding Time}" Width="100" />
-                    </StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="80"/>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="100"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding Id}" />
+                        <TextBlock Grid.Column="1" Text="{Binding Name}" />
+                        <TextBlock Grid.Column="2" Text="{Binding Department}" />
+                        <TextBlock Grid.Column="3" Text="{Binding Country}" />
+                        <TextBlock Grid.Column="4" Text="{Binding Time}" />
+                    </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>
-        </controls:FilterableDataGrid>
+        </ListView>
     </Grid>
 </Page>

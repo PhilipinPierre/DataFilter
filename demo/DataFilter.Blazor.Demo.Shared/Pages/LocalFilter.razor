@@ -1,0 +1,44 @@
+@page "/demo/local"
+@using DataFilter.Blazor.Demo.Shared.State
+@inject DemoState State
+@inject NavigationManager Navigation
+
+<DemoShell OnClearFilters="HandleClearFilters" />
+
+<div class="scenario-header">
+    <h3>Scenario 1 — Local Filtering</h3>
+    <p class="text-muted">All data is loaded locally. Filters are applied in-memory instantly.</p>
+</div>
+
+<div class="grid-container">
+    <DataFilterGrid @ref="_grid" Items="@_data" Columns="@_columns" />
+</div>
+
+@using DataFilter.Blazor.Demo.Shared.Helpers
+...
+@code {
+    private DataFilterGrid<Employee>? _grid;
+    private IEnumerable<Employee> _data => EmployeeDataGenerator.Employees;
+    private List<DataFilterGrid<Employee>.ColumnDefinition<Employee>> _columns = ColumnHelper.GetDefaultColumns();
+
+    protected override void OnInitialized()
+    {
+        State.OnChange += StateChanged;
+        if (!EmployeeDataGenerator.Employees.Any())
+        {
+            State.Regenerate();
+        }
+    }
+
+    private void StateChanged() => StateHasChanged();
+
+    private void HandleClearFilters()
+    {
+        _grid?.ClearFilters();
+    }
+
+    public void Dispose()
+    {
+        State.OnChange -= StateChanged;
+    }
+}

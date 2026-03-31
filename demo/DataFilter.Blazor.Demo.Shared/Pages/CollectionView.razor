@@ -1,0 +1,38 @@
+@page "/demo/collectionview"
+@using DataFilter.Blazor.Demo.Shared.State
+@using DataFilter.Blazor.Demo.Shared.Helpers
+@inject DemoState State
+
+<DemoShell OnClearFilters="HandleClearFilters" />
+
+<div class="scenario-header">
+    <h3>Scenario 6 — Custom Collection Integration</h3>
+    <p class="text-muted">Filtering a custom collection with specific adapter logic (simulated with the same grid for demo purposes).</p>
+</div>
+
+<div class="grid-container">
+    <DataFilterGrid @ref="_grid" Items="@_data" Columns="@_columns" />
+</div>
+
+@code {
+    private DataFilterGrid<Employee>? _grid;
+    private IEnumerable<Employee> _data => EmployeeDataGenerator.Employees;
+    private List<DataFilterGrid<Employee>.ColumnDefinition<Employee>> _columns = ColumnHelper.GetDefaultColumns();
+
+    protected override void OnInitialized()
+    {
+        State.OnChange += StateChanged;
+    }
+
+    private void StateChanged() => StateHasChanged();
+
+    private void HandleClearFilters()
+    {
+        _grid?.ClearFilters();
+    }
+
+    public void Dispose()
+    {
+        State.OnChange -= StateChanged;
+    }
+}

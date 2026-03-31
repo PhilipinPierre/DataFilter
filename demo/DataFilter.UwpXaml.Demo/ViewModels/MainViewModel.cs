@@ -45,11 +45,13 @@ public partial class MainViewModel : ObservableObject
         ListViewScenario.GridViewModel.Context.ClearDescriptors();
         CollectionViewScenario.GridViewModel.Context.ClearDescriptors();
 
-        await LocalFilterScenario.GridViewModel.RefreshDataAsync();
-        await AsyncFilterScenario.GridViewModel.RefreshDataAsync();
-        await HybridFilterScenario.GridViewModel.RefreshDataAsync();
-        await CustomizationScenario.GridViewModel.RefreshDataAsync();
-        await ListViewScenario.GridViewModel.RefreshDataAsync();
-        await CollectionViewScenario.GridViewModel.RefreshDataAsync();
+        await Task.WhenAll(
+            LocalFilterScenario.GridViewModel.RefreshDataAsync(),
+            AsyncFilterScenario.GridViewModel.RefreshDataAsync(),
+            HybridFilterScenario.GridViewModel.RefreshDataAsync(),
+            CustomizationScenario.GridViewModel.RefreshDataAsync(),
+            ListViewScenario.GridViewModel.RefreshDataAsync(),
+            CollectionViewScenario.GridViewModel.RefreshDataAsync()
+        );
     }
 }

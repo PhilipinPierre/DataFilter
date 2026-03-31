@@ -1,0 +1,54 @@
+@using DataFilter.Blazor.Demo.Shared.State
+@inject DemoState State
+
+<div class="demo-shell">
+    <div class="shell-controls">
+        <label>Rows:</label>
+        <input type="number" @bind="State.RowCount" min="1" max="100000" />
+        <button class="btn btn-primary" @onclick="State.Regenerate">Regenerate Data</button>
+        <button class="btn btn-secondary" @onclick="OnClearFilters">Clear Filters</button>
+    </div>
+</div>
+
+<style>
+    .demo-shell {
+        padding: 1rem;
+        background: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+        margin-bottom: 1rem;
+    }
+    .shell-controls {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .shell-controls input {
+        width: 100px;
+        padding: 0.25rem 0.5rem;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+    }
+    .btn {
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.25rem;
+        cursor: pointer;
+        font-weight: 400;
+        text-align: center;
+        border: 1px solid transparent;
+        transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    }
+    .btn-primary {
+        color: #fff;
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+    .btn-secondary {
+        color: #fff;
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+</style>
+
+@code {
+    [Parameter] public EventCallback OnClearFilters { get; set; }
+}

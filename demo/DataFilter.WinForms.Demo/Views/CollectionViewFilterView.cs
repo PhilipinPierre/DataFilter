@@ -11,6 +11,27 @@ public partial class CollectionViewFilterView : UserControl
 
     public CollectionViewFilterView()
     {
+        var title = new Label
+        {
+            Text = "Scenario 6 — Collection View Integration",
+            Dock = DockStyle.Top,
+            Height = 30,
+            Font = new Font(Font.FontFamily, 11, FontStyle.Bold),
+            Padding = new Padding(10, 5, 0, 0)
+        };
+
+        var banner = new Label
+        {
+            Text = "📦  Integrated with WinForms BindingSource — demonstrating standard collection view abstraction.",
+            Dock = DockStyle.Top,
+            Height = 35,
+            BackColor = Color.GhostWhite,
+            ForeColor = Color.MediumSlateBlue,
+            Font = new Font(Font.FontFamily, 9, FontStyle.Regular),
+            TextAlign = ContentAlignment.MiddleLeft,
+            Padding = new Padding(10, 0, 0, 0)
+        };
+
         _grid = new FilterableDataGrid
         {
             Dock = DockStyle.Fill,
@@ -18,6 +39,8 @@ public partial class CollectionViewFilterView : UserControl
         };
 
         Controls.Add(_grid);
+        Controls.Add(banner);
+        Controls.Add(title);
     }
 
     public void Bind(CollectionViewScenarioViewModel viewModel)

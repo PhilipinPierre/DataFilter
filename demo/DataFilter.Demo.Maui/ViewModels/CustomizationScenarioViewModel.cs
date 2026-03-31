@@ -8,17 +8,14 @@ namespace DataFilter.Maui.Demo.ViewModels;
 public partial class CustomizationScenarioViewModel : ObservableObject
 {
     [ObservableProperty]
-    private FilterableDataGridViewModel<Employee> _gridViewModel;
+    private FilterableDataGridViewModel<Employee> _gridViewModel = new();
 
     [ObservableProperty]
     private bool _isDarkTheme;
 
     public void Regenerate(int count)
     {
-        GridViewModel = new FilterableDataGridViewModel<Employee>
-        {
-            LocalDataSource = EmployeeDataGenerator.Employees
-        };
+        GridViewModel.LocalDataSource = EmployeeDataGenerator.Employees;
         GridViewModel.RefreshDataAsync();
     }
 }

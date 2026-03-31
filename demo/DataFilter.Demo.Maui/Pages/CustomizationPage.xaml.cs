@@ -13,4 +13,12 @@ public partial class CustomizationPage : ContentPage
         ViewModel = viewModel;
         BindingContext = this;
     }
+
+    private void OnThemeSwitchToggled(object sender, ToggledEventArgs e)
+    {
+        if (Application.Current != null)
+        {
+            Application.Current.UserAppTheme = e.Value ? AppTheme.Dark : AppTheme.Light;
+        }
+    }
 }

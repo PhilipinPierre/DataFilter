@@ -67,7 +67,7 @@ public sealed class MainForm : Form
         _collectionViewView.Bind(_collectionViewVm);
 
         // --- Events ---
-        _regenerateBtn.Click += async (s, e) => await RegenerateAsync();
+        _regenerateBtn.Click += (s, e) => Regenerate();
         _clearFiltersBtn.Click += async (s, e) => await ClearFiltersAsync();
     }
 
@@ -79,7 +79,7 @@ public sealed class MainForm : Form
         _tabControl.TabPages.Add(page);
     }
 
-    private async Task RegenerateAsync()
+    private void Regenerate()
     {
         int count = (int)_rowCountInput.Value;
         EmployeeDataGenerator.Regenerate(count);
@@ -94,17 +94,21 @@ public sealed class MainForm : Form
 
     private async Task ClearFiltersAsync()
     {
-        // Clear logic delegates to context on current/all ViewModels
-        var tabIndex = _tabControl.SelectedIndex;
+        // Clear all filters across all scenarios as per DemoFeatures.md
+        _localVm.GridViewModel.Context.ClearDescriptors();
+        _asyncVm.GridViewModel.Context.ClearDescriptors();
+        _hybridVm.GridViewModel.Context.ClearDescriptors();
+        _customizationVm.GridViewModel.Context.ClearDescriptors();
+        _listViewVm.GridViewModel.Context.ClearDescriptors();
+        _collectionViewVm.GridViewModel.Context.ClearDescriptors();
 
-        switch (tabIndex)
-        {
-            case 0: _localVm.GridViewModel.Context.ClearDescriptors(); await _localVm.GridViewModel.RefreshDataAsync(); break;
-            case 1: _asyncVm.GridViewModel.Context.ClearDescriptors(); await _asyncVm.GridViewModel.RefreshDataAsync(); break;
-            case 2: _hybridVm.GridViewModel.Context.ClearDescriptors(); await _hybridVm.GridViewModel.RefreshDataAsync(); break;
-            case 3: _customizationVm.GridViewModel.Context.ClearDescriptors(); await _customizationVm.GridViewModel.RefreshDataAsync(); break;
-            case 4: _listViewVm.GridViewModel.Context.ClearDescriptors(); await _listViewVm.GridViewModel.RefreshDataAsync(); break;
-            case 5: _collectionViewVm.GridViewModel.Context.ClearDescriptors(); await _collectionViewVm.GridViewModel.RefreshDataAsync(); break;
-        }
+        await Task.WhenAll(
+            _localVm.GridViewModel.RefreshDataAsync(),
+            _asyncVm.GridViewModel.RefreshDataAsync(),
+            _hybridVm.GridViewModel.RefreshDataAsync(),
+            _customizationVm.GridViewModel.RefreshDataAsync(),
+            _listViewVm.GridViewModel.RefreshDataAsync(),
+            _collectionViewVm.GridViewModel.RefreshDataAsync()
+        );
     }
 }

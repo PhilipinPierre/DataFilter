@@ -166,6 +166,16 @@
         return vm;
     }
 
+    public void ClearFilters()
+    {
+        foreach (var vm in _viewModels.Values)
+        {
+            vm.ClearFilter();
+        }
+        ApplyFilters();
+        StateHasChanged();
+    }
+
     private void SetSort(string propertyName, bool isDescending)
     {
         if (string.IsNullOrWhiteSpace(propertyName)) return;

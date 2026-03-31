@@ -9,13 +9,25 @@ public partial class AsyncFilterView : UserControl
 
     public AsyncFilterView()
     {
-        var banner = new Label
+        var title = new Label
         {
-            Text = "Async Data Loading Enabled",
+            Text = "Scenario 2 — Async Filtering",
             Dock = DockStyle.Top,
             Height = 30,
-            Font = new Font(Font.FontFamily, 10, FontStyle.Bold),
-            TextAlign = ContentAlignment.MiddleLeft
+            Font = new Font(Font.FontFamily, 11, FontStyle.Bold),
+            Padding = new Padding(10, 5, 0, 0)
+        };
+
+        var banner = new Label
+        {
+            Text = "⏳  Async Data Loading Enabled — Fetches data from a mock API service",
+            Dock = DockStyle.Top,
+            Height = 35,
+            BackColor = Color.AliceBlue,
+            ForeColor = Color.RoyalBlue,
+            Font = new Font(Font.FontFamily, 9, FontStyle.Regular),
+            TextAlign = ContentAlignment.MiddleLeft,
+            Padding = new Padding(10, 0, 0, 0)
         };
 
         _grid = new FilterableDataGrid
@@ -26,6 +38,7 @@ public partial class AsyncFilterView : UserControl
 
         Controls.Add(_grid);
         Controls.Add(banner);
+        Controls.Add(title);
     }
 
     public void Bind(AsyncFilterScenarioViewModel viewModel)

@@ -7,11 +7,10 @@
     xmlns:pages="clr-namespace:DataFilter.Maui.Demo.Pages"
     Title="DataFilter.Maui">
     <Shell.TitleView>
-        <HorizontalStackLayout VerticalOptions="Center" Spacing="20" Margin="0,0,20,0"
-                               BindingContext="{Binding Source={x:RelativeSource AncestorType={x:Type local:AppShell}}, Path=BindingContext}">
+        <HorizontalStackLayout VerticalOptions="Center" Spacing="20" Margin="0,0,20,0">
             <Label Text="Rows:" VerticalOptions="Center" />
             <Entry Text="{Binding RowCount}" Keyboard="Numeric" WidthRequest="100" />
-            <Button Text="Regenerate" Command="{Binding RegenerateDataCommand}" />
+            <Button Text="Regenerate" Command="{Binding RegenerateCommand}" />
             <Button Text="Clear Filters" Command="{Binding ClearFiltersCommand}" />
         </HorizontalStackLayout>
     </Shell.TitleView>

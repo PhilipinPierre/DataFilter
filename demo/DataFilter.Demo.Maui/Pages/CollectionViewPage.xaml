@@ -2,11 +2,46 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:DataFilter.Maui.Controls;assembly=DataFilter.Maui"
-             xmlns:vm="clr-namespace:DataFilter.Maui.Demo.ViewModels"
              x:Class="DataFilter.Maui.Demo.Pages.CollectionViewPage"
-             Title="CollectionViewPage">
+             Title="Collection View">
 
-    <Grid>
-        <controls:FilterableDataGrid ViewModel="{Binding ViewModel.GridViewModel}" />
+    <Grid RowDefinitions="Auto,Auto,*">
+        <VerticalStackLayout Grid.Row="0" Padding="16,12" Spacing="2">
+            <Label Text="Scenario 6 — Collection View Integration"
+                   FontSize="16" FontAttributes="Bold" />
+            <Label Text="Filtering applied through the FilterableDataGridViewModel which updates the bound CollectionView."
+                   FontSize="13" TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
+        </VerticalStackLayout>
+        <Frame Grid.Row="1" Margin="16,0,16,8" Padding="10,6"
+               BackgroundColor="{AppThemeBinding Light=#F3E5F5, Dark=#2D1B4E}"
+               BorderColor="{AppThemeBinding Light=#CE93D8, Dark=#7B3FAB}"
+               CornerRadius="6">
+            <Label Text="📦  Direct CollectionView binding — demonstrating smooth UI updates"
+                   FontSize="13"
+                   TextColor="{AppThemeBinding Light=#6A1B9A, Dark=#CE93D8}" />
+        </Frame>
+
+        <CollectionView Grid.Row="2" Margin="12"
+                        ItemsSource="{Binding ViewModel.GridViewModel.FilteredItems}">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Frame Padding="12" CornerRadius="8" HasShadow="False"
+                           BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#2A2A2A}"
+                           BorderColor="{AppThemeBinding Light=#EEEEEE, Dark=#444444}">
+                        <HorizontalStackLayout Spacing="15">
+                            <Ellipse Fill="#512BD4" WidthRequest="40" HeightRequest="40" VerticalOptions="Center" />
+                            <VerticalStackLayout VerticalOptions="Center">
+                                <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="15" />
+                                <Label Text="{Binding Department}" FontSize="12" TextColor="Gray" />
+                            </VerticalStackLayout>
+                            <Label Text="{Binding Country}" VerticalOptions="Center" HorizontalOptions="EndAndExpand" Margin="0,0,10,0" />
+                        </HorizontalStackLayout>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
     </Grid>
 </ContentPage>

@@ -8,7 +8,17 @@
     mc:Ignorable="d">
 
     <Grid>
-        <controls:FilterableDataGrid 
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="10" Spacing="5">
+            <TextBlock Text="Scenario 1 — Local Filtering" FontSize="20" FontWeight="Bold" />
+            <TextBlock Text="All data is loaded locally. Filters are applied in-memory instantly against the collection." FontSize="14" Foreground="{ThemeResource SystemControlPageTextBaseMediumBrush}" />
+        </StackPanel>
+
+        <controls:FilterableDataGrid Grid.Row="1"
             ViewModel="{x:Bind ViewModel.GridViewModel, Mode=OneWay}"
             ItemsSource="{x:Bind ViewModel.GridViewModel.FilteredItems, Mode=OneWay}">
             <ListView.ItemTemplate>

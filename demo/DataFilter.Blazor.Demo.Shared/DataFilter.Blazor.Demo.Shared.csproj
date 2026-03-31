@@ -17,6 +17,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\DataFilter.Blazor\DataFilter.Blazor.csproj" />
+    <ProjectReference Include="..\..\src\DataFilter.Core\DataFilter.Core.csproj" />
+    <ProjectReference Include="..\..\src\DataFilter.PlatformShared\DataFilter.PlatformShared.csproj" />
   </ItemGroup>
 
   <ItemGroup>

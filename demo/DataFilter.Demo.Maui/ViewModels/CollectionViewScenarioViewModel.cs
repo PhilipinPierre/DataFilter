@@ -9,18 +9,15 @@ namespace DataFilter.Maui.Demo.ViewModels;
 public partial class CollectionViewScenarioViewModel : ObservableObject
 {
     [ObservableProperty]
-    private FilterableDataGridViewModel<Employee> _gridViewModel;
+    private FilterableDataGridViewModel<Employee> _gridViewModel = new();
     
     [ObservableProperty]
-    private ObservableCollection<Employee> _employees;
+    private ObservableCollection<Employee> _employees = new();
 
     public void Regenerate(int count)
     {
         Employees = new ObservableCollection<Employee>(EmployeeDataGenerator.Employees);
-        GridViewModel = new FilterableDataGridViewModel<Employee>
-        {
-            LocalDataSource = Employees
-        };
+        GridViewModel.LocalDataSource = Employees;
         GridViewModel.RefreshDataAsync();
     }
 }
