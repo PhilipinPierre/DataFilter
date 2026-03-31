@@ -1,3 +1,5 @@
+using DataFilter.Blazor.Demo.Shared.State;
+using DataFilter.Demo.Shared;
 using Microsoft.Extensions.Logging;
 
 namespace DataFilter.Blazor.Demo.Hybrid;
@@ -17,6 +19,12 @@ public static class MauiProgram
 				});
 
 			builder.Services.AddMauiBlazorWebView();
+
+			// Shared Demo Services
+			builder.Services.AddDataFilterDemoServices();
+
+			// Blazor Shared State
+			builder.Services.AddScoped<DemoState>();
 
 #if DEBUG
 			builder.Services.AddBlazorWebViewDeveloperTools();

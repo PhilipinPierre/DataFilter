@@ -1,0 +1,18 @@
+  Identification des projets à restaurer...
+  Tous les projets sont à jour pour la restauration.
+  DataFilter.Core -> D:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Core\bin\x64\Debug\net9.0\DataFilter.Core.dll
+  DataFilter.Filtering.ExcelLike -> D:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.Filtering.ExcelLike\bin\x64\Debug\net9.0\DataFilter.Filtering.ExcelLike.dll
+  DataFilter.PlatformShared -> D:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.PlatformShared\bin\x64\Debug\net9.0\DataFilter.PlatformShared.dll
+  DataFilter.UwpXaml -> D:\Workspaces_Personal\Dev\DataFilter\src\DataFilter.UwpXaml\bin\x64\Debug\net9.0-windows10.0.26100.0\DataFilter.UwpXaml.dll
+  DataFilter.Demo.Shared -> D:\Workspaces_Personal\Dev\DataFilter\demo\DataFilter.Demo.Shared\bin\x64\Debug\net9.0\DataFilter.Demo.Shared.dll
+D:\Workspaces_Personal\Dev\DataFilter\demo\DataFilter.UwpXaml.Demo\obj\x64\Debug\net9.0-windows10.0.26100.0\win-x64\Pages\ListViewPage.g.cs(38,13): error CS0246: Le nom de type ou d'espace de noms 'IListViewPage_Bindings' est introuvable (vous manque-t-il une directive using ou une référence d'assembly ?) [D:\Workspaces_Personal\Dev\DataFilter\demo\DataFilter.UwpXaml.Demo\DataFilter.UwpXaml.Demo.csproj]
+
+ÉCHEC de la build.
+
+D:\Workspaces_Personal\Dev\DataFilter\demo\DataFilter.UwpXaml.Demo\obj\x64\Debug\net9.0-windows10.0.26100.0\win-x64\Pages\ListViewPage.g.cs(38,13): error CS0246: Le nom de type ou d'espace de noms 'IListViewPage_Bindings' est introuvable (vous manque-t-il une directive using ou une référence d'assembly ?) [D:\Workspaces_Personal\Dev\DataFilter\demo\DataFilter.UwpXaml.Demo\DataFilter.UwpXaml.Demo.csproj]
+    0 Avertissement(s)
+    1 Erreur(s)
+
+Temps écoulé 00:00:03.01
+
+Des mises à jour de la charge de travail sont disponibles. Exécutez `dotnet workload list` pour plus d’informations.

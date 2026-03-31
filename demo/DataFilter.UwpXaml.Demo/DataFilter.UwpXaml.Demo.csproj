@@ -1,40 +1,41 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net9.0-windows10.0.26100.0</TargetFramework>
-    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
-    <Nullable>enable</Nullable>
-    <UseUwp>true</UseUwp>
-    <Platforms>x86;x64;arm64</Platforms>
-    <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
-    <DefaultLanguage>fr-FR</DefaultLanguage>
-    <PublishAot>true</PublishAot>
-    <PublishProfile>win-$(Platform).pubxml</PublishProfile>
-    <DisableRuntimeMarshalling>true</DisableRuntimeMarshalling>
-    <EnableMsixTooling>true</EnableMsixTooling>
-  </PropertyGroup>
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net9.0-windows10.0.26100.0</TargetFramework>
+		<TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+		<Nullable>enable</Nullable>
+		<UseUwp>true</UseUwp>
+		<Platforms>x86;x64;arm64</Platforms>
+		<RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+		<DefaultLanguage>fr-FR</DefaultLanguage>
+		<PublishAot>true</PublishAot>
+		<PublishProfile>win-$(Platform).pubxml</PublishProfile>
+		<DisableRuntimeMarshalling>true</DisableRuntimeMarshalling>
+		<EnableMsixTooling>true</EnableMsixTooling>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <ApplicationDefinition Remove="App.xaml" />
-    <ApplicationDefinition Include="App.xaml" />
-    <Page Remove="**\*.xaml" />
-    <Page Include="**\*.xaml" Exclude="App.xaml" />
-  </ItemGroup>
+	<ItemGroup>
+		<ApplicationDefinition Remove="App.xaml" />
+		<ApplicationDefinition Include="App.xaml" />
+		<Page Remove="**\*.xaml" />
+		<Page Include="**\*.xaml" Exclude="App.xaml" />
+	</ItemGroup>
 
-  <Target Name="IncludeXamlGeneratedFiles" BeforeTargets="CoreCompile">
-    <ItemGroup>
-      <Compile Include="obj\**\*.g.i.cs" />
-      <Compile Include="obj\**\*.g.cs" Exclude="obj\**\*.GlobalUsings.g.cs;obj\**\*.AssemblyAttributes.cs" />
-    </ItemGroup>
-  </Target>
+	<Target Name="IncludeXamlGeneratedFiles" BeforeTargets="CoreCompile">
+		<ItemGroup>
+			<Compile Include="obj\**\*.g.i.cs" />
+			<Compile Include="obj\**\*.g.cs" Exclude="obj\**\*.GlobalUsings.g.cs;obj\**\*.AssemblyAttributes.cs" />
+		</ItemGroup>
+	</Target>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\DataFilter.UwpXaml\DataFilter.UwpXaml.csproj" />
-    <ProjectReference Include="..\DataFilter.Demo.Shared\DataFilter.Demo.Shared.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\..\src\DataFilter.UwpXaml\DataFilter.UwpXaml.csproj" />
+		<ProjectReference Include="..\DataFilter.Demo.Shared\DataFilter.Demo.Shared.csproj" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="CommunityToolkit.Mvvm" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
-  </ItemGroup>
-</Project>
+	<ItemGroup>
+		<PackageReference Include="CommunityToolkit.Mvvm" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
+	</ItemGroup>
+	</Project>

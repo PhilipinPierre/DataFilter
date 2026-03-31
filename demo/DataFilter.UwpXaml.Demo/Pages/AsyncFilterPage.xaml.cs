@@ -18,6 +18,10 @@ public sealed partial class AsyncFilterPage : Page
         if (e.Parameter is AsyncFilterScenarioViewModel vm)
         {
             ViewModel = vm;
+            _ = Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+            {
+                Bindings.Update();
+            });
         }
         base.OnNavigatedTo(e);
     }

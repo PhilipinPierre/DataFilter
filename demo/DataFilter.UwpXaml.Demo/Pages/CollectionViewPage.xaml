@@ -24,8 +24,7 @@
 
         <controls:FilterableDataGrid 
             Grid.Row="1"
-            ViewModel="{x:Bind ViewModel.GridViewModel, Mode=OneWay}"
-            ItemsSource="{x:Bind EmployeeCVS.View, Mode=OneWay}">
+            ViewModel="{x:Bind ViewModel.GridViewModel, Mode=OneWay}">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <Grid>

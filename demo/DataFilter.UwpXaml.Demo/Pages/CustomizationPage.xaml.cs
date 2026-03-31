@@ -19,6 +19,10 @@ public sealed partial class CustomizationPage : Page
         if (e.Parameter is CustomizationScenarioViewModel vm)
         {
             ViewModel = vm;
+            _ = Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+            {
+                Bindings.Update();
+            });
         }
         base.OnNavigatedTo(e);
     }

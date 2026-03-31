@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DataFilter.Demo.Shared.Services;
 
@@ -43,6 +43,7 @@ public partial class MainViewModel : ObservableObject
         CustomizationScenario.Regenerate(count);
         ListViewScenario.Regenerate(count);
         CollectionViewScenario.Regenerate(count);
+
     }
 
     [RelayCommand]

@@ -1,4 +1,4 @@
-using Windows.UI.Xaml;
+﻿using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
 using DataFilter.UwpXaml.Behaviors;
@@ -30,8 +30,31 @@ public sealed partial class ListViewPage : Page
     {
         if (e.Parameter is ListViewScenarioViewModel vm)
         {
+            if (ViewModel != null) ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
             ViewModel = vm;
+            ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+            UpdateItemsSource();
+            
+            _ = Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+            {
+                Bindings.Update();
+            });
         }
         base.OnNavigatedTo(e);
+    }
+
+    private void OnViewModelPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ListViewScenarioViewModel.GridViewModel))
+        {
+            UpdateItemsSource();
+        }
+    }
+
+    private void UpdateItemsSource()
+    {
+        if (ViewModel?.GridViewModel == null) return;
+
+        DataListView.ItemsSource = ViewModel.GridViewModel.FilteredItems;
     }
 }

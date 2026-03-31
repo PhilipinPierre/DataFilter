@@ -5,14 +5,38 @@
              x:Class="DataFilter.Maui.Demo.Pages.LocalFilterPage"
              Title="Local Filtering">
 
-    <Grid RowDefinitions="Auto,*">
+    <Grid RowDefinitions="Auto,Auto,*">
         <VerticalStackLayout Grid.Row="0" Padding="16,12" Spacing="2">
             <Label Text="Scenario 1 — Local Filtering"
                    FontSize="16" FontAttributes="Bold" />
             <Label Text="All data is loaded locally. Filters are applied in-memory instantly against the collection."
                    FontSize="13" TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
         </VerticalStackLayout>
-        <controls:FilterableDataGrid Grid.Row="1"
-                                     ViewModel="{Binding ViewModel.GridViewModel}" />
+
+        <!-- Header Row -->
+        <Border Grid.Row="1" Style="{StaticResource DataGridHeaderStyle}" Margin="8,0">
+            <HorizontalStackLayout Spacing="0" VerticalOptions="Center">
+                <Button Text="ID 🔍" WidthRequest="70" Clicked="OnFilterId" Style="{StaticResource HeaderButtonStyle}" />
+                <Button Text="Name 🔍" WidthRequest="150" Clicked="OnFilterName" Style="{StaticResource HeaderButtonStyle}" />
+                <Button Text="Dept 🔍" WidthRequest="120" Clicked="OnFilterDept" Style="{StaticResource HeaderButtonStyle}" />
+                <Button Text="Country 🔍" WidthRequest="120" Clicked="OnFilterCountry" Style="{StaticResource HeaderButtonStyle}" />
+            </HorizontalStackLayout>
+        </Border>
+
+        <ListView Grid.Row="2" Margin="8"
+                  ItemsSource="{Binding ViewModel.GridViewModel.FilteredItems}"
+                  ItemTemplate="{StaticResource EmployeeItemTemplate}"
+                  SeparatorVisibility="Default"
+                  SelectionMode="None" />
+
+        <!-- Popup Overlay -->
+        <BoxView x:Name="PopupOverlay" Grid.Row="0" Grid.RowSpan="3" BackgroundColor="#80000000" IsVisible="False">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnClosePopup" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
+        <Frame x:Name="PopupFrame" Grid.Row="2" VerticalOptions="Start" HorizontalOptions="Center" Margin="20" Padding="0" IsVisible="False" HasShadow="True" CornerRadius="8" BorderColor="Gray">
+            <ContentView x:Name="PopupContainer" />
+        </Frame>
     </Grid>
 </ContentPage>

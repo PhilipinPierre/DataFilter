@@ -1,16 +1,35 @@
-using DataFilter.Maui.Demo.ViewModels;
+﻿using DataFilter.Maui.Demo.ViewModels;
 using Microsoft.Maui.Controls;
 
 namespace DataFilter.Maui.Demo.Pages;
 
-public partial class HybridFilterPage : ContentPage
-{
-    public HybridFilterScenarioViewModel ViewModel { get; }
-
-    public HybridFilterPage(HybridFilterScenarioViewModel viewModel)
+    public partial class HybridFilterPage : ContentPage
     {
-        InitializeComponent();
-        ViewModel = viewModel;
-        BindingContext = this;
+        public HybridFilterScenarioViewModel ViewModel { get; }
+
+        public HybridFilterPage(HybridFilterScenarioViewModel viewModel)
+        {
+            InitializeComponent();
+            ViewModel = viewModel;
+            BindingContext = this;
+        }
+
+        private void OnFilterId(object sender, EventArgs e) => ShowPopup("Id");
+        private void OnFilterName(object sender, EventArgs e) => ShowPopup("Name");
+        private void OnFilterDept(object sender, EventArgs e) => ShowPopup("Department");
+        private void OnFilterCountry(object sender, EventArgs e) => ShowPopup("Country");
+
+        private void ShowPopup(string propertyName)
+        {
+            var popup = DataFilter.Maui.Behaviors.FilterHeaderBehavior.CreatePopup(ViewModel.GridViewModel, propertyName);
+            PopupContainer.Content = popup;
+            PopupOverlay.IsVisible = true;
+            PopupFrame.IsVisible = true;
+        }
+
+        private void OnClosePopup(object sender, EventArgs e)
+        {
+            PopupOverlay.IsVisible = false;
+            PopupFrame.IsVisible = false;
+        }
     }
-}

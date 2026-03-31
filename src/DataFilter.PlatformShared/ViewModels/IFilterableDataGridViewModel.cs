@@ -1,11 +1,14 @@
+using System.Collections;
+using System.ComponentModel;
 using DataFilter.Core.Abstractions;
 using DataFilter.Filtering.ExcelLike.Abstractions;
 using DataFilter.Filtering.ExcelLike.Models;
 
 namespace DataFilter.PlatformShared.ViewModels;
 
-public interface IFilterableDataGridViewModel
+public interface IFilterableDataGridViewModel : INotifyPropertyChanged
 {
+    IEnumerable FilteredItems { get; }
     IFilterContext Context { get; }
     Task RefreshDataAsync();
     void ApplyColumnFilter(string propertyName, ExcelFilterState state);

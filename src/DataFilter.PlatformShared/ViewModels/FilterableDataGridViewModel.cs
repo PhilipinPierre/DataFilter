@@ -15,14 +15,17 @@ public partial class FilterableDataGridViewModel<T> : ObservableObject, IFiltera
     public HashSet<string> FilterableProperties { get; } = new(StringComparer.OrdinalIgnoreCase);
 
     [ObservableProperty] private IAsyncDataProvider<T>? _asyncDataProvider;
-    [ObservableProperty] private IEnumerable<T> _localDataSource = Enumerable.Empty<T>();
-    [ObservableProperty] private IEnumerable<T> _filteredItems = Enumerable.Empty<T>();
+    [ObservableProperty] private IEnumerable<T> _localDataSource = new List<T>();
+    [ObservableProperty] private IEnumerable<T> _filteredItems = new List<T>();
+
+    System.Collections.IEnumerable IFilterableDataGridViewModel.FilteredItems => FilteredItems;
 
     public async Task RefreshDataAsync()
     {
         if (AsyncDataProvider != null)
         {
-            FilteredItems = (await AsyncDataProvider.FetchDataAsync(Context)).Items;
+            var dataResult = await AsyncDataProvider.FetchDataAsync(Context);
+            FilteredItems = dataResult.Items.ToList();
             return;
         }
 
@@ -38,7 +41,7 @@ public partial class FilterableDataGridViewModel<T> : ObservableObject, IFiltera
                 : (sort.IsDescending ? ordered.ThenByDescending(x => pi.GetValue(x)) : ordered.ThenBy(x => pi.GetValue(x)));
         }
         if (ordered != null) result = ordered;
-        FilteredItems = result;
+        FilteredItems = result.ToList();
     }
 
     public async void ApplyColumnFilter(string propertyName, ExcelFilterState state)

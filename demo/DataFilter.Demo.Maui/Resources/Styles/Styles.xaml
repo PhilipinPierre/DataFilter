@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <?xaml-comp compile="true" ?>
 <ResourceDictionary 
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
@@ -436,5 +436,33 @@
         <Setter Property="UnselectedTabColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray950}}" />
         <Setter Property="SelectedTabColor" Value="{AppThemeBinding Light={StaticResource Gray950}, Dark={StaticResource Gray200}}" />
     </Style>
+
+    <!-- DataGrid-like Styles -->
+    <Style x:Key="DataGridHeaderStyle" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="HeightRequest" Value="45" />
+    </Style>
+
+    <Style x:Key="HeaderButtonStyle" TargetType="Button">
+        <Setter Property="Padding" Value="5,0" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="VerticalOptions" Value="Fill" />
+    </Style>
+
+    <DataTemplate x:Key="EmployeeItemTemplate">
+        <ViewCell>
+            <HorizontalStackLayout Spacing="0" Padding="10,0">
+                <Label Text="{Binding Id}" WidthRequest="60" VerticalOptions="Center" />
+                <Label Text="{Binding Name}" WidthRequest="150" VerticalOptions="Center" FontAttributes="Bold" />
+                <Label Text="{Binding Department}" WidthRequest="120" VerticalOptions="Center" />
+                <Label Text="{Binding Country}" WidthRequest="120" VerticalOptions="Center" />
+                <Label Text="{Binding Salary}" WidthRequest="100" VerticalOptions="Center" HorizontalTextAlignment="End" />
+            </HorizontalStackLayout>
+        </ViewCell>
+    </DataTemplate>
 
 </ResourceDictionary>

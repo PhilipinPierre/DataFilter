@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using DataFilter.Demo.Shared.Models;
 using DataFilter.Demo.Shared.Services;
 using DataFilter.UwpXaml.ViewModels;
@@ -18,17 +18,6 @@ public partial class HybridFilterScenarioViewModel : ObservableObject
         GridViewModel.AsyncDataProvider = _mockService;
         GridViewModel.LocalDataSource = EmployeeDataGenerator.Employees;
         _ = GridViewModel.RefreshDataAsync();
-    }
-
-    public HybridFilterScenarioViewModel(IMockEmployeeApiService mockService)
-    {
-        _mockService = mockService;
-        GridViewModel = new FilterableDataGridViewModel<Employee>
-        {
-            LocalDataSource = EmployeeDataGenerator.Employees,
-            AsyncDataProvider = _mockService
-        };
-        GridViewModel.RefreshDataAsync();
     }
 
     public void Regenerate(int count)

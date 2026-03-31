@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using DataFilter.Demo.Shared.Models;
 using DataFilter.Demo.Shared.Services;
 using DataFilter.UwpXaml.ViewModels;
@@ -23,5 +23,6 @@ public partial class LocalFilterScenarioViewModel : ObservableObject
             LocalDataSource = EmployeeDataGenerator.Employees
         };
         GridViewModel.RefreshDataAsync();
+
     }
 }

@@ -5,7 +5,7 @@
              x:Class="DataFilter.Maui.Demo.Pages.AsyncFilterPage"
              Title="Async Filtering">
 
-    <Grid RowDefinitions="Auto,Auto,*">
+    <Grid RowDefinitions="Auto,Auto,Auto,*">
         <VerticalStackLayout Grid.Row="0" Padding="16,12" Spacing="2">
             <Label Text="Scenario 2 — Async Data Loading"
                    FontSize="16" FontAttributes="Bold" />
@@ -20,7 +20,31 @@
                    FontSize="13"
                    TextColor="{AppThemeBinding Light=#1565C0, Dark=#90CAF9}" />
         </Frame>
-        <controls:FilterableDataGrid Grid.Row="2"
-                                     ViewModel="{Binding ViewModel.GridViewModel}" />
+
+        <!-- Header Row -->
+        <Border Grid.Row="2" Style="{StaticResource DataGridHeaderStyle}" Margin="8,0">
+            <HorizontalStackLayout Spacing="0" VerticalOptions="Center">
+                <Button Text="ID 🔍" WidthRequest="70" Clicked="OnFilterId" Style="{StaticResource HeaderButtonStyle}" />
+                <Button Text="Name 🔍" WidthRequest="150" Clicked="OnFilterName" Style="{StaticResource HeaderButtonStyle}" />
+                <Button Text="Dept 🔍" WidthRequest="120" Clicked="OnFilterDept" Style="{StaticResource HeaderButtonStyle}" />
+                <Button Text="Country 🔍" WidthRequest="120" Clicked="OnFilterCountry" Style="{StaticResource HeaderButtonStyle}" />
+            </HorizontalStackLayout>
+        </Border>
+
+        <ListView Grid.Row="3" Margin="8"
+                  ItemsSource="{Binding ViewModel.GridViewModel.FilteredItems}"
+                  ItemTemplate="{StaticResource EmployeeItemTemplate}"
+                  SeparatorVisibility="Default"
+                  SelectionMode="None" />
+
+        <!-- Popup Overlay -->
+        <BoxView x:Name="PopupOverlay" Grid.Row="0" Grid.RowSpan="4" BackgroundColor="#80000000" IsVisible="False">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnClosePopup" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
+        <Frame x:Name="PopupFrame" Grid.Row="3" VerticalOptions="Start" HorizontalOptions="Center" Margin="20" Padding="0" IsVisible="False" HasShadow="True" CornerRadius="8" BorderColor="Gray">
+            <ContentView x:Name="PopupContainer" />
+        </Frame>
     </Grid>
 </ContentPage>

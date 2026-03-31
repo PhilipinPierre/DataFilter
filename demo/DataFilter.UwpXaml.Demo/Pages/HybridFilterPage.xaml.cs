@@ -18,6 +18,10 @@ public sealed partial class HybridFilterPage : Page
         if (e.Parameter is HybridFilterScenarioViewModel vm)
         {
             ViewModel = vm;
+            _ = Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+            {
+                Bindings.Update();
+            });
         }
         base.OnNavigatedTo(e);
     }
