@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Windows.UI.Xaml.Controls;
 using DataFilter.UwpXaml.Demo.ViewModels;
 using DataFilter.UwpXaml.Demo.Pages;
@@ -6,11 +7,12 @@ namespace DataFilter.UwpXaml.Demo
 {
     public sealed partial class MainPage : Page
     {
-        public MainViewModel ViewModel { get; } = new MainViewModel();
+        public MainViewModel ViewModel { get; }
 
         public MainPage()
         {
             this.InitializeComponent();
+            ViewModel = App.ServiceProvider.GetRequiredService<MainViewModel>();
             this.Loaded += MainPage_Loaded;
         }
 

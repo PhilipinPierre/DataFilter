@@ -1,10 +1,32 @@
 /* DataFilter.Blazor Styles */
 
+:root {
+    --df-popup-bg: #ffffff;
+    --df-popup-border: #ccc;
+    --df-popup-fg: #333;
+    --df-primary-color: #007bff;
+    --df-secondary-bg: #eee;
+    --df-secondary-border: #ccc;
+    --df-header-bg: #f9f9f9;
+    --df-font-family: sans-serif;
+    --df-font-size: 13px;
+}
+
+.df-theme-dark {
+    --df-popup-bg: #333;
+    --df-popup-border: #444;
+    --df-popup-fg: #eee;
+    --df-primary-color: #3794ff;
+    --df-secondary-bg: #444;
+    --df-secondary-border: #555;
+    --df-header-bg: #3a3a3a;
+}
+
 .df-popup-container {
     position: fixed;
     z-index: 1000;
-    background: var(--df-popup-bg, #ffffff);
-    border: 1px solid var(--df-popup-border, #ccc);
+    background: var(--df-popup-bg);
+    border: 1px solid var(--df-popup-border);
     box-shadow: 0 2px 10px rgba(0,0,0,0.2);
     display: flex;
     flex-direction: column;
@@ -12,11 +34,9 @@
     min-height: 150px;
     width: 250px;
     height: auto;
-    /* Resize will clamp to the viewport in JS (see DataFilterInterops.initResizable). */
-    max-height: none;
-    font-family: var(--df-font-family, sans-serif);
-    font-size: var(--df-font-size, 13px);
-    color: var(--df-popup-fg, #333);
+    font-family: var(--df-font-family);
+    font-size: var(--df-font-size);
+    color: var(--df-popup-fg);
 }
 
 .df-popup-body {
@@ -57,14 +77,15 @@
 .df-sort-button {
     text-align: left;
     background: transparent;
-    border: 1px solid #ddd;
+    border: 1px solid var(--df-secondary-border);
     padding: 5px 10px;
     cursor: pointer;
     border-radius: 4px;
+    color: inherit;
 }
 
 .df-sort-button:hover {
-    background: #f5f5f5;
+    background: var(--df-secondary-bg);
 }
 
 .df-search-section {
@@ -77,9 +98,11 @@
 .df-search-input {
     width: 100%;
     padding: 5px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--df-secondary-border);
     border-radius: 4px;
     box-sizing: border-box;
+    background: var(--df-popup-bg);
+    color: inherit;
 }
 
 .df-accumulation-options {
@@ -99,16 +122,18 @@
 .df-accumulation-select {
     font-size: 10px;
     padding: 1px;
+    background: var(--df-popup-bg);
+    color: inherit;
 }
 
 .df-custom-filter-section {
-    border: 1px solid #eee;
+    border: 1px solid var(--df-secondary-border);
     margin-bottom: 10px;
     border-radius: 4px;
 }
 
 .df-custom-filter-header {
-    background: #f9f9f9;
+    background: var(--df-header-bg);
     padding: 5px;
     cursor: pointer;
     font-weight: bold;
@@ -125,7 +150,9 @@
 
 .df-custom-input {
     padding: 3px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--df-secondary-border);
+    background: var(--df-popup-bg);
+    color: inherit;
 }
 
 .df-value-list-section {
@@ -133,7 +160,7 @@
     min-height: 120px;
     max-height: none;
     overflow-y: auto;
-    border: 1px solid #eee;
+    border: 1px solid var(--df-secondary-border);
     padding: 5px;
 }
 
@@ -142,25 +169,6 @@
     align-items: center;
     gap: 5px;
     padding: 2px 0;
-}
-
-.df-tree-indent {
-    width: 15px;
-    display: inline-block;
-}
-
-.df-expander {
-    width: 15px;
-    height: 15px;
-    padding: 0;
-    margin: 0;
-    border: 0;
-    background: transparent;
-    cursor: pointer;
-    color: #666;
-    font-size: 12px;
-    line-height: 15px;
-    text-align: center;
 }
 
 .df-footer-buttons {
@@ -172,7 +180,7 @@
 }
 
 .df-btn-primary {
-    background: var(--df-primary-color, #007bff);
+    background: var(--df-primary-color);
     color: white;
     border: none;
     padding: 5px 15px;
@@ -181,15 +189,12 @@
 }
 
 .df-btn-secondary {
-    background: #eee;
-    border: 1px solid #ccc;
+    background: var(--df-secondary-bg);
+    border: 1px solid var(--df-secondary-border);
     padding: 5px 15px;
     border-radius: 4px;
     cursor: pointer;
-}
-
-.df-btn:hover {
-    opacity: 0.9;
+    color: inherit;
 }
 
 .df-column-header-button {
@@ -197,9 +202,12 @@
     border: none;
     cursor: pointer;
     padding: 0 5px;
-    color: #666;
+    color: inherit;
+    opacity: 0.6;
 }
 
 .df-column-header-button.active {
-    color: var(--df-primary-color, #007bff);
+    opacity: 1;
+    color: var(--df-primary-color);
 }
+

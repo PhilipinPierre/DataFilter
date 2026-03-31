@@ -13,15 +13,27 @@ public sealed partial class MainViewModel : ObservableObject
 
     public TabItem SelectedTabControl { get; set; }
 
-    public LocalFilterScenarioViewModel LocalFilterScenario { get; } = new();
-    public AsyncFilterScenarioViewModel AsyncFilterScenario { get; } = new();
-    public HybridFilterScenarioViewModel HybridFilterScenario { get; } = new();
-    public CustomizationScenarioViewModel CustomizationScenario { get; } = new();
-    public ListViewScenarioViewModel ListViewScenario { get; } = new();
-    public CollectionViewScenarioViewModel CollectionViewScenario { get; } = new();
+    public LocalFilterScenarioViewModel LocalFilterScenario { get; }
+    public AsyncFilterScenarioViewModel AsyncFilterScenario { get; }
+    public HybridFilterScenarioViewModel HybridFilterScenario { get; }
+    public CustomizationScenarioViewModel CustomizationScenario { get; }
+    public ListViewScenarioViewModel ListViewScenario { get; }
+    public CollectionViewScenarioViewModel CollectionViewScenario { get; }
 
-    public MainViewModel()
+    public MainViewModel(
+        LocalFilterScenarioViewModel localFilterScenario,
+        AsyncFilterScenarioViewModel asyncFilterScenario,
+        HybridFilterScenarioViewModel hybridFilterScenario,
+        CustomizationScenarioViewModel customizationScenario,
+        ListViewScenarioViewModel listViewScenario,
+        CollectionViewScenarioViewModel collectionViewScenario)
     {
+        LocalFilterScenario = localFilterScenario;
+        AsyncFilterScenario = asyncFilterScenario;
+        HybridFilterScenario = hybridFilterScenario;
+        CustomizationScenario = customizationScenario;
+        ListViewScenario = listViewScenario;
+        CollectionViewScenario = collectionViewScenario;
     }
 
     [RelayCommand]

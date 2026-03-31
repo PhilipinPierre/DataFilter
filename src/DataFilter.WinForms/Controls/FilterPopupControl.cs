@@ -66,10 +66,7 @@ public sealed class FilterPopupControl : UserControl
         };
         _ok.Click += (_, _) => ViewModel?.ApplyCommand.Execute(null);
         _clear.Click += (_, _) => ViewModel?.ClearCommand.Execute(null);
-        _selectAll.CheckedChanged += (_, _) =>
-        {
-            if (ViewModel != null) ViewModel.SelectAll = _selectAll.Checked;
-        };
+        _selectAll.CheckedChanged += (_, _) => OnSelectAllChanged(_selectAll.Checked);
         _advanced.CheckedChanged += (_, _) => _advancedPanel.Visible = _advanced.Checked;
 
         _accumulationMode.Items.Add("Union");
@@ -82,11 +79,14 @@ public sealed class FilterPopupControl : UserControl
                 ? DataFilter.Core.Enums.AccumulationMode.Union
                 : DataFilter.Core.Enums.AccumulationMode.Intersection;
         };
-        _values.AfterCheck += (_, e) =>
+        _values.AfterCheck += (s, e) =>
         {
+            if (e.Action != TreeViewAction.ByMouse && e.Action != TreeViewAction.ByKeyboard) return;
             if (e.Node?.Tag is DataFilter.Filtering.ExcelLike.Models.FilterValueItem item)
             {
                 item.IsSelected = e.Node.Checked;
+                // If it has children, check them too
+                foreach (TreeNode child in e.Node.Nodes) SetCheckedRecursive(child, e.Node.Checked);
             }
         };
 
@@ -149,5 +149,42 @@ public sealed class FilterPopupControl : UserControl
             node.Nodes.Add(BuildNode(child));
         }
         return node;
+    }
+
+    public void ApplyTheme(bool isDark)
+    {
+        this.BackColor = isDark ? Color.FromArgb(45, 45, 48) : SystemColors.Control;
+        this.ForeColor = isDark ? Color.White : SystemColors.ControlText;
+        UpdateControlTheme(this, isDark);
+    }
+
+    private void UpdateControlTheme(Control parent, bool isDark)
+    {
+        foreach (Control c in parent.Controls)
+        {
+            c.BackColor = isDark ? Color.FromArgb(45, 45, 48) : SystemColors.Window;
+            c.ForeColor = isDark ? Color.White : SystemColors.ControlText;
+            if (c is Button b) b.FlatStyle = FlatStyle.Flat;
+            UpdateControlTheme(c, isDark);
+        }
+    }
+
+    private void OnSelectAllChanged(bool checkedState)
+    {
+        if (ViewModel == null) return;
+        ViewModel.SelectAll = checkedState;
+        foreach (TreeNode node in _values.Nodes)
+        {
+            SetCheckedRecursive(node, checkedState);
+        }
+    }
+
+    private void SetCheckedRecursive(TreeNode node, bool checkedState)
+    {
+        node.Checked = checkedState;
+        foreach (TreeNode child in node.Nodes)
+        {
+            SetCheckedRecursive(child, checkedState);
+        }
     }
 }

@@ -1,7 +1,9 @@
-@typeparam TItem
+﻿@typeparam TItem
 @using DataFilter.Blazor.ViewModels
 @using DataFilter.Filtering.ExcelLike.Models
 @using DataFilter.Core.Enums
+@using DataFilter.Core.Abstractions
+@using DataFilter.Core.Models
 @using System.Linq
 
 <div class="df-grid-container">
@@ -20,14 +22,27 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var item in _filteredItems)
+            @if (_isLoading)
             {
                 <tr>
-                    @foreach (var col in Columns)
-                    {
-                        <td>@col.Selector(item)</td>
-                    }
+                    <td colspan="@Columns.Count" class="text-center p-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </td>
                 </tr>
+            }
+            else
+            {
+                @foreach (var item in _filteredItems)
+                {
+                    <tr>
+                        @foreach (var col in Columns)
+                        {
+                            <td>@col.Selector(item)</td>
+                        }
+                    </tr>
+                }
             }
         </tbody>
     </table>
@@ -35,95 +50,126 @@
 
 @code {
     [Parameter] public IEnumerable<TItem> Items { get; set; } = Enumerable.Empty<TItem>();
+    [Parameter] public IAsyncDataProvider<TItem>? DataProvider { get; set; }
     [Parameter] public List<ColumnDefinition<TItem>> Columns { get; set; } = new();
+    [Parameter] public int PageSize { get; set; } = 20;
 
     private Dictionary<string, IBlazorColumnFilterViewModel> _viewModels = new();
     private List<TItem> _filteredItems = new();
     private readonly List<(string PropertyName, bool IsDescending)> _sortDescriptors = new();
+    private bool _isLoading;
+    private int _currentPage = 1;
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
-        ApplyFilters();
+        await ApplyFiltersAsync();
     }
 
-    private void ApplyFilters()
+    private async Task ApplyFiltersAsync()
     {
-        var descriptors = new List<DataFilter.Core.Abstractions.IFilterDescriptor>();
-        foreach (var entry in _viewModels)
+        _isLoading = true;
+        StateHasChanged();
+
+        try
         {
-            var vm = entry.Value;
-            var column = Columns.FirstOrDefault(c => c.Id == entry.Key);
-            if (column == null || string.IsNullOrEmpty(column.PropertyName)) continue;
-
-            if (vm.IsFilterActive)
+            var descriptors = new List<IFilterDescriptor>();
+            foreach (var entry in _viewModels)
             {
-                var group = new DataFilter.Core.Models.FilterGroup(DataFilter.Core.Enums.LogicalOperator.And);
-                
-                // Selections
-                if (!vm.FilterState.SelectAll && vm.FilterState.SelectedValues.Count > 0)
-                {
-                    group.Add(new DataFilter.Core.Models.FilterDescriptor(column.PropertyName, DataFilter.Core.Enums.FilterOperator.In, vm.FilterState.SelectedValues.ToList()));
-                }
-                
-                // Custom Filter
-                if (vm.FilterState.CustomOperator.HasValue)
-                {
-                    object? val = vm.FilterState.CustomValue1;
-                    if (vm.FilterState.CustomOperator == DataFilter.Core.Enums.FilterOperator.Between)
-                    {
-                        val = new DataFilter.Core.Models.RangeValue(vm.FilterState.CustomValue1, vm.FilterState.CustomValue2);
-                    }
-                    group.Add(new DataFilter.Core.Models.FilterDescriptor(column.PropertyName, vm.FilterState.CustomOperator.Value, val));
-                }
+                var vm = entry.Value;
+                var column = Columns.FirstOrDefault(c => c.Id == entry.Key);
+                if (column == null || string.IsNullOrEmpty(column.PropertyName)) continue;
 
-                if (group.Descriptors.Count > 0)
+                if (vm.IsFilterActive)
                 {
-                    descriptors.Add(group);
+                    var group = new FilterGroup(LogicalOperator.And);
+                    
+                    // Selections
+                    if (!vm.FilterState.SelectAll && vm.FilterState.SelectedValues.Count > 0)
+                    {
+                        group.Add(new FilterDescriptor(column.PropertyName, FilterOperator.In, vm.FilterState.SelectedValues.ToList()));
+                    }
+                    
+                    // Custom Filter
+                    if (vm.FilterState.CustomOperator.HasValue)
+                    {
+                        object? val = vm.FilterState.CustomValue1;
+                        if (vm.FilterState.CustomOperator == FilterOperator.Between)
+                        {
+                            val = new RangeValue(vm.FilterState.CustomValue1, vm.FilterState.CustomValue2);
+                        }
+                        group.Add(new FilterDescriptor(column.PropertyName, vm.FilterState.CustomOperator.Value, val));
+                    }
+
+                    if (group.Descriptors.Count > 0)
+                    {
+                        descriptors.Add(group);
+                    }
                 }
             }
-        }
 
-        IEnumerable<TItem> results;
-        if (descriptors.Count > 0)
-        {
-            var engine = new DataFilter.Core.Engine.ReflectionFilterEngine<TItem>();
-            results = engine.Apply(Items, descriptors);
-        }
-        else
-        {
-            results = Items;
-        }
-
-        // Apply sorting after filtering (if any)
-        if (_sortDescriptors.Count > 0)
-        {
-            var flags = System.Reflection.BindingFlags.IgnoreCase | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance;
-            IOrderedEnumerable<TItem>? ordered = null;
-
-            foreach (var sort in _sortDescriptors)
+            if (DataProvider != null)
             {
-                var propInfo = typeof(TItem).GetProperty(sort.PropertyName, flags);
-                if (propInfo == null) continue;
-
-                if (ordered == null)
+                var context = new FilterContext
                 {
-                    ordered = sort.IsDescending
-                        ? results.OrderByDescending(x => propInfo.GetValue(x))
-                        : results.OrderBy(x => propInfo.GetValue(x));
+                    // Descriptors = descriptors,
+                    // SortDescriptors = _sortDescriptors.Select(s => new DataFilter.Core.Models.SortDescriptor(s.PropertyName, s.IsDescending)).Cast<ISortDescriptor>().ToList(),
+                    Page = _currentPage,
+                    PageSize = PageSize
+                };
+
+                var result = await DataProvider.FetchDataAsync(context);
+                _filteredItems = result.Items.ToList();
+            }
+            else
+            {
+                IEnumerable<TItem> results;
+                if (descriptors.Count > 0)
+                {
+                    var engine = new DataFilter.Core.Engine.ReflectionFilterEngine<TItem>();
+                    results = engine.Apply(Items, descriptors);
                 }
                 else
                 {
-                    ordered = sort.IsDescending
-                        ? ordered.ThenByDescending(x => propInfo.GetValue(x))
-                        : ordered.ThenBy(x => propInfo.GetValue(x));
+                    results = Items;
+                }
+
+                // Apply sorting after filtering (if any)
+                if (_sortDescriptors.Count > 0)
+                {
+                    var flags = System.Reflection.BindingFlags.IgnoreCase | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance;
+                    IOrderedEnumerable<TItem>? ordered = null;
+
+                    foreach (var sort in _sortDescriptors)
+                    {
+                        var propInfo = typeof(TItem).GetProperty(sort.PropertyName, flags);
+                        if (propInfo == null) continue;
+
+                        if (ordered == null)
+                        {
+                            ordered = sort.IsDescending
+                                ? results.OrderByDescending(x => propInfo.GetValue(x))
+                                : results.OrderBy(x => propInfo.GetValue(x));
+                        }
+                        else
+                        {
+                            ordered = sort.IsDescending
+                                ? ordered.ThenByDescending(x => propInfo.GetValue(x))
+                                : ordered.ThenBy(x => propInfo.GetValue(x));
+                        }
+                    }
+
+                    _filteredItems = ordered?.ToList() ?? results.ToList();
+                }
+                else
+                {
+                    _filteredItems = results.ToList();
                 }
             }
-
-            _filteredItems = ordered?.ToList() ?? results.ToList();
         }
-        else
+        finally
         {
-            _filteredItems = results.ToList();
+            _isLoading = false;
+            StateHasChanged();
         }
     }
 
@@ -131,70 +177,75 @@
     {
         if (!_viewModels.TryGetValue(column.Id, out var vm))
         {
-            // Simplified VM creation for demo
             vm = new BlazorColumnFilterViewModel(
                 async (search) => {
-                    var distinctValues = Items.Select(column.Selector).Distinct().ToList();
-                    return await Task.FromResult(distinctValues);
+                    if (DataProvider != null)
+                    {
+                        return await DataProvider.FetchDistinctValuesAsync(column.PropertyName, search);
+                    }
+                    var distinctValues = Items.Select(column.Selector).Distinct();
+                    if (!string.IsNullOrEmpty(search))
+                    {
+                         distinctValues = distinctValues.Where(x => x?.ToString()?.Contains(search, StringComparison.OrdinalIgnoreCase) == true);
+                    }
+                    return distinctValues.ToList();
                 },
-                (state) => { 
-                    ApplyFilters();
-                    StateHasChanged(); 
+                async (state) => { 
+                    await ApplyFiltersAsync();
                 },
-                () => { 
-                    ApplyFilters();
-                    StateHasChanged(); 
+                async () => { 
+                    await ApplyFiltersAsync();
                 },
-                (isDescending) =>
+                async (isDescending) =>
                 {
-                    // Primary sort: replace any existing sorts
-                    SetSort(column.PropertyName, isDescending);
+                    SetSortInternal(column.PropertyName, isDescending);
+                    await ApplyFiltersAsync();
                 },
-                (isDescending) =>
+                async (isDescending) =>
                 {
-                    // Sub sort: keep existing sorts and append a new one
-                    AddSubSort(column.PropertyName, isDescending);
+                    AddSubSortInternal(column.PropertyName, isDescending);
+                    await ApplyFiltersAsync();
                 },
                 column.PropertyType
             );
             
             // Initialize VM with distinct values
-            _ = vm.InitializeAsync(Items.Select(column.Selector).Distinct());
+            if (DataProvider == null)
+            {
+                _ = vm.InitializeAsync(Items.Select(column.Selector).Distinct());
+            }
+            else
+            {
+                // For async, we let the VM fetch values when popup opens, or we can pre-fetch
+                // vm.InitializeAsync will be called by the popup if needed
+            }
             
             _viewModels[column.Id] = vm;
         }
         return vm;
     }
 
-    public void ClearFilters()
+    public async Task ClearFilters()
     {
         foreach (var vm in _viewModels.Values)
         {
             vm.ClearFilter();
         }
-        ApplyFilters();
-        StateHasChanged();
+        await ApplyFiltersAsync();
     }
 
-    private void SetSort(string propertyName, bool isDescending)
+    private void SetSortInternal(string propertyName, bool isDescending)
     {
         if (string.IsNullOrWhiteSpace(propertyName)) return;
         _sortDescriptors.Clear();
         _sortDescriptors.Add((propertyName, isDescending));
-        ApplyFilters();
-        StateHasChanged();
     }
 
-    private void AddSubSort(string propertyName, bool isDescending)
+    private void AddSubSortInternal(string propertyName, bool isDescending)
     {
         if (string.IsNullOrWhiteSpace(propertyName)) return;
-
-        // Remove previous sort for the same property, then append to keep order.
-        _sortDescriptors.RemoveAll(s => string.Equals(s.PropertyName, propertyName, System.StringComparison.OrdinalIgnoreCase));
+        _sortDescriptors.RemoveAll(s => string.Equals(s.PropertyName, propertyName, StringComparison.OrdinalIgnoreCase));
         _sortDescriptors.Add((propertyName, isDescending));
-
-        ApplyFilters();
-        StateHasChanged();
     }
 
     public class ColumnDefinition<T>

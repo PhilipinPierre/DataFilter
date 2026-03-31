@@ -1,4 +1,7 @@
 using Microsoft.Extensions.Logging;
+using DataFilter.Demo.Shared;
+using DataFilter.Maui.Demo.ViewModels;
+using DataFilter.Maui.Demo.Pages;
 
 namespace DataFilter.Maui
 {
@@ -15,26 +18,29 @@ namespace DataFilter.Maui
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
 
+            // Shared Services
+            builder.Services.AddDataFilterDemoServices();
+
 #if DEBUG
     		builder.Logging.AddDebug();
 #endif
 
-            builder.Services.AddSingleton<DataFilter.Maui.Demo.Services.IMockEmployeeApiService, DataFilter.Maui.Demo.Services.MockEmployeeApiService>();
-            builder.Services.AddSingleton<DataFilter.Maui.Demo.ViewModels.MainViewModel>();
+            // MAUI ViewModels
+            builder.Services.AddSingleton<MainViewModel>();
+            builder.Services.AddSingleton<LocalFilterScenarioViewModel>();
+            builder.Services.AddSingleton<AsyncFilterScenarioViewModel>();
+            builder.Services.AddSingleton<HybridFilterScenarioViewModel>();
+            builder.Services.AddSingleton<CustomizationScenarioViewModel>();
+            builder.Services.AddSingleton<ListViewScenarioViewModel>();
+            builder.Services.AddSingleton<CollectionViewScenarioViewModel>();
 
-            builder.Services.AddTransient<DataFilter.Maui.Demo.ViewModels.LocalFilterScenarioViewModel>();
-            builder.Services.AddTransient<DataFilter.Maui.Demo.ViewModels.AsyncFilterScenarioViewModel>();
-            builder.Services.AddTransient<DataFilter.Maui.Demo.ViewModels.HybridFilterScenarioViewModel>();
-            builder.Services.AddTransient<DataFilter.Maui.Demo.ViewModels.CustomizationScenarioViewModel>();
-            builder.Services.AddTransient<DataFilter.Maui.Demo.ViewModels.ListViewScenarioViewModel>();
-            builder.Services.AddTransient<DataFilter.Maui.Demo.ViewModels.CollectionViewScenarioViewModel>();
-
-            builder.Services.AddTransient<DataFilter.Maui.Demo.Pages.LocalFilterPage>();
-            builder.Services.AddTransient<DataFilter.Maui.Demo.Pages.AsyncFilterPage>();
-            builder.Services.AddTransient<DataFilter.Maui.Demo.Pages.HybridFilterPage>();
-            builder.Services.AddTransient<DataFilter.Maui.Demo.Pages.CustomizationPage>();
-            builder.Services.AddTransient<DataFilter.Maui.Demo.Pages.ListViewPage>();
-            builder.Services.AddTransient<DataFilter.Maui.Demo.Pages.CollectionViewPage>();
+            // MAUI Pages
+            builder.Services.AddTransient<LocalFilterPage>();
+            builder.Services.AddTransient<AsyncFilterPage>();
+            builder.Services.AddTransient<HybridFilterPage>();
+            builder.Services.AddTransient<CustomizationPage>();
+            builder.Services.AddTransient<ListViewPage>();
+            builder.Services.AddTransient<CollectionViewPage>();
 
             return builder.Build();
         }

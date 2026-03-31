@@ -1,7 +1,8 @@
-﻿using DataFilter.Wpf.Demo.ViewModels;
+using DataFilter.Wpf.Demo.ViewModels;
 using System.Windows;
+using Microsoft.Extensions.DependencyInjection;
+using DataFilter.Demo.Shared;
 using System.Windows.Markup;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace DataFilter.Wpf.Demo;
 
@@ -10,12 +11,37 @@ namespace DataFilter.Wpf.Demo;
 /// </summary>
 public partial class App : Application
 {
+    private readonly IServiceProvider _serviceProvider;
+
     public App()
     {
+        _serviceProvider = ConfigureServices();
 
         this.DispatcherUnhandledException += App_DispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
         TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
+    }
+
+    private static IServiceProvider ConfigureServices()
+    {
+        var services = new ServiceCollection();
+
+        // Shared Services
+        services.AddDataFilterDemoServices();
+
+        // WPF ViewModels
+        services.AddSingleton<MainViewModel>();
+        services.AddTransient<LocalFilterScenarioViewModel>();
+        services.AddTransient<AsyncFilterScenarioViewModel>();
+        services.AddTransient<HybridFilterScenarioViewModel>();
+        services.AddTransient<CustomizationScenarioViewModel>();
+        services.AddTransient<ListViewScenarioViewModel>();
+        services.AddTransient<CollectionViewScenarioViewModel>();
+
+        // WPF Views
+        services.AddSingleton<Views.MainWindow>();
+
+        return services.BuildServiceProvider();
     }
 
     protected override void OnStartup(StartupEventArgs e)
@@ -29,10 +55,8 @@ public partial class App : Application
         Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("pack://application:,,,/DataFilter.Wpf;component/Themes/Generic.xaml", UriKind.Absolute) });
         Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("pack://application:,,,/DataFilter.Wpf;component/Themes/FilterLightTheme.xaml", UriKind.Absolute) });
 
-        var mainWindow = new Views.MainWindow
-        {
-            DataContext = new MainViewModel()
-        };
+        var mainWindow = _serviceProvider.GetRequiredService<Views.MainWindow>();
+        mainWindow.DataContext = _serviceProvider.GetRequiredService<MainViewModel>();
         mainWindow.Show();
     }
 

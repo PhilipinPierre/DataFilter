@@ -57,6 +57,11 @@ public class FilterableDataGrid : DataGridView
         if (string.IsNullOrWhiteSpace(propertyName)) return;
 
         var popup = await FilterHeaderBehavior.CreatePopupAsync(ViewModel, propertyName);
+        
+        // Pass theme to popup
+        bool isDark = BackgroundColor.R < 128;
+        popup.ApplyTheme(isDark);
+
         popup.Width = 320;
         popup.Height = 420;
         popup.RequestClose += () =>

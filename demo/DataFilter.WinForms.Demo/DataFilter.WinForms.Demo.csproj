@@ -10,6 +10,9 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\src\DataFilter.WinForms\DataFilter.WinForms.csproj" />
     <ProjectReference Include="..\DataFilter.Demo.Shared\DataFilter.Demo.Shared.csproj" />
   </ItemGroup>

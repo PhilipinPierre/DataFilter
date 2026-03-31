@@ -89,9 +89,10 @@
 
     private void StateChanged() => StateHasChanged();
 
-    private async Task ToggleTheme()
+    private async Task ToggleTheme(ChangeEventArgs e)
     {
-        _isDark = !_isDark;
+        _isDark = (bool)(e.Value ?? false);
+        StateHasChanged();
         await JSRuntime.InvokeVoidAsync("console.log", $"Theme toggled to: {(_isDark ? "Dark" : "Light")}");
     }
 

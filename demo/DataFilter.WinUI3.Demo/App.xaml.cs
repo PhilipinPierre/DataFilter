@@ -1,15 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.ApplicationModel;
-using Windows.ApplicationModel.Activation;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
+using Microsoft.Extensions.DependencyInjection;
+using DataFilter.Demo.Shared;
+using DataFilter.WinUI3.Demo.ViewModels;
 using Microsoft.UI.Xaml;
 
 namespace DataFilter.WinUI3
@@ -20,6 +11,7 @@ namespace DataFilter.WinUI3
     public partial class App : Application
     {
         private Window? _window;
+        public static IServiceProvider ServiceProvider { get; private set; } = null!;
 
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
@@ -27,7 +19,30 @@ namespace DataFilter.WinUI3
         /// </summary>
         public App()
         {
-            InitializeComponent();
+            this.InitializeComponent();
+            ServiceProvider = ConfigureServices();
+        }
+
+        private static IServiceProvider ConfigureServices()
+        {
+            var services = new ServiceCollection();
+
+            // Shared Services
+            services.AddDataFilterDemoServices();
+
+            // WinUI 3 ViewModels
+            services.AddSingleton<MainViewModel>();
+            services.AddTransient<LocalFilterScenarioViewModel>();
+            services.AddTransient<AsyncFilterScenarioViewModel>();
+            services.AddTransient<HybridFilterScenarioViewModel>();
+            services.AddTransient<CustomizationScenarioViewModel>();
+            services.AddTransient<ListViewScenarioViewModel>();
+            services.AddTransient<CollectionViewScenarioViewModel>();
+
+            // WinUI 3 Views
+            services.AddTransient<MainWindow>();
+
+            return services.BuildServiceProvider();
         }
 
         /// <summary>
@@ -36,7 +51,7 @@ namespace DataFilter.WinUI3
         /// <param name="args">Details about the launch request and process.</param>
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
-            _window = new MainWindow();
+            _window = ServiceProvider.GetRequiredService<MainWindow>();
             _window.Activate();
         }
     }

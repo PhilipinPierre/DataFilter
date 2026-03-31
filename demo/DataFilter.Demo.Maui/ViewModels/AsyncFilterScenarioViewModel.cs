@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using DataFilter.Demo.Shared.Models;
-using DataFilter.Maui.Demo.Services;
+using DataFilter.Demo.Shared.Services;
 using DataFilter.Maui.ViewModels;
 
 namespace DataFilter.Maui.Demo.ViewModels;
@@ -15,11 +15,13 @@ public partial class AsyncFilterScenarioViewModel : ObservableObject
     public AsyncFilterScenarioViewModel(IMockEmployeeApiService apiService)
     {
         _apiService = apiService;
+        GridViewModel.AsyncDataProvider = _apiService;
+        GridViewModel.RefreshDataAsync();
     }
 
     public void Regenerate(int count)
     {
-        GridViewModel.AsyncDataProvider = _apiService;
+        _apiService.Regenerate(count);
         GridViewModel.RefreshDataAsync();
     }
 }

@@ -1,21 +1,27 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using DataFilter.Demo.Shared.Models;
-using DataFilter.UwpXaml.Demo.Services;
+using DataFilter.Demo.Shared.Services;
 using DataFilter.UwpXaml.ViewModels;
 
 namespace DataFilter.UwpXaml.Demo.ViewModels;
 
 public partial class AsyncFilterScenarioViewModel : ObservableObject
 {
+    private readonly IMockEmployeeApiService _mockService;
+
     [ObservableProperty]
-    private FilterableDataGridViewModel<Employee> _gridViewModel;
+    private FilterableDataGridViewModel<Employee> _gridViewModel = new();
+
+    public AsyncFilterScenarioViewModel(IMockEmployeeApiService mockService)
+    {
+        _mockService = mockService;
+        GridViewModel.AsyncDataProvider = _mockService;
+        _ = GridViewModel.RefreshDataAsync();
+    }
 
     public void Regenerate(int count)
     {
-        GridViewModel = new FilterableDataGridViewModel<Employee>
-        {
-            AsyncDataProvider = new MockEmployeeApiService(count)
-        };
+        _mockService.Regenerate(count);
         GridViewModel.RefreshDataAsync();
     }
 }

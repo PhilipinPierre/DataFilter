@@ -6,19 +6,29 @@ namespace DataFilter.WinUI3.Demo.ViewModels;
 
 public partial class MainViewModel : ObservableObject
 {
-    [ObservableProperty]
-    private double _rowCount = 1000;
+    public double RowCount { get; set; } = 1000;
 
-    public LocalFilterScenarioViewModel LocalFilterScenario { get; } = new();
-    public AsyncFilterScenarioViewModel AsyncFilterScenario { get; } = new();
-    public HybridFilterScenarioViewModel HybridFilterScenario { get; } = new();
-    public CustomizationScenarioViewModel CustomizationScenario { get; } = new();
-    public ListViewScenarioViewModel ListViewScenario { get; } = new();
-    public CollectionViewScenarioViewModel CollectionViewScenario { get; } = new();
+    public LocalFilterScenarioViewModel LocalFilterScenario { get; }
+    public AsyncFilterScenarioViewModel AsyncFilterScenario { get; }
+    public HybridFilterScenarioViewModel HybridFilterScenario { get; }
+    public CustomizationScenarioViewModel CustomizationScenario { get; }
+    public ListViewScenarioViewModel ListViewScenario { get; }
+    public CollectionViewScenarioViewModel CollectionViewScenario { get; }
 
-    public MainViewModel()
+    public MainViewModel(
+        LocalFilterScenarioViewModel localFilterScenario,
+        AsyncFilterScenarioViewModel asyncFilterScenario,
+        HybridFilterScenarioViewModel hybridFilterScenario,
+        CustomizationScenarioViewModel customizationScenario,
+        ListViewScenarioViewModel listViewScenario,
+        CollectionViewScenarioViewModel collectionViewScenario)
     {
-        Regenerate();
+        LocalFilterScenario = localFilterScenario;
+        AsyncFilterScenario = asyncFilterScenario;
+        HybridFilterScenario = hybridFilterScenario;
+        CustomizationScenario = customizationScenario;
+        ListViewScenario = listViewScenario;
+        CollectionViewScenario = collectionViewScenario;
     }
 
     [RelayCommand]

@@ -43,10 +43,10 @@ public partial class ListViewFilterView : UserControl
             MultiSelect = false
         };
 
-        _listView.Columns.Add("Id", 60);
-        _listView.Columns.Add("Name", 150);
-        _listView.Columns.Add("Department", 150);
-        _listView.Columns.Add("Country", 120);
+        _listView.Columns.Add("Id 🔍", 60);
+        _listView.Columns.Add("Name 🔍", 150);
+        _listView.Columns.Add("Department 🔍", 150);
+        _listView.Columns.Add("Country 🔍", 120);
 
         _listView.ColumnClick += OnColumnClick;
 

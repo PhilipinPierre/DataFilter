@@ -11,6 +11,12 @@ public partial class CollectionViewScenarioViewModel : ObservableObject
     [ObservableProperty]
     private FilterableDataGridViewModel<Employee> _gridViewModel = new();
     
+    public CollectionViewScenarioViewModel()
+    {
+        GridViewModel.LocalDataSource = EmployeeDataGenerator.Employees;
+        _ = GridViewModel.RefreshDataAsync();
+    }
+    
     [ObservableProperty]
     private ObservableCollection<Employee> _employees = new();
 

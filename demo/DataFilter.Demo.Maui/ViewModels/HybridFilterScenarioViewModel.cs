@@ -1,7 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using DataFilter.Demo.Shared.Models;
 using DataFilter.Demo.Shared.Services;
-using DataFilter.Maui.Demo.Services;
 using DataFilter.Maui.ViewModels;
 
 namespace DataFilter.Maui.Demo.ViewModels;
@@ -16,12 +15,15 @@ public partial class HybridFilterScenarioViewModel : ObservableObject
     public HybridFilterScenarioViewModel(IMockEmployeeApiService apiService)
     {
         _apiService = apiService;
+        GridViewModel.LocalDataSource = EmployeeDataGenerator.Employees;
+        GridViewModel.AsyncDataProvider = _apiService;
+        GridViewModel.RefreshDataAsync();
     }
 
     public void Regenerate(int count)
     {
+        _apiService.Regenerate(count);
         GridViewModel.LocalDataSource = EmployeeDataGenerator.Employees;
-        GridViewModel.AsyncDataProvider = _apiService;
         GridViewModel.RefreshDataAsync();
     }
 }

@@ -10,6 +10,12 @@ public partial class ListViewScenarioViewModel : ObservableObject
     [ObservableProperty]
     private FilterableDataGridViewModel<Employee> _gridViewModel = new();
 
+    public ListViewScenarioViewModel()
+    {
+        GridViewModel.LocalDataSource = EmployeeDataGenerator.Employees;
+        _ = GridViewModel.RefreshDataAsync();
+    }
+
     public void Regenerate(int count)
     {
         GridViewModel.LocalDataSource = EmployeeDataGenerator.Employees;

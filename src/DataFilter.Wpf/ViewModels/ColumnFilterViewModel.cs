@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DataFilter.Core.Engine;
 using DataFilter.Core.Enums;
@@ -602,14 +602,11 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
         try
         {
             FilterOperator op = SelectedCustomOperator.Value;
-            
-            var v1Typed = v1!= null ? Convert.ChangeType(v1, FilterValues.First().GetType(), CultureInfo.CurrentCulture): null;
-            var v2Typed = v2 != null ? Convert.ChangeType(v2, FilterValues.First().GetType(), CultureInfo.CurrentCulture) : null;
             bool effectiveAddToExisting = AddToExistingFilter && (_initialFilterActive || IsFilterActive);
 
             foreach (var item in FilterValues)
             {
-                UpdateItemMatchRecursive(item, op, v1Typed, v2Typed, effectiveAddToExisting);
+                UpdateItemMatchRecursive(item, op, v1, v2, effectiveAddToExisting);
             }
 
             UpdateSelectAllState();

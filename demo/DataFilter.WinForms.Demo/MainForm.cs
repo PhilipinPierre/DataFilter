@@ -11,24 +11,48 @@ public sealed class MainForm : Form
     private readonly Button _clearFiltersBtn;
     private readonly TabControl _tabControl;
 
-    // ViewModels
-    private readonly LocalFilterScenarioViewModel _localVm = new();
-    private readonly AsyncFilterScenarioViewModel _asyncVm = new();
-    private readonly HybridFilterScenarioViewModel _hybridVm = new();
-    private readonly CustomizationScenarioViewModel _customizationVm = new();
-    private readonly ListViewScenarioViewModel _listViewVm = new();
-    private readonly CollectionViewScenarioViewModel _collectionViewVm = new();
+    private readonly LocalFilterScenarioViewModel _localVm;
+    private readonly AsyncFilterScenarioViewModel _asyncVm;
+    private readonly HybridFilterScenarioViewModel _hybridVm;
+    private readonly CustomizationScenarioViewModel _customizationVm;
+    private readonly ListViewScenarioViewModel _listViewVm;
+    private readonly CollectionViewScenarioViewModel _collectionViewVm;
 
     // Views
-    private readonly LocalFilterView _localView = new();
-    private readonly AsyncFilterView _asyncView = new();
-    private readonly HybridFilterView _hybridView = new();
-    private readonly CustomizationView _customizationView = new();
-    private readonly ListViewFilterView _listViewView = new();
-    private readonly CollectionViewFilterView _collectionViewView = new();
+    private readonly LocalFilterView _localView;
+    private readonly AsyncFilterView _asyncView;
+    private readonly HybridFilterView _hybridView;
+    private readonly CustomizationView _customizationView;
+    private readonly ListViewFilterView _listViewView;
+    private readonly CollectionViewFilterView _collectionViewView;
 
-    public MainForm()
+    public MainForm(
+        LocalFilterScenarioViewModel localVm,
+        AsyncFilterScenarioViewModel asyncVm,
+        HybridFilterScenarioViewModel hybridVm,
+        CustomizationScenarioViewModel customizationVm,
+        ListViewScenarioViewModel listViewVm,
+        CollectionViewScenarioViewModel collectionViewVm,
+        LocalFilterView localView,
+        AsyncFilterView asyncView,
+        HybridFilterView hybridView,
+        CustomizationView customizationView,
+        ListViewFilterView listViewView,
+        CollectionViewFilterView collectionViewView)
     {
+        _localVm = localVm;
+        _asyncVm = asyncVm;
+        _hybridVm = hybridVm;
+        _customizationVm = customizationVm;
+        _listViewVm = listViewVm;
+        _collectionViewVm = collectionViewVm;
+
+        _localView = localView;
+        _asyncView = asyncView;
+        _hybridView = hybridView;
+        _customizationView = customizationView;
+        _listViewView = listViewView;
+        _collectionViewView = collectionViewView;
         Text = "DataFilter WinForms Demo";
         Width = 1000;
         Height = 600;

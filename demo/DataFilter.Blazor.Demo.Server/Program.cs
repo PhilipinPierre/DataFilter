@@ -1,6 +1,6 @@
 using DataFilter.Blazor.Demo.Server.Components;
 using DataFilter.Blazor.Demo.Shared.State;
-using DataFilter.Blazor.Demo.Shared.Services;
+using DataFilter.Demo.Shared;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,8 +9,11 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 
+// Shared Services
+builder.Services.AddDataFilterDemoServices();
+
+// Blazor Shared State
 builder.Services.AddScoped<DemoState>();
-builder.Services.AddScoped<IMockEmployeeApiService, MockEmployeeApiService>(sp => new MockEmployeeApiService(sp.GetRequiredService<DemoState>().RowCount));
 
 var app = builder.Build();
 

@@ -8,7 +8,13 @@ namespace DataFilter.UwpXaml.Demo.ViewModels;
 public partial class LocalFilterScenarioViewModel : ObservableObject
 {
     [ObservableProperty]
-    private FilterableDataGridViewModel<Employee> _gridViewModel;
+    private FilterableDataGridViewModel<Employee> _gridViewModel = new();
+
+    public LocalFilterScenarioViewModel()
+    {
+        GridViewModel.LocalDataSource = EmployeeDataGenerator.Employees;
+        _ = GridViewModel.RefreshDataAsync();
+    }
 
     public void Regenerate(int count)
     {

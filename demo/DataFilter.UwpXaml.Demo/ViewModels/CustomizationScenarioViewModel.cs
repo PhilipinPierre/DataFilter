@@ -8,7 +8,13 @@ namespace DataFilter.UwpXaml.Demo.ViewModels;
 public partial class CustomizationScenarioViewModel : ObservableObject
 {
     [ObservableProperty]
-    private FilterableDataGridViewModel<Employee> _gridViewModel;
+    private FilterableDataGridViewModel<Employee> _gridViewModel = new();
+
+    public CustomizationScenarioViewModel()
+    {
+        GridViewModel.LocalDataSource = EmployeeDataGenerator.Employees;
+        _ = GridViewModel.RefreshDataAsync();
+    }
 
     [ObservableProperty]
     private bool _isDarkTheme;

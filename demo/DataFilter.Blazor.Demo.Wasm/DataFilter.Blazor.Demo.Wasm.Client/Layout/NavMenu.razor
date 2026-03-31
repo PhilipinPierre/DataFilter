@@ -1,4 +1,4 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">DataFilter.Blazor.Demo.Wasm</a>
     </div>
@@ -15,8 +15,38 @@
         </div>
 
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="demo">
+            <NavLink class="nav-link" href="/demo" Match="NavLinkMatch.All">
                 <span class="bi bi-list-columns-nav-menu" aria-hidden="true"></span> Demo
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/demo/local">
+                <span class="bi bi-grip-vertical-nav-menu" aria-hidden="true"></span> Local Filter
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/demo/async">
+                <span class="bi bi-cloud-download-nav-menu" aria-hidden="true"></span> Async Filter
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/demo/hybrid">
+                <span class="bi bi-intersect-nav-menu" aria-hidden="true"></span> Hybrid Filter
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/demo/customization">
+                <span class="bi bi-palette-nav-menu" aria-hidden="true"></span> Customization
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/demo/collectionview">
+                <span class="bi bi-collection-nav-menu" aria-hidden="true"></span> Collection View
             </NavLink>
         </div>
     </nav>

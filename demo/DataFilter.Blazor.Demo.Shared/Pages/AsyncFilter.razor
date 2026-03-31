@@ -26,9 +26,12 @@
 
     private void StateChanged() => StateHasChanged();
 
-    private void HandleClearFilters()
+    private async Task HandleClearFilters()
     {
-        _grid?.ClearFilters();
+        if (_grid != null)
+        {
+            await _grid.ClearFilters();
+        }
     }
 
     public void Dispose()

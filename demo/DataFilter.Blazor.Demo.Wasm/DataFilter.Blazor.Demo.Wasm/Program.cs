@@ -1,5 +1,7 @@
 using DataFilter.Blazor.Demo.Wasm.Client.Pages;
 using DataFilter.Blazor.Demo.Wasm.Components;
+using DataFilter.Demo.Shared;
+using DataFilter.Blazor.Demo.Shared.State;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +9,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
+
+// Shared Services
+builder.Services.AddDataFilterDemoServices();
+
+// Blazor Shared State
+builder.Services.AddScoped<DemoState>();
 
 var app = builder.Build();
 
