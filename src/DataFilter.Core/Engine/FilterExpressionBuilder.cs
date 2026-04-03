@@ -1,4 +1,4 @@
-﻿using DataFilter.Core.Abstractions;
+using DataFilter.Core.Abstractions;
 using DataFilter.Core.Enums;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -79,6 +79,36 @@ public static class FilterExpressionBuilder
         }
 
         return Expression.Lambda<Func<T, bool>>(combinedBody, parameter);
+    }
+
+    /// <summary>
+    /// Builds a compiled predicate for a sequence of descriptors, for a known item type (boxed as <see cref="object"/>).
+    /// </summary>
+    public static Func<object, bool> BuildCombinedFunc(Type itemType, IReadOnlyList<IFilterDescriptor> descriptors, LogicalOperator logicalOperator = LogicalOperator.And)
+    {
+        if (descriptors == null || descriptors.Count == 0)
+        {
+            return _ => true;
+        }
+
+        var objParameter = Expression.Parameter(typeof(object), "obj");
+        var castParameter = Expression.Convert(objParameter, itemType);
+
+        Expression? combinedBody = null;
+
+        foreach (var descriptor in descriptors)
+        {
+            var body = BuildBody(castParameter, descriptor);
+
+            combinedBody = combinedBody == null
+                ? body
+                : logicalOperator == LogicalOperator.And
+                    ? Expression.AndAlso(combinedBody, body)
+                    : Expression.OrElse(combinedBody, body);
+        }
+
+        var lambda = Expression.Lambda<Func<object, bool>>(combinedBody!, objParameter);
+        return lambda.Compile();
     }
 
     private static Expression BuildBody(Expression parameter, IFilterDescriptor descriptor)

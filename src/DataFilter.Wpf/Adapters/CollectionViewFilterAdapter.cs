@@ -33,16 +33,42 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
     /// <inheritdoc />
     public IExcelFilterEngine<T> FilterEngine { get; } = new ExcelFilterEngine<T>();
 
+    IExcelFilterEngine DataFilter.PlatformShared.ViewModels.IFilterableDataGridViewModel.FilterEngine => FilterEngine;
+
+    /// <inheritdoc />
+    public Type ItemType { get; set; } = typeof(T);
+
     /// <inheritdoc />
     public HashSet<string> FilterableProperties { get; } = new(StringComparer.OrdinalIgnoreCase);
 
     /// <inheritdoc />
     public IAsyncDataProvider<T>? AsyncDataProvider { get; set; }
 
+    IAsyncDataProvider? DataFilter.PlatformShared.ViewModels.IFilterableDataGridViewModel.AsyncDataProvider
+    {
+        get => AsyncDataProvider is null ? null : new AsyncDataProviderAdapter<T>(AsyncDataProvider);
+        set
+        {
+            if (value is null)
+            {
+                AsyncDataProvider = null;
+                return;
+            }
+
+            throw new NotSupportedException("Assign the typed AsyncDataProvider property instead.");
+        }
+    }
+
     /// <inheritdoc />
     public IEnumerable<T> LocalDataSource
     {
         get => CollectionView.SourceCollection.Cast<object>().OfType<T>();
+        set => throw new NotSupportedException("LocalDataSource cannot be set directly on CollectionViewFilterAdapter. It uses the CollectionView's SourceCollection.");
+    }
+
+    IEnumerable DataFilter.PlatformShared.ViewModels.IFilterableDataGridViewModel.LocalDataSource
+    {
+        get => CollectionView.SourceCollection;
         set => throw new NotSupportedException("LocalDataSource cannot be set directly on CollectionViewFilterAdapter. It uses the CollectionView's SourceCollection.");
     }
 

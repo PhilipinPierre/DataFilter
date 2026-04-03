@@ -9,7 +9,12 @@ namespace DataFilter.PlatformShared.ViewModels;
 public interface IFilterableDataGridViewModel : INotifyPropertyChanged
 {
     IEnumerable FilteredItems { get; }
+    /// <summary>CLR type of items in <see cref="LocalDataSource"/> (homogeneous collection).</summary>
+    Type ItemType { get; set; }
     IFilterContext Context { get; }
+    IExcelFilterEngine FilterEngine { get; }
+    IAsyncDataProvider? AsyncDataProvider { get; set; }
+    IEnumerable LocalDataSource { get; set; }
     Task RefreshDataAsync();
     void ApplyColumnFilter(string propertyName, ExcelFilterState state);
     void ClearColumnFilter(string propertyName);
@@ -26,9 +31,9 @@ public interface IFilterableDataGridViewModel : INotifyPropertyChanged
 public interface IFilterableDataGridViewModel<T> : IFilterableDataGridViewModel
 {
     new IFilterContext Context { get; }
-    IExcelFilterEngine<T> FilterEngine { get; }
-    IAsyncDataProvider<T>? AsyncDataProvider { get; set; }
-    IEnumerable<T> LocalDataSource { get; set; }
+    new IExcelFilterEngine<T> FilterEngine { get; }
+    new IAsyncDataProvider<T>? AsyncDataProvider { get; set; }
+    new IEnumerable<T> LocalDataSource { get; set; }
     new IEnumerable<T> FilteredItems { get; }
     new Task RefreshDataAsync();
 }

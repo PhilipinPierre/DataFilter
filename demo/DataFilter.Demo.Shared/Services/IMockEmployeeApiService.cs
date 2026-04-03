@@ -7,7 +7,7 @@ namespace DataFilter.Demo.Shared.Services;
 /// <summary>
 /// Service simulating an API for employee data.
 /// </summary>
-public interface IMockEmployeeApiService : IAsyncDataProvider<Employee>
+public interface IMockEmployeeApiService : IAsyncDataProvider<Employee>, IAsyncDataProvider
 {
     /// <summary>
     /// Regenerates the underlying employee dataset with the specified count.

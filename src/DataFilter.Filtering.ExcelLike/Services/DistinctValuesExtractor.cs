@@ -1,5 +1,6 @@
-﻿using DataFilter.Filtering.ExcelLike.Abstractions;
+using System.Collections;
 using System.Linq.Expressions;
+using DataFilter.Filtering.ExcelLike.Abstractions;
 
 namespace DataFilter.Filtering.ExcelLike.Services;
 
@@ -9,49 +10,70 @@ namespace DataFilter.Filtering.ExcelLike.Services;
 public class DistinctValuesExtractor : IDistinctValuesExtractor
 {
     /// <inheritdoc />
-    public IEnumerable<object> Extract<T>(IEnumerable<T> source, string propertyName)
+    public IEnumerable<object> Extract(IEnumerable source, Type elementType, string propertyName)
     {
         if (source == null || string.IsNullOrWhiteSpace(propertyName))
         {
             return Enumerable.Empty<object>();
         }
 
-        var propertyInfo = typeof(T).GetProperty(propertyName);
+        var propertyInfo = elementType.GetProperty(propertyName);
         if (propertyInfo == null)
         {
-            // If the property is nested or complex, consider building a dynamic expression (similar to FilterExpressionBuilder)
-            // For simplicity in this implementation, we handle direct properties.
-            // If we need nested properties, we'd compile an Expression Tree. Let's do the rigorous Expression Tree way:
-            var parameter = Expression.Parameter(typeof(T), "x");
-            Expression current = parameter;
+            var objParameter = Expression.Parameter(typeof(object), "obj");
+            var castParameter = Expression.Convert(objParameter, elementType);
+            Expression current = castParameter;
             foreach (var prop in propertyName.Split('.'))
             {
                 current = Expression.PropertyOrField(current, prop);
             }
 
-            // convert to object
             if (current.Type.IsValueType)
             {
                 current = Expression.Convert(current, typeof(object));
             }
+            else if (current.Type != typeof(object))
+            {
+                current = Expression.Convert(current, typeof(object));
+            }
 
-            var lambda = Expression.Lambda<Func<T, object>>(current, parameter);
+            var lambda = Expression.Lambda<Func<object, object>>(current, objParameter);
             var compiledFunc = lambda.Compile();
 
-            var distinctMap = source.Select(compiledFunc)
-                                    .Where(x => x != null)
-                                    .Distinct()
-                                    .ToList();
+            var distinctMap = new List<object>();
+            foreach (var x in source)
+            {
+                if (x == null) continue;
+                var v = compiledFunc(x);
+                if (v != null)
+                {
+                    distinctMap.Add(v);
+                }
+            }
 
+            distinctMap = distinctMap.Distinct().ToList();
             return Sort(distinctMap);
         }
 
-        var results = source.Select(x => propertyInfo.GetValue(x))
-                            .Where(x => x != null)
-                            .Distinct()
-                            .ToList();
+        var results = new List<object>();
+        foreach (var x in source)
+        {
+            if (x == null) continue;
+            var v = propertyInfo.GetValue(x);
+            if (v != null)
+            {
+                results.Add(v);
+            }
+        }
 
-        return Sort(results!);
+        var distinctResults = results.Distinct().ToList();
+        return Sort(distinctResults);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<object> Extract<T>(IEnumerable<T> source, string propertyName)
+    {
+        return Extract(source!, typeof(T), propertyName);
     }
 
     private static IEnumerable<object> Sort(List<object> values)

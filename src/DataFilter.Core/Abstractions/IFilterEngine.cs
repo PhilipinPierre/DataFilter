@@ -1,4 +1,19 @@
-﻿namespace DataFilter.Core.Abstractions;
+namespace DataFilter.Core.Abstractions;
+
+/// <summary>
+/// Applies a collection of filter descriptors to a non-generic enumerable source.
+/// </summary>
+public interface IFilterEngine
+{
+    /// <summary>
+    /// Applies the specified filters to the source collection.
+    /// </summary>
+    /// <param name="source">The source collection.</param>
+    /// <param name="elementType">The runtime type of elements (homogeneous sequence).</param>
+    /// <param name="descriptors">The filter descriptors to apply.</param>
+    /// <returns>A filtered collection.</returns>
+    System.Collections.IEnumerable Apply(System.Collections.IEnumerable source, Type elementType, IReadOnlyList<IFilterDescriptor> descriptors);
+}
 
 /// <summary>
 /// Applies a collection of filter descriptors to an enumerable source.

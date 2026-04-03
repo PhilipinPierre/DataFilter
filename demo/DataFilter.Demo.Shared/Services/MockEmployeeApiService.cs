@@ -99,4 +99,19 @@ public class MockEmployeeApiService : IMockEmployeeApiService
             _ => query
         };
     }
+
+    async Task<PagedResult<object>> IAsyncDataProvider.FetchDataAsync(IFilterContext context, CancellationToken cancellationToken)
+    {
+        var r = await FetchDataAsync(context, cancellationToken).ConfigureAwait(false);
+        return new PagedResult<object>
+        {
+            Items = r.Items.Cast<object>(),
+            TotalCount = r.TotalCount,
+            Page = r.Page,
+            PageSize = r.PageSize
+        };
+    }
+
+    Task<IEnumerable<object>> IAsyncDataProvider.FetchDistinctValuesAsync(string propertyName, string searchText, CancellationToken cancellationToken)
+        => FetchDistinctValuesAsync(propertyName, searchText, cancellationToken);
 }

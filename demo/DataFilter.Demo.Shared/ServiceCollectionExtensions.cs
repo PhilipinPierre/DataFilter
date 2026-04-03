@@ -20,6 +20,7 @@ public static class ServiceCollectionExtensions
     {
         // Infrastructure
         services.AddSingleton<IExcelFilterEngine<Employee>, ExcelFilterEngine<Employee>>();
+        services.AddSingleton<IExcelFilterEngine>(sp => sp.GetRequiredService<IExcelFilterEngine<Employee>>());
         
         // Mock API
         services.AddSingleton<IMockEmployeeApiService, MockEmployeeApiService>();
