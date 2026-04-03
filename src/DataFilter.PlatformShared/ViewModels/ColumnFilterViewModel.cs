@@ -92,9 +92,20 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
 
     /// <summary>
     /// Indicates whether the filter is actively filtering data.
+    /// Matches <see cref="DataFilter.Filtering.ExcelLike.Models.ExcelFilterDescriptor"/> so the column button stays
+    /// highlighted whenever the context still applies a non-trivial filter (including partial list selection
+    /// when SelectAll is true but selected count differs from distinct count).
     /// </summary>
-    public bool IsFilterActive => FilterState != null &&
-        (!FilterState.SelectAll || !string.IsNullOrEmpty(FilterState.SearchText) || FilterState.CustomOperator != null);
+    public bool IsFilterActive => HasActiveExcelFilter(FilterState);
+
+    private static bool HasActiveExcelFilter(ExcelFilterState? state)
+    {
+        if (state == null) return false;
+        return state.CustomOperator != null
+            || !string.IsNullOrEmpty(state.SearchText)
+            || !state.SelectAll
+            || state.DistinctValues.Count != state.SelectedValues.Count;
+    }
 
     /// <summary>
     /// Gets the list of available custom operators for the current data type.
@@ -548,8 +559,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
                 FilterState.DistinctValues.Add(val);
         });
 
-        _initialFilterActive = state != null &&
-            (!state.SelectAll || !string.IsNullOrEmpty(state.SearchText) || state.CustomOperator != null);
+        _initialFilterActive = HasActiveExcelFilter(state);
 
         SelectedCustomOperator = state.CustomOperator;
         CustomValue1 = state.CustomValue1?.ToString() ?? string.Empty;

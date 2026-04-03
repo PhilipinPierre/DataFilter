@@ -298,12 +298,11 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
     }
 
     /// <summary>
-    /// Opens/closes the filter popup. Matches v1.0.0 timing: empty search then <see cref="Popup.IsOpen"/> = true
-    /// in the same turn (no deferred open / no await before show). That ordering is required for opening
-    /// another column’s popup after filtering a first column; async + deferred open regressed that scenario.
-    /// State sync remains in <see cref="TryInitializeAsync"/> (and parent-driven updates while the popup is open).
+    /// Opens/closes the filter popup. Loads distinct values first, then restores selection from the parent
+    /// grid context so reopening a filtered column matches the applied filter. No deferred <c>IsOpen</c> or
+    /// forced close before open (those broke opening another column’s popup after filtering a first one).
     /// </summary>
-    private void OnFilterButtonClick(object sender, RoutedEventArgs e)
+    private async void OnFilterButtonClick(object sender, RoutedEventArgs e)
     {
         e.Handled = true;
         if (_viewModel == null) return;
@@ -321,7 +320,14 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         }
         else
         {
-            _ = _viewModel.SearchCommand.ExecuteAsync(string.Empty);
+            await _viewModel.SearchCommand.ExecuteAsync(string.Empty);
+            if (ParentViewModel is IFilterableDataGridViewModel parentVm && !string.IsNullOrEmpty(PropertyName))
+            {
+                var state = parentVm.GetColumnFilterState(PropertyName);
+                if (state != null)
+                    await _viewModel.LoadStateAsync(state);
+            }
+
             _filterPopup.IsOpen = true;
         }
     }
