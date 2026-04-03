@@ -29,6 +29,6 @@ public interface IFilterableDataGridViewModel<T> : IFilterableDataGridViewModel
     IExcelFilterEngine<T> FilterEngine { get; }
     IAsyncDataProvider<T>? AsyncDataProvider { get; set; }
     IEnumerable<T> LocalDataSource { get; set; }
-    IEnumerable<T> FilteredItems { get; }
+    new IEnumerable<T> FilteredItems { get; }
     new Task RefreshDataAsync();
 }

@@ -26,8 +26,10 @@ public sealed partial class CollectionViewScenarioViewModel : ObservableObject, 
 
     public void Regenerate(int count)
     {
+        var snapshot = GridViewModel.ExtractSnapshot();
         var employees = EmployeeDataGenerator.Employees;
         CollectionView = CollectionViewSource.GetDefaultView(employees);
         GridViewModel = new CollectionViewFilterAdapter<Employee>(CollectionView);
+        GridViewModel.RestoreSnapshot(snapshot);
     }
 }

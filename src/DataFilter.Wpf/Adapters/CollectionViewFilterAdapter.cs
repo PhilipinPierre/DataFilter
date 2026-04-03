@@ -51,6 +51,8 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
     /// <inheritdoc />
     public IEnumerable<T> FilteredItems => _filteredItemsWrapper;
 
+    IEnumerable DataFilter.PlatformShared.ViewModels.IFilterableDataGridViewModel.FilteredItems => FilteredItems;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="CollectionViewFilterAdapter{T}"/> class.
     /// </summary>

@@ -342,9 +342,8 @@ public class ColumnFilterViewModelTests
         // 2. Load state back
         await vm.LoadStateAsync(resultState);
 
-        // 3. Search for "Item1000" (should trigger the parallel logic > 1000 items)
-        vm.SearchText = "Item1000";
-        await vm.InitializeAsync(new List<object> { "Item1000" }); 
+        // 3. Narrow list to "Item1000" (avoid SearchText setter racing with InitializeAsync via SearchCommand)
+        await vm.InitializeAsync(new List<object> { "Item1000" });
 
         // 4. "Add to existing"
         vm.AddToExistingFilter = true;

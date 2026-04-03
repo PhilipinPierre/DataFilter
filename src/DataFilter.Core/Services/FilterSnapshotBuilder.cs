@@ -64,8 +64,8 @@ public sealed class FilterSnapshotBuilder : IFilterSnapshotBuilder
         {
             return new FilterSnapshotEntry
             {
-                PropertyName = string.Empty,
-                Operator = string.Empty,
+                PropertyName = group.PropertyName,
+                Operator = group.Operator.ToString(),
                 LogicalOperator = group.LogicalOperator.ToString(),
                 Children = group.Descriptors.Select(DescriptorToEntry).ToList()
             };

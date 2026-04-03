@@ -2,7 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DataFilter.Demo.Shared.Models;
 using DataFilter.Demo.Shared.Services;
-using DataFilter.WinUI3.ViewModels;
+using DataFilter.PlatformShared.ViewModels;
 
 namespace DataFilter.WinUI3.Demo.ViewModels;
 

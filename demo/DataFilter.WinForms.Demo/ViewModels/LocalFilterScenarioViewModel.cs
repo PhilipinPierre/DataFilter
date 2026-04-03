@@ -1,6 +1,6 @@
 using DataFilter.Demo.Shared.Models;
 using DataFilter.Demo.Shared.Services;
-using DataFilter.WinForms.ViewModels;
+using DataFilter.PlatformShared.ViewModels;
 
 namespace DataFilter.WinForms.Demo.ViewModels;
 

@@ -1,7 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using DataFilter.Demo.Shared.Models;
 using DataFilter.Demo.Shared.Services;
-using DataFilter.Maui.ViewModels;
+using DataFilter.PlatformShared.ViewModels;
 
 namespace DataFilter.Maui.Demo.ViewModels;
 

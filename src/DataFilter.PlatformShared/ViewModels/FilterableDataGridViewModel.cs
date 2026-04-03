@@ -1,54 +1,91 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using DataFilter.Core.Abstractions;
 using DataFilter.Core.Models;
-using DataFilter.Core.Services;
 using DataFilter.Filtering.ExcelLike.Abstractions;
 using DataFilter.Filtering.ExcelLike.Models;
 using DataFilter.Filtering.ExcelLike.Services;
+using DataFilter.Core.Services;
 
 namespace DataFilter.PlatformShared.ViewModels;
 
+/// <summary>
+/// Implementation of the data grid filtering orchestrator.
+/// </summary>
+/// <typeparam name="T">The type of items.</typeparam>
 public partial class FilterableDataGridViewModel<T> : ObservableObject, IFilterableDataGridViewModel<T>
 {
+    System.Collections.IEnumerable IFilterableDataGridViewModel.FilteredItems => FilteredItems;
+
     public IFilterContext Context { get; } = new FilterContext();
     public IExcelFilterEngine<T> FilterEngine { get; } = new ExcelFilterEngine<T>();
     public HashSet<string> FilterableProperties { get; } = new(StringComparer.OrdinalIgnoreCase);
 
-    [ObservableProperty] private IAsyncDataProvider<T>? _asyncDataProvider;
-    [ObservableProperty] private IEnumerable<T> _localDataSource = new List<T>();
-    [ObservableProperty] private IEnumerable<T> _filteredItems = new List<T>();
+    [ObservableProperty]
+    private IAsyncDataProvider<T>? _asyncDataProvider;
 
     [ObservableProperty]
+    private IEnumerable<T> _localDataSource = Enumerable.Empty<T>();
 
+    /// <summary>
+    /// Resulting items available to the UI.
+    /// </summary>
+    [ObservableProperty]
+    private IEnumerable<T> _filteredItems = Enumerable.Empty<T>();
+
+    /// <inheritdoc />
     public async Task RefreshDataAsync()
     {
         if (AsyncDataProvider != null)
         {
-            var dataResult = await AsyncDataProvider.FetchDataAsync(Context);
-            FilteredItems = dataResult.Items.ToList();
-            return;
+            var pagedResult = await AsyncDataProvider.FetchDataAsync(Context);
+            FilteredItems = pagedResult.Items;
         }
-
-        var filtered = FilterEngine.Apply(LocalDataSource, Context.Descriptors);
-        IEnumerable<T> result = filtered;
-        IOrderedEnumerable<T>? ordered = null;
-        foreach (var sort in Context.SortDescriptors)
+        else
         {
-            var pi = typeof(T).GetProperty(sort.PropertyName, System.Reflection.BindingFlags.IgnoreCase | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-            if (pi == null) continue;
-            ordered = ordered == null
-                ? (sort.IsDescending ? filtered.OrderByDescending(x => pi.GetValue(x)) : filtered.OrderBy(x => pi.GetValue(x)))
-                : (sort.IsDescending ? ordered.ThenByDescending(x => pi.GetValue(x)) : ordered.ThenBy(x => pi.GetValue(x)));
+            var items = FilterEngine.Apply(LocalDataSource, Context.Descriptors);
+            
+            // Materialize here as well if no sorting applied
+            IEnumerable<T> result = items;
+
+            if (Context.SortDescriptors.Count > 0)
+            {
+                IOrderedEnumerable<T>? orderedItems = null;
+
+                foreach (var sort in Context.SortDescriptors)
+                {
+                    var propInfo = typeof(T).GetProperty(sort.PropertyName, System.Reflection.BindingFlags.IgnoreCase | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                    if (propInfo == null) continue;
+
+                    if (orderedItems == null)
+                    {
+                        orderedItems = sort.IsDescending
+                            ? items.OrderByDescending(x => propInfo.GetValue(x))
+                            : items.OrderBy(x => propInfo.GetValue(x));
+                    }
+                    else
+                    {
+                        orderedItems = sort.IsDescending
+                            ? orderedItems.ThenByDescending(x => propInfo.GetValue(x))
+                            : orderedItems.ThenBy(x => propInfo.GetValue(x));
+                    }
+                }
+
+                if (orderedItems != null)
+                {
+                    result = orderedItems;
+                }
+            }
+            
+            FilteredItems = result;
         }
-        if (ordered != null) result = ordered;
-        FilteredItems = result.ToList();
     }
 
     public async void ApplyColumnFilter(string propertyName, ExcelFilterState state)
     {
+        var descriptor = new ExcelFilterDescriptor(propertyName, state);
         if (Context is FilterContext ctx)
         {
-            ctx.AddOrUpdateDescriptor(new ExcelFilterDescriptor(propertyName, state));
+            ctx.AddOrUpdateDescriptor(descriptor);
             ctx.Page = 1;
         }
         await RefreshDataAsync();
@@ -84,6 +121,16 @@ public partial class FilterableDataGridViewModel<T> : ObservableObject, IFiltera
         await RefreshDataAsync();
     }
 
+    public async void ClearSort()
+    {
+        if (Context is FilterContext ctx)
+        {
+            ctx.ClearSort();
+            ctx.Page = 1;
+        }
+        await RefreshDataAsync();
+    }
+
     public Task<IEnumerable<object>> GetDistinctValuesAsync(string propertyName, string searchText)
     {
         if (AsyncDataProvider != null)
@@ -94,25 +141,87 @@ public partial class FilterableDataGridViewModel<T> : ObservableObject, IFiltera
         return Task.Run(() =>
         {
             var distincts = FilterEngine.DistinctValuesExtractor.Extract(LocalDataSource, propertyName);
-            if (string.IsNullOrWhiteSpace(searchText)) return distincts;
-            var matcher = new WildcardMatcher();
-            return matcher.ContainsWildcard(searchText)
-                ? distincts.Where(x => x != null && matcher.IsMatch(x.ToString() ?? string.Empty, searchText))
-                : distincts.Where(x => x?.ToString()?.StartsWith(searchText, StringComparison.OrdinalIgnoreCase) == true);
+            if (!string.IsNullOrWhiteSpace(searchText))
+            {
+                var matcher = new WildcardMatcher();
+                if (matcher.ContainsWildcard(searchText))
+                {
+                    distincts = distincts.Where(x => x != null && matcher.IsMatch(x.ToString() ?? string.Empty, searchText));
+                }
+                else
+                {
+                    distincts = distincts.Where(x => x?.ToString()?.StartsWith(searchText, StringComparison.OrdinalIgnoreCase) == true);
+                }
+            }
+            return distincts;
         });
     }
 
     public ExcelFilterState? GetColumnFilterState(string propertyName)
-        => Context.Descriptors.FirstOrDefault(d => string.Equals(d.PropertyName, propertyName, StringComparison.OrdinalIgnoreCase)) is ExcelFilterDescriptor d ? d.State : null;
+    {
+        return Context.Descriptors.FirstOrDefault(d => string.Equals(d.PropertyName, propertyName, StringComparison.OrdinalIgnoreCase)) is ExcelFilterDescriptor excelDesc 
+            ? excelDesc.State 
+            : null;
+    }
 
     public Type? GetPropertyType(string propertyName)
-        => typeof(T).GetProperty(propertyName, System.Reflection.BindingFlags.IgnoreCase | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)?.PropertyType;
+    {
+        return typeof(T).GetProperty(propertyName, System.Reflection.BindingFlags.IgnoreCase | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)?.PropertyType;
+    }
 
-    public IFilterSnapshot ExtractSnapshot() => new FilterSnapshotBuilder().CreateSnapshot(Context);
+    public IFilterSnapshot ExtractSnapshot()
+    {
+        return new FilterSnapshotBuilder().CreateSnapshot(Context);
+    }
+
+    private IReadOnlyList<FilterSnapshotEntry> CleanSnapshotEntries(IEnumerable<FilterSnapshotEntry> entries)
+    {
+        var valid = new List<FilterSnapshotEntry>();
+        foreach (var entry in entries)
+        {
+            if (entry.IsGroup)
+            {
+                var validChildren = CleanSnapshotEntries(entry.Children ?? Enumerable.Empty<FilterSnapshotEntry>());
+                if (validChildren.Count > 0)
+                {
+                    valid.Add(new FilterSnapshotEntry
+                    {
+                        PropertyName = string.Empty,
+                        Operator = string.Empty,
+                        LogicalOperator = entry.LogicalOperator,
+                        Children = validChildren.ToList()
+                    });
+                }
+            }
+            else
+            {
+                bool isValid = FilterableProperties.Count > 0 
+                    ? FilterableProperties.Contains(entry.PropertyName)
+                    : typeof(T).GetProperty(entry.PropertyName) != null;
+                
+                if (isValid)
+                {
+                    valid.Add(entry);
+                }
+            }
+        }
+        return valid;
+    }
 
     public async void RestoreSnapshot(IFilterSnapshot snapshot)
     {
-        new FilterSnapshotBuilder().RestoreSnapshot(Context, snapshot);
+        var validEntries = CleanSnapshotEntries(snapshot.Entries);
+        var validSorts = snapshot.SortEntries.Where(e => 
+            FilterableProperties.Count > 0 
+                ? FilterableProperties.Contains(e.PropertyName) 
+                : typeof(T).GetProperty(e.PropertyName) != null
+        ).ToList();
+
+        var filteredSnapshot = new FilterSnapshot(
+            (IReadOnlyList<FilterSnapshotEntry>)validEntries, 
+            (IReadOnlyList<SortSnapshotEntry>)validSorts);
+
+        new FilterSnapshotBuilder().RestoreSnapshot(Context, filteredSnapshot);
         await RefreshDataAsync();
     }
 }

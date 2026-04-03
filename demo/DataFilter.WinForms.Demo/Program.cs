@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using DataFilter.Demo.Shared;
 using DataFilter.WinForms.Demo.ViewModels;
 using DataFilter.WinForms.Demo.Views;

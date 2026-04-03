@@ -1,4 +1,4 @@
-using DataFilter.Demo.Shared.Services;
+﻿using DataFilter.Demo.Shared.Services;
 using DataFilter.WinForms.Demo.ViewModels;
 using DataFilter.WinForms.Demo.Views;
 
@@ -63,7 +63,7 @@ public sealed class MainForm : Form
         topPanel.Controls.Add(flowLayout);
 
         var lblRowCount = new Label { Text = "Row Count:", AutoSize = true, Margin = new Padding(0, 7, 5, 0) };
-        _rowCountInput = new NumericUpDown { Minimum = 1, Maximum = 1000000, Value = 1000, Width = 100, Margin = new Padding(0, 3, 10, 0) };
+        _rowCountInput = new NumericUpDown { Minimum = 1, Maximum = 1000000000, Value = 1000, Width = 100, Margin = new Padding(0, 3, 10, 0) };
         _regenerateBtn = new Button { Text = "Regenerate Data", AutoSize = true, Margin = new Padding(0, 0, 10, 0) };
         _clearFiltersBtn = new Button { Text = "Clear filters", AutoSize = true };
 

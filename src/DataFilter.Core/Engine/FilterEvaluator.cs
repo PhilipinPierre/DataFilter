@@ -1,4 +1,4 @@
-using DataFilter.Core.Enums;
+﻿using DataFilter.Core.Enums;
 using System.Globalization;
 
 namespace DataFilter.Core.Engine;

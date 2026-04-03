@@ -7,6 +7,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace DataFilter.Wpf.Behaviors;
 
@@ -111,6 +112,16 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         {
             _filterButton.Click -= OnFilterButtonClick;
         }
+
+        if (_filterPopup != null)
+        {
+            _filterPopup.Opened -= OnFilterPopupOpened;
+            _filterPopup.Closed -= OnFilterPopupClosed;
+            var window = Window.GetWindow(AssociatedObject);
+            if (window != null)
+                window.PreviewMouseLeftButtonDown -= OnWindowMouseDown;
+        }
+
     }
 
     private async void OnAssociatedObjectLoaded(object sender, RoutedEventArgs e)
@@ -122,6 +133,7 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
 
     private async void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
+        TryResolvePropertyName();
         TryResolveParentViewModel();
         await TryInitializeAsync();
     }
@@ -210,6 +222,8 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
 
     private async Task TryInitializeAsync()
     {
+        TryResolvePropertyName();
+
         if (_viewModel != null || string.IsNullOrEmpty(PropertyName) || ParentViewModel is not IFilterableDataGridViewModel parentVm)
             return;
 
@@ -289,34 +303,52 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         e.Handled = true;
         if (_viewModel == null) return;
 
+        TryResolvePropertyName();
+        TryResolveParentViewModel();
+
         if (_filterPopup == null)
         {
             BuildPopup();
         }
 
+        // Same toggle as pre-refactor: close on second click on the filter button.
         if (_filterPopup!.IsOpen)
         {
             _filterPopup.IsOpen = false;
+            return;
         }
-        else
-        {
-            if (ParentViewModel is IFilterableDataGridViewModel parentVm)
-            {
-                var existingState = parentVm.GetColumnFilterState(PropertyName!);
-                if (existingState != null)
-                {
-                    await _viewModel.LoadStateAsync(existingState);
-                }
-                else
-                {
-                    // If no state exists in context (e.g. after global Clear All), reset the UI
-                    _viewModel.ClearCommand.Execute(null);
-                }
-            }
 
-            _ = _viewModel.SearchCommand.ExecuteAsync(string.Empty);
-            _filterPopup.IsOpen = true;
+        if (ParentViewModel is IFilterableDataGridViewModel parentVm)
+        {
+            var existingState = parentVm.GetColumnFilterState(PropertyName!);
+            if (existingState == null)
+            {
+                _viewModel.ClearCommand.Execute(null);
+                await _viewModel.SearchCommand.ExecuteAsync(string.Empty);
+            }
+            else
+            {
+                // Populate FilterValues first; LoadState applies selection to those items.
+                await _viewModel.SearchCommand.ExecuteAsync(existingState.SearchText ?? string.Empty);
+                await _viewModel.LoadStateAsync(existingState);
+            }
         }
+
+        // WPF Popup only raises Opened when IsOpen transitions false→true. If the native property was
+        // left true without Opened (layout/placement edge cases), setting true again is a no-op.
+        _filterPopup.IsOpen = false;
+
+        // Refresh placement after grid/filter updates (headers can re-layout; stale target breaks display).
+        _filterPopup.PlacementTarget = _filterButton;
+
+        // Defer open so placement and child layout run before hit-testing; avoids Opened/hooks missing.
+        _ = AssociatedObject.Dispatcher.BeginInvoke(
+            DispatcherPriority.Loaded,
+            new Action(() =>
+            {
+                if (_filterPopup != null)
+                    _filterPopup.IsOpen = true;
+            }));
     }
 
     private void BuildPopup()
@@ -335,23 +367,47 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
 
         _viewModel!.OnApply += (_, _) => _filterPopup.IsOpen = false;
         _viewModel.OnClear += (_, _) => _filterPopup.IsOpen = false;
-        _filterPopup.Opened += (s, e) =>
-        {
-            var window = Window.GetWindow(AssociatedObject);
-            if (window != null) window.PreviewMouseLeftButtonDown += OnWindowMouseDown;
-        };
+
+        // Subscribe once per open, unsubscribe on Closed — otherwise handlers stack on every open
+        // while Apply/Clear never removed them, breaking subsequent filter button clicks.
+        _filterPopup.Opened += OnFilterPopupOpened;
+        _filterPopup.Closed += OnFilterPopupClosed;
+    }
+
+    private void OnFilterPopupOpened(object? sender, EventArgs e)
+    {
+        var window = Window.GetWindow(AssociatedObject);
+        if (window != null)
+            window.PreviewMouseLeftButtonDown += OnWindowMouseDown;
+    }
+
+    private void OnFilterPopupClosed(object? sender, EventArgs e)
+    {
+        var window = Window.GetWindow(AssociatedObject);
+        if (window != null)
+            window.PreviewMouseLeftButtonDown -= OnWindowMouseDown;
     }
 
     private void OnWindowMouseDown(object sender, MouseButtonEventArgs e)
     {
-        if (_filterPopup is { IsOpen: true } && _filterPopup.Child is UIElement child)
+        if (_filterPopup is not { IsOpen: true, Child: UIElement child })
+            return;
+
+        // Before first layout, RenderSize can be (0,0). Rect with zero area contains no points,
+        // so every position looks "outside" and we would close the popup immediately after open.
+        double w = child.RenderSize.Width;
+        double h = child.RenderSize.Height;
+        if (child is FrameworkElement fe)
         {
-            if (!new Rect(child.RenderSize).Contains(e.GetPosition(child)))
-            {
-                _filterPopup.IsOpen = false;
-                Window.GetWindow(AssociatedObject).PreviewMouseLeftButtonDown -= OnWindowMouseDown;
-            }
+            if (w <= 0) w = fe.ActualWidth;
+            if (h <= 0) h = fe.ActualHeight;
         }
+
+        if (w <= 0 || h <= 0)
+            return;
+
+        if (!new Rect(0, 0, w, h).Contains(e.GetPosition(child)))
+            _filterPopup.IsOpen = false;
     }
 
     // FindFilterableParent is no longer needed but kept empty for safety, or removed entirely.
