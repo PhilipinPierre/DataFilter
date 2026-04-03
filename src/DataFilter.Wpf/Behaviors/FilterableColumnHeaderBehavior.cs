@@ -7,7 +7,6 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Threading;
 
 namespace DataFilter.Wpf.Behaviors;
 
@@ -298,57 +297,33 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         header.Content = dockPanel;
     }
 
-    private async void OnFilterButtonClick(object sender, RoutedEventArgs e)
+    /// <summary>
+    /// Opens/closes the filter popup. Matches v1.0.0 timing: empty search then <see cref="Popup.IsOpen"/> = true
+    /// in the same turn (no deferred open / no await before show). That ordering is required for opening
+    /// another column’s popup after filtering a first column; async + deferred open regressed that scenario.
+    /// State sync remains in <see cref="TryInitializeAsync"/> (and parent-driven updates while the popup is open).
+    /// </summary>
+    private void OnFilterButtonClick(object sender, RoutedEventArgs e)
     {
         e.Handled = true;
         if (_viewModel == null) return;
 
+        // Keep post-refactor robustness: headers/parent can change when the grid re-templates after a filter.
         TryResolvePropertyName();
         TryResolveParentViewModel();
 
         if (_filterPopup == null)
-        {
             BuildPopup();
-        }
 
-        // Same toggle as pre-refactor: close on second click on the filter button.
         if (_filterPopup!.IsOpen)
         {
             _filterPopup.IsOpen = false;
-            return;
         }
-
-        if (ParentViewModel is IFilterableDataGridViewModel parentVm)
+        else
         {
-            var existingState = parentVm.GetColumnFilterState(PropertyName!);
-            if (existingState == null)
-            {
-                _viewModel.ClearCommand.Execute(null);
-                await _viewModel.SearchCommand.ExecuteAsync(string.Empty);
-            }
-            else
-            {
-                // Populate FilterValues first; LoadState applies selection to those items.
-                await _viewModel.SearchCommand.ExecuteAsync(existingState.SearchText ?? string.Empty);
-                await _viewModel.LoadStateAsync(existingState);
-            }
+            _ = _viewModel.SearchCommand.ExecuteAsync(string.Empty);
+            _filterPopup.IsOpen = true;
         }
-
-        // WPF Popup only raises Opened when IsOpen transitions false→true. If the native property was
-        // left true without Opened (layout/placement edge cases), setting true again is a no-op.
-        _filterPopup.IsOpen = false;
-
-        // Refresh placement after grid/filter updates (headers can re-layout; stale target breaks display).
-        _filterPopup.PlacementTarget = _filterButton;
-
-        // Defer open so placement and child layout run before hit-testing; avoids Opened/hooks missing.
-        _ = AssociatedObject.Dispatcher.BeginInvoke(
-            DispatcherPriority.Loaded,
-            new Action(() =>
-            {
-                if (_filterPopup != null)
-                    _filterPopup.IsOpen = true;
-            }));
     }
 
     private void BuildPopup()
