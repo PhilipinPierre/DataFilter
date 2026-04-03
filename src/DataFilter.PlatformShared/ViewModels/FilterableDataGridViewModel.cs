@@ -18,7 +18,7 @@ public partial class FilterableDataGridViewModel<T> : ObservableObject, IFiltera
     [ObservableProperty] private IEnumerable<T> _localDataSource = new List<T>();
     [ObservableProperty] private IEnumerable<T> _filteredItems = new List<T>();
 
-    System.Collections.IEnumerable IFilterableDataGridViewModel.FilteredItems => FilteredItems;
+    [ObservableProperty]
 
     public async Task RefreshDataAsync()
     {
