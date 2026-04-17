@@ -3,7 +3,9 @@ using CommunityToolkit.Mvvm.Input;
 using DataFilter.Core.Engine;
 using DataFilter.Core.Enums;
 using DataFilter.Filtering.ExcelLike.Models;
+using DataFilter.Filtering.ExcelLike.Services;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 
@@ -397,6 +399,9 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
     {
         _internalUpdate = true;
 
+        var distinctList = distinctValues as IList<object> ?? distinctValues.ToList();
+        ExcelFilterSelectionReconciler.ReconcileSelectedValues(FilterState, distinctList, dropSelectionsNotInDistinct: false);
+
         foreach (var item in FilterValues)
         {
             item.PropertyChanged -= Item_PropertyChanged;
@@ -410,17 +415,17 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
         {
             if (DataType == FilterDataType.Date)
             {
-                InitializeDateTree(distinctValues, newFilterValues);
+                InitializeDateTree(distinctList, newFilterValues);
             }
             else if (DataType == FilterDataType.Time)
             {
                 // TODO: Fix TreeView for Time with 15-min intervals
                 // InitializeTimeTree(distinctValues, newFilterValues);
-                InitializeFlatList(distinctValues, newFilterValues);
+                InitializeFlatList(distinctList, newFilterValues);
             }
             else
             {
-                InitializeFlatList(distinctValues, newFilterValues);
+                InitializeFlatList(distinctList, newFilterValues);
             }
         });
 
@@ -434,6 +439,16 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
         UpdateSelectAllState();
         SyncFilterStateSelectedValues();
         _internalUpdate = false;
+
+        // After distincts are rebuilt: advanced filters drive checkboxes via the evaluator, not only SelectedValues.
+        if (FilterState.CustomOperator != null)
+        {
+            SelectedCustomOperator = FilterState.CustomOperator;
+            CustomValue1 = FilterState.CustomValue1?.ToString() ?? string.Empty;
+            CustomValue2 = FilterState.CustomValue2?.ToString() ?? string.Empty;
+            UpdateSelectionFromCustomFilter();
+            UpdateSelectionSnapshot();
+        }
     }
 
     private void InitializeFlatList(IEnumerable<object> distinctValues, List<FilterValueItem> newFilterValues)
@@ -616,16 +631,26 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
         IsCustomFilterExpanded = state.CustomOperator != null || state.AdditionalCustomCriteria.Count > 0;
 
         SearchText = FilterState.SearchText;
-        
-        // Restore selection state to the items
-        foreach (var item in FilterValues)
+
+        // List-only filters: map SelectedValues onto the current FilterValues (new distincts after item source change).
+        // Custom / advanced filters: ApplySelectionStateToItemsRecursive uses In-list semantics and would overwrite
+        // checkboxes incorrectly; the operator is reapplied after _internalUpdate is cleared.
+        if (state.CustomOperator == null)
         {
-            ApplySelectionStateToItemsRecursive(item, state.SelectedValues);
+            foreach (var item in FilterValues)
+                ApplySelectionStateToItemsRecursive(item, state.SelectedValues);
+            UpdateSelectAllState();
+            UpdateSelectionSnapshot();
         }
-        UpdateSelectAllState();
-        UpdateSelectionSnapshot();
 
         _internalUpdate = false;
+
+        if (state.CustomOperator != null && FilterValues.Count > 0)
+        {
+            UpdateSelectionFromCustomFilter();
+            UpdateSelectionSnapshot();
+        }
+
         OnPropertyChanged(nameof(IsFilterActive));
     }
 
@@ -663,12 +688,11 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
         _internalUpdate = true;
         try
         {
-            FilterOperator op = SelectedCustomOperator.Value;
             bool effectiveAddToExisting = AddToExistingFilter && (_initialFilterActive || IsFilterActive);
 
             foreach (var item in FilterValues)
             {
-                UpdateItemMatchRecursive(item, op, v1, v2, effectiveAddToExisting);
+                UpdateItemMatchRecursive(item, effectiveAddToExisting);
             }
 
             UpdateSelectAllState();
@@ -689,19 +713,38 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
         return value;
     }
 
-    private void UpdateItemMatchRecursive(FilterValueItem item, FilterOperator op, object? v1, object? v2, bool effectiveAddToExisting)
+    private bool ValueMatchesAllStackedCustomColumnFilters(object? itemValue)
+    {
+        if (SelectedCustomOperator == null)
+            return false;
+
+        object? v1 = ConvertCustomValue(CustomValue1);
+        object? v2 = ConvertCustomValue(CustomValue2);
+        if (!_filterEvaluator.EvaluateOperator(itemValue, SelectedCustomOperator.Value, v1, v2))
+            return false;
+
+        foreach (var extra in FilterState.AdditionalCustomCriteria)
+        {
+            if (!_filterEvaluator.EvaluateOperator(itemValue, extra.Operator, extra.Value1, extra.Value2))
+                return false;
+        }
+
+        return true;
+    }
+
+    private void UpdateItemMatchRecursive(FilterValueItem item, bool effectiveAddToExisting)
     {
         if (item.Children.Count > 0)
         {
             foreach (var child in item.Children)
             {
-                UpdateItemMatchRecursive(child, op, v1, v2, effectiveAddToExisting);
+                UpdateItemMatchRecursive(child, effectiveAddToExisting);
             }
             item.UpdateStateFromChildren();
         }
         else
         {
-            bool matches = _filterEvaluator.EvaluateOperator(item.Value, op, v1, v2);
+            bool matches = ValueMatchesAllStackedCustomColumnFilters(item.Value);
 
             if (effectiveAddToExisting)
             {
@@ -835,6 +878,31 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
             if (item.Value != null)
                 item.IsSelected = selectedValues.Contains(item.Value);
         }
+    }
+
+    /// <summary>
+    /// Notifies bindings that <see cref="IsFilterActive"/> should be re-evaluated (e.g. after Excel state reconciliation on data refresh).
+    /// </summary>
+    public void RaiseFilterActiveChanged() => OnPropertyChanged(nameof(IsFilterActive));
+
+    /// <summary>
+    /// Clears local filter UI state and reloads distinct values without invoking the parent clear callback.
+    /// Use when the parent context no longer has a filter for this column.
+    /// </summary>
+    public async System.Threading.Tasks.Task SyncFromClearedContextAsync()
+    {
+        _internalUpdate = true;
+        FilterState.Clear();
+        SelectedCustomOperator = null;
+        CustomValue1 = string.Empty;
+        CustomValue2 = string.Empty;
+        IsCustomFilterExpanded = false;
+        AddToExistingFilter = false;
+        SearchText = string.Empty;
+        _internalUpdate = false;
+
+        await SearchCommand.ExecuteAsync(string.Empty);
+        OnPropertyChanged(nameof(IsFilterActive));
     }
 
     private void ClearFilter()

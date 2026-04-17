@@ -35,6 +35,12 @@ public interface IFilterableDataGridViewModel : INotifyPropertyChanged
     /// </summary>
     FilterPipeline CreatePipelineFromCurrentSnapshot();
     HashSet<string> FilterableProperties { get; }
+
+    /// <summary>
+    /// Raised when filters in <see cref="Context"/> change from outside the column popup (pipeline JSON, snapshot restore, clear column).
+    /// Column headers use this to resync <see cref="ExcelFilterState"/> and the active-filter indicator.
+    /// </summary>
+    event EventHandler<FilterDescriptorsChangedEventArgs>? FilterDescriptorsChanged;
 }
 
 public interface IFilterableDataGridViewModel<T> : IFilterableDataGridViewModel

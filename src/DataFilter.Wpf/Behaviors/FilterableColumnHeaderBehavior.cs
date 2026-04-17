@@ -1,6 +1,9 @@
+using System.ComponentModel;
 using DataFilter.Wpf.Controls;
 using DataFilter.Wpf.ViewModels;
 using Microsoft.Xaml.Behaviors;
+using ColumnFilterVm = DataFilter.Wpf.ViewModels.ColumnFilterViewModel;
+using GridFilterVm = DataFilter.Wpf.ViewModels.IFilterableDataGridViewModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -18,8 +21,9 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
 {
     private ColumnFilterButton? _filterButton;
     private Popup? _filterPopup;
-    private ColumnFilterViewModel? _viewModel;
+    private ColumnFilterVm? _viewModel;
     private bool _contentInjected;
+    private GridFilterVm? _filterParentSubscriptions;
 
     #region IsFilterable Attached Property
 
@@ -104,6 +108,7 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
 
     protected override void OnDetaching()
     {
+        UnsubscribeParentFilterEvents();
         base.OnDetaching();
         AssociatedObject.Loaded -= OnAssociatedObjectLoaded;
         AssociatedObject.DataContextChanged -= OnDataContextChanged;
@@ -209,7 +214,7 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
                 if (ParentViewModel != null) return;
             }
 
-            if (parent is FrameworkElement fe && fe.DataContext is IFilterableDataGridViewModel vm)
+            if (parent is FrameworkElement fe && fe.DataContext is GridFilterVm vm)
             {
                 ParentViewModel = vm;
                 return;
@@ -223,10 +228,10 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
     {
         TryResolvePropertyName();
 
-        if (_viewModel != null || string.IsNullOrEmpty(PropertyName) || ParentViewModel is not IFilterableDataGridViewModel parentVm)
+        if (_viewModel != null || string.IsNullOrEmpty(PropertyName) || ParentViewModel is not GridFilterVm parentVm)
             return;
 
-        _viewModel = new ColumnFilterViewModel(
+        _viewModel = new ColumnFilterVm(
             async (searchText) => await parentVm.GetDistinctValuesAsync(PropertyName, searchText),
             (state) => parentVm.ApplyColumnFilter(PropertyName, state),
             () => parentVm.ClearColumnFilter(PropertyName),
@@ -237,7 +242,7 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
 
         BuildHeaderContent();
 
-        if (ParentViewModel is IFilterableDataGridViewModel pVm && !string.IsNullOrEmpty(PropertyName))
+        if (ParentViewModel is GridFilterVm pVm && !string.IsNullOrEmpty(PropertyName))
         {
             pVm.FilterableProperties.Add(PropertyName);
         }
@@ -247,6 +252,62 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         {
             await _viewModel.LoadStateAsync(existingState);
         }
+
+        SubscribeParentFilterEvents(parentVm);
+    }
+
+    private void SubscribeParentFilterEvents(GridFilterVm parentVm)
+    {
+        UnsubscribeParentFilterEvents();
+        _filterParentSubscriptions = parentVm;
+        parentVm.FilterDescriptorsChanged += OnFilterDescriptorsChanged;
+        if (parentVm is INotifyPropertyChanged npc)
+            npc.PropertyChanged += OnParentGridPropertyChanged;
+    }
+
+    private void UnsubscribeParentFilterEvents()
+    {
+        if (_filterParentSubscriptions is { } vm)
+        {
+            vm.FilterDescriptorsChanged -= OnFilterDescriptorsChanged;
+            if (vm is INotifyPropertyChanged npc)
+                npc.PropertyChanged -= OnParentGridPropertyChanged;
+            _filterParentSubscriptions = null;
+        }
+    }
+
+    private async void OnFilterDescriptorsChanged(object? sender, DataFilter.PlatformShared.ViewModels.FilterDescriptorsChangedEventArgs e)
+    {
+        if (_viewModel == null || string.IsNullOrEmpty(PropertyName) || ParentViewModel is not GridFilterVm parentVm)
+            return;
+
+        if (e.AffectedPropertyName != null && !string.Equals(e.AffectedPropertyName, PropertyName, StringComparison.OrdinalIgnoreCase))
+        {
+            _viewModel.RaiseFilterActiveChanged();
+            return;
+        }
+
+        await SyncColumnFilterFromParentAsync(parentVm);
+    }
+
+    private async System.Threading.Tasks.Task SyncColumnFilterFromParentAsync(GridFilterVm parentVm)
+    {
+        if (_viewModel == null || string.IsNullOrEmpty(PropertyName))
+            return;
+
+        await _viewModel.SearchCommand.ExecuteAsync(string.Empty);
+        var state = parentVm.GetColumnFilterState(PropertyName);
+        if (state != null)
+            await _viewModel.LoadStateAsync(state);
+        else
+            await _viewModel.SyncFromClearedContextAsync();
+    }
+
+    private void OnParentGridPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is not ("FilteredItems" or "LocalDataSource"))
+            return;
+        _viewModel?.RaiseFilterActiveChanged();
     }
 
     private void BuildHeaderContent()
@@ -273,7 +334,7 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         _filterButton.Click += OnFilterButtonClick;
 
         // Bind IsActive
-        _filterButton.SetBinding(ColumnFilterButton.IsActiveProperty, new Binding(nameof(ColumnFilterViewModel.IsFilterActive)) { Source = _viewModel });
+        _filterButton.SetBinding(ColumnFilterButton.IsActiveProperty, new Binding(nameof(ColumnFilterVm.IsFilterActive)) { Source = _viewModel });
 
         DockPanel.SetDock(_filterButton, Dock.Right);
         dockPanel.Children.Add(_filterButton);
@@ -321,7 +382,7 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         else
         {
             await _viewModel.SearchCommand.ExecuteAsync(string.Empty);
-            if (ParentViewModel is IFilterableDataGridViewModel parentVm && !string.IsNullOrEmpty(PropertyName))
+            if (ParentViewModel is GridFilterVm parentVm && !string.IsNullOrEmpty(PropertyName))
             {
                 var state = parentVm.GetColumnFilterState(PropertyName);
                 if (state != null)

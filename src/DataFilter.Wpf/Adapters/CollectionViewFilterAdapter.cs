@@ -12,6 +12,7 @@ using DataFilter.Core.Services;
 using DataFilter.Filtering.ExcelLike.Abstractions;
 using DataFilter.Filtering.ExcelLike.Models;
 using DataFilter.Filtering.ExcelLike.Services;
+using DataFilter.PlatformShared.ViewModels;
 using DataFilter.Wpf.ViewModels;
 
 namespace DataFilter.Wpf.Adapters;
@@ -23,6 +24,7 @@ namespace DataFilter.Wpf.Adapters;
 /// <typeparam name="T">The type of items in the collection.</typeparam>
 public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollectionViewFilterAdapter<T>
 {
+    private IEnumerable? _lastSourceCollectionSyncRef;
     private readonly Dictionary<string, ExcelFilterState> _columnFilterStates = new(StringComparer.OrdinalIgnoreCase);
 
     /// <inheritdoc />
@@ -80,6 +82,9 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
 
     IEnumerable DataFilter.PlatformShared.ViewModels.IFilterableDataGridViewModel.FilteredItems => FilteredItems;
 
+    /// <inheritdoc />
+    public event EventHandler<FilterDescriptorsChangedEventArgs>? FilterDescriptorsChanged;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="CollectionViewFilterAdapter{T}"/> class.
     /// </summary>
@@ -93,9 +98,29 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
     /// <inheritdoc />
     public Task RefreshDataAsync()
     {
+        var sourceChanged = !ReferenceEquals(_lastSourceCollectionSyncRef, CollectionView.SourceCollection);
+        _lastSourceCollectionSyncRef = CollectionView.SourceCollection;
+
+        ReconcileExcelFilterStatesWithLocalDistincts();
         ApplyFilterToCollectionView();
         CollectionView.Refresh();
+
+        if (sourceChanged && Context.Descriptors.Count > 0)
+            FilterDescriptorsChanged?.Invoke(this, new FilterDescriptorsChangedEventArgs());
+
         return Task.CompletedTask;
+    }
+
+    private void ReconcileExcelFilterStatesWithLocalDistincts()
+    {
+        foreach (var d in Context.Descriptors)
+        {
+            if (d is ExcelFilterDescriptor ed)
+            {
+                var distincts = FilterEngine.DistinctValuesExtractor.Extract(LocalDataSource, ItemType, ed.PropertyName);
+                ExcelFilterSelectionReconciler.ReconcileSelectedValues(ed.State, distincts);
+            }
+        }
     }
 
     /// <inheritdoc />
@@ -122,6 +147,7 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
         }
 
         RefreshDataAsync();
+        FilterDescriptorsChanged?.Invoke(this, new FilterDescriptorsChangedEventArgs { AffectedPropertyName = propertyName });
     }
 
     /// <inheritdoc />
@@ -230,6 +256,7 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
             }
 
             RefreshDataAsync();
+            FilterDescriptorsChanged?.Invoke(this, new FilterDescriptorsChangedEventArgs());
         }
     }
 
@@ -239,12 +266,15 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
         if (pipeline == null) throw new ArgumentNullException(nameof(pipeline));
         if (Context is FilterContext ctx)
         {
-            pipeline.ApplyToContext(ctx);
+            var compiled = FilterPipelineCompiler.Compile(pipeline);
+            var excelDescriptors = FilterDescriptorToExcelConverter.ConvertCompiledPipeline(compiled);
+            ctx.ReplaceDescriptors(excelDescriptors);
             _columnFilterStates.Clear();
             SyncColumnFilterStatesFromContext();
         }
 
         await RefreshDataAsync();
+        FilterDescriptorsChanged?.Invoke(this, new FilterDescriptorsChangedEventArgs());
     }
 
     /// <inheritdoc />
@@ -336,7 +366,7 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
 
         if (customs.Count > 0)
         {
-            ApplyCustomRuleToState(state, customs[0]);
+            ExcelFilterStateFromFilterDescriptor.ApplyCustomRuleToState(state, customs[0]);
             for (int i = 1; i < customs.Count; i++)
             {
                 var fd = customs[i];
@@ -362,44 +392,10 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
         }
         else if (inRule != null)
         {
-            ApplyInRuleToState(state, inRule);
+            ExcelFilterStateFromFilterDescriptor.ApplyInRuleToState(state, inRule);
         }
 
         return state;
-    }
-
-    private static void ApplyCustomRuleToState(ExcelFilterState state, FilterDescriptor fd)
-    {
-        state.CustomOperator = fd.Operator;
-        state.SelectedValues.Clear();
-        state.SelectAll = true;
-
-        if (fd.Operator == FilterOperator.Between && fd.Value is RangeValue rv)
-        {
-            state.CustomValue1 = rv.Min;
-            state.CustomValue2 = rv.Max;
-        }
-        else
-        {
-            state.CustomValue1 = fd.Value;
-            state.CustomValue2 = null;
-        }
-    }
-
-    private static void ApplyInRuleToState(ExcelFilterState state, FilterDescriptor fd)
-    {
-        state.CustomOperator = null;
-        state.CustomValue1 = null;
-        state.CustomValue2 = null;
-        state.SelectedValues.Clear();
-
-        if (fd.Value is IEnumerable enumerable and not string)
-        {
-            foreach (var v in enumerable)
-                state.SelectedValues.Add(v);
-        }
-
-        state.SelectAll = false;
     }
 
     private Func<T, bool>? _cachedPredicate;

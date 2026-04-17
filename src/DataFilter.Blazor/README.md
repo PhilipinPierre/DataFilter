@@ -18,6 +18,7 @@ The core UI for selection and advanced filtering. Supports:
 - Multi-select value list with hierarchical grouping (Dates).
 - Advanced operators (Equals, Contains, Greater Than, etc.).
 - Accumulation modes (Union / Intersection).
+- **`BlazorColumnFilterViewModel`** mirrors the shared Excel behavior: reconciliation of **`SelectedValues`** when distincts change, **`LoadStateAsync`** vs custom-filter preview, and **AND**-combined **stacked** custom criteria on the same column.
 
 ## Usage
 

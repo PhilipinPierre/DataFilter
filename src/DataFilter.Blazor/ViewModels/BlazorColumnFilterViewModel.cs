@@ -3,7 +3,9 @@ using CommunityToolkit.Mvvm.Input;
 using DataFilter.Core.Enums;
 using DataFilter.Core.Engine;
 using DataFilter.Filtering.ExcelLike.Models;
+using DataFilter.Filtering.ExcelLike.Services;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Input;
@@ -332,6 +334,9 @@ public partial class BlazorColumnFilterViewModel : ObservableObject, IBlazorColu
     {
         _internalUpdate = true;
 
+        var distinctList = distinctValues as IList<object> ?? distinctValues.ToList();
+        ExcelFilterSelectionReconciler.ReconcileSelectedValues(FilterState, distinctList, dropSelectionsNotInDistinct: false);
+
         foreach (var item in FilterValues)
         {
             item.PropertyChanged -= Item_PropertyChanged;
@@ -342,11 +347,11 @@ public partial class BlazorColumnFilterViewModel : ObservableObject, IBlazorColu
 
         if (DataType == FilterDataType.Date)
         {
-            InitializeDateTree(distinctValues, newFilterValues);
+            InitializeDateTree(distinctList, newFilterValues);
         }
         else
         {
-            InitializeFlatList(distinctValues, newFilterValues);
+            InitializeFlatList(distinctList, newFilterValues);
         }
 
         FilterValues = new ObservableCollection<FilterValueItem>(newFilterValues);
@@ -359,6 +364,15 @@ public partial class BlazorColumnFilterViewModel : ObservableObject, IBlazorColu
         UpdateSelectAllState();
         SyncFilterStateSelectedValues();
         _internalUpdate = false;
+
+        if (FilterState.CustomOperator != null)
+        {
+            SelectedCustomOperator = FilterState.CustomOperator;
+            CustomValue1 = FilterState.CustomValue1?.ToString() ?? string.Empty;
+            CustomValue2 = FilterState.CustomValue2?.ToString() ?? string.Empty;
+            UpdateSelectionFromCustomFilter();
+            UpdateSelectionSnapshot();
+        }
     }
 
     private void InitializeFlatList(IEnumerable<object> distinctValues, List<FilterValueItem> newFilterValues)
@@ -462,15 +476,23 @@ public partial class BlazorColumnFilterViewModel : ObservableObject, IBlazorColu
         IsCustomFilterExpanded = state.CustomOperator != null || state.AdditionalCustomCriteria.Count > 0;
 
         SearchText = FilterState.SearchText;
-        
-        foreach (var item in FilterValues)
+
+        if (state.CustomOperator == null)
         {
-            ApplySelectionStateToItemsRecursive(item, state.SelectedValues);
+            foreach (var item in FilterValues)
+                ApplySelectionStateToItemsRecursive(item, state.SelectedValues);
+            UpdateSelectAllState();
+            UpdateSelectionSnapshot();
         }
-        UpdateSelectAllState();
-        UpdateSelectionSnapshot();
 
         _internalUpdate = false;
+
+        if (state.CustomOperator != null && FilterValues.Count > 0)
+        {
+            UpdateSelectionFromCustomFilter();
+            UpdateSelectionSnapshot();
+        }
+
         OnPropertyChanged(nameof(IsFilterActive));
     }
 
@@ -493,9 +515,6 @@ public partial class BlazorColumnFilterViewModel : ObservableObject, IBlazorColu
     {
         if (_internalUpdate || SelectedCustomOperator == null) return;
 
-        object? v1 = CustomValue1;
-        object? v2 = CustomValue2;
-
         if (AddToExistingFilter && AccumulationMode == AccumulationMode.Intersection && string.IsNullOrEmpty(CustomValue1) && string.IsNullOrEmpty(CustomValue2))
         {
             return;
@@ -504,12 +523,11 @@ public partial class BlazorColumnFilterViewModel : ObservableObject, IBlazorColu
         _internalUpdate = true;
         try
         {
-            FilterOperator op = SelectedCustomOperator.Value;
             bool effectiveAddToExisting = AddToExistingFilter && (_initialFilterActive || IsFilterActive);
 
             foreach (var item in FilterValues)
             {
-                UpdateItemMatchRecursive(item, op, v1, v2, effectiveAddToExisting);
+                UpdateItemMatchRecursive(item, effectiveAddToExisting);
             }
 
             UpdateSelectAllState();
@@ -521,19 +539,38 @@ public partial class BlazorColumnFilterViewModel : ObservableObject, IBlazorColu
         }
     }
 
-    private void UpdateItemMatchRecursive(FilterValueItem item, FilterOperator op, object? v1, object? v2, bool effectiveAddToExisting)
+    private bool ValueMatchesAllStackedCustomColumnFilters(object? itemValue)
+    {
+        if (SelectedCustomOperator == null)
+            return false;
+
+        object? v1 = string.IsNullOrEmpty(CustomValue1) ? null : CustomValue1;
+        object? v2 = string.IsNullOrEmpty(CustomValue2) ? null : CustomValue2;
+        if (!_filterEvaluator.EvaluateOperator(itemValue, SelectedCustomOperator.Value, v1, v2))
+            return false;
+
+        foreach (var extra in FilterState.AdditionalCustomCriteria)
+        {
+            if (!_filterEvaluator.EvaluateOperator(itemValue, extra.Operator, extra.Value1, extra.Value2))
+                return false;
+        }
+
+        return true;
+    }
+
+    private void UpdateItemMatchRecursive(FilterValueItem item, bool effectiveAddToExisting)
     {
         if (item.Children.Count > 0)
         {
             foreach (var child in item.Children)
             {
-                UpdateItemMatchRecursive(child, op, v1, v2, effectiveAddToExisting);
+                UpdateItemMatchRecursive(child, effectiveAddToExisting);
             }
             item.UpdateStateFromChildren();
         }
         else
         {
-            bool matches = _filterEvaluator.EvaluateOperator(item.Value, op, v1, v2);
+            bool matches = ValueMatchesAllStackedCustomColumnFilters(item.Value);
 
             if (effectiveAddToExisting)
             {
@@ -637,6 +674,26 @@ public partial class BlazorColumnFilterViewModel : ObservableObject, IBlazorColu
         {
             if (item.Value != null) item.IsSelected = selectedValues.Contains(item.Value);
         }
+    }
+
+    /// <summary>Notifies that <see cref="IsFilterActive"/> should be re-evaluated.</summary>
+    public void RaiseFilterActiveChanged() => OnPropertyChanged(nameof(IsFilterActive));
+
+    /// <summary>Clears local filter UI and reloads distinct values without notifying the parent clear callback.</summary>
+    public async System.Threading.Tasks.Task SyncFromClearedContextAsync()
+    {
+        _internalUpdate = true;
+        FilterState.Clear();
+        SelectedCustomOperator = null;
+        CustomValue1 = string.Empty;
+        CustomValue2 = string.Empty;
+        IsCustomFilterExpanded = false;
+        AddToExistingFilter = false;
+        SearchText = string.Empty;
+        _internalUpdate = false;
+
+        await SearchCommand.ExecuteAsync(string.Empty);
+        OnPropertyChanged(nameof(IsFilterActive));
     }
 
     /// <inheritdoc />

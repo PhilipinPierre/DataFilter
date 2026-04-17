@@ -11,6 +11,11 @@ namespace DataFilter.Core.Services;
 public static class FilterPipelineCompiler
 {
     /// <summary>
+    /// Property name of the root <see cref="FilterGroup"/> created when <see cref="FilterPipeline.RootCombineOperator"/> is <see cref="LogicalOperator.Or"/>.
+    /// </summary>
+    public const string PipelineRootGroupPropertyName = "__pipeline_root";
+
+    /// <summary>
     /// Compiles enabled nodes to descriptors (top-level order preserved). Empty groups are omitted.
     /// Root <see cref="FilterPipeline.RootCombineOperator"/> is honored: for <c>Or</c>, a single
     /// <see cref="FilterGroup"/> wraps all root-level descriptors so engines that combine siblings with <c>And</c> still behave correctly.
@@ -29,7 +34,7 @@ public static class FilterPipelineCompiler
 
         if (pipeline.RootCombineOperator == LogicalOperator.Or && list.Count > 1)
         {
-            var root = new FilterGroup(LogicalOperator.Or, "__pipeline_root");
+            var root = new FilterGroup(LogicalOperator.Or, PipelineRootGroupPropertyName);
             foreach (IFilterDescriptor d in list)
                 root.Add(d);
             return new[] { root };

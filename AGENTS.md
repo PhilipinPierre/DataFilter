@@ -74,6 +74,18 @@ Any change to **serializable models** or **contracts** (`IFilterContext`, snapsh
 5. **`IAsyncDataProvider<T>`**: Async loading, paging, distinct values for popups — central pattern for “remote data” scenarios.
 6. **ExcelLike**: Specialized descriptors (text, numeric, date) and domain logic separate from the generic Core engine. Column popups still use **`AddOrUpdateDescriptor`** by property name; advanced UIs can drive **`ApplyFilterPipelineAsync`** (see PlatformShared) after editing a pipeline or preset.
 
+## Excel column filter state, popup UI, and item source changes
+
+When **`LocalDataSource`** (or the collection view’s **`SourceCollection`**) is **replaced**, distinct value identities change. The grid must keep **`ExcelFilterState.SelectedValues`** aligned with canonical instances from the current data, and the **column popup** must **reload distincts** and **reapply** the same logical filter as the context.
+
+| Piece | Role |
+|-------|------|
+| **`ExcelFilterSelectionReconciler`** (`Filtering.ExcelLike`) | Maps `SelectedValues` to instances present in the current distinct list (reference equality first, then `Equals`). **`dropSelectionsNotInDistinct`**: default **`true`** when reconciling **descriptor state** (e.g. `FilterableDataGridViewModel.RefreshDataAsync`, `CollectionViewFilterAdapter`) so stale entries are removed. **`false`** in **`ColumnFilterViewModel.InitializeAsync`** / **`BlazorColumnFilterViewModel.InitializeAsync`** so search-narrowed distinct lists do not drop off-screen selections needed for “add to existing”. |
+| **`FilterableDataGridViewModel.RefreshDataAsync`** | After reconciling descriptors, if **`LocalDataSource`** **reference** changed and there are descriptors, raises **`FilterDescriptorsChanged`** so WPF **`FilterableColumnHeaderBehavior`** runs **`SyncColumnFilterFromParentAsync`** (refetch distincts + `LoadStateAsync`). Hosts should call **`RefreshDataAsync`** after assigning a new items collection. |
+| **`CollectionViewFilterAdapter.RefreshDataAsync`** | Same idea when **`CollectionView.SourceCollection`** reference changes; raises **`FilterDescriptorsChanged`** when descriptors exist. |
+| **`ColumnFilterViewModel` / `BlazorColumnFilterViewModel`** | After **`InitializeAsync`**, if **`FilterState.CustomOperator`** is set, sync observable fields and call **`UpdateSelectionFromCustomFilter()`** so checkbox preview matches operators on **new** distincts. **`LoadStateAsync`**: for **list-only** filters, **`ApplySelectionStateToItemsRecursive`**; for **custom** filters, **`UpdateSelectionFromCustomFilter`** after **`_internalUpdate`** is cleared (In-list semantics must not overwrite operator-driven preview). |
+| **Stacked custom criteria on one column** | **`ExcelFilterDescriptor.Descriptors`** emits **`CustomOperator`** + **`AdditionalCustomCriteria`** as **AND**-combined rules. **`UpdateSelectionFromCustomFilter`** uses **`ValueMatchesAllStackedCustomColumnFilters`** (primary operator + each **`ExcelFilterAdditionalCriterion`**) so the popup matches grid filtering. |
+
 ## Tests
 
 - Location: `tests/DataFilter.*.Tests`.
@@ -93,7 +105,8 @@ Any change to **serializable models** or **contracts** (`IFilterContext`, snapsh
 
 - `README.md` — product overview and quick start (includes **filter pipeline** summary).
 - `src/DataFilter.Core/README.md` — abstractions, **`FilterPipeline` / `FilterPipelineSnapshot`**, and extending the engine.
-- `src/DataFilter.PlatformShared/README.md` — shared ViewModels and **`ApplyFilterPipelineAsync`**.
+- `src/DataFilter.PlatformShared/README.md` — shared ViewModels, **`ApplyFilterPipelineAsync`**, **`FilterDescriptorsChanged`**, and column popup sync.
+- `src/DataFilter.Filtering.ExcelLike/README.md` — **`ExcelFilterDescriptor`**, **`ExcelFilterSelectionReconciler`**, stacked **`AdditionalCustomCriteria`**.
 - `src/DataFilter.Expressions.Server/README.md` — server-side LINQ bridge.
 - `CUSTOMIZATION.md` — WPF themes and Blazor CSS.
 

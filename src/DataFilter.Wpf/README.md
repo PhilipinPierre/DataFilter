@@ -34,3 +34,4 @@ Allows making any `GridViewColumn` or `DataGridColumn` filterable by simply sett
 <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}"
                 behaviors:FilterableColumnHeaderBehavior.IsFilterable="True" />
 ```
+Subscribes to **`IFilterableDataGridViewModel.FilterDescriptorsChanged`** and **`LocalDataSource`** / **`FilteredItems`** property changes so the header button and filter popup stay aligned with the grid context after filters or **item source** updates. Opening the popup runs **`SearchCommand`** (empty search) then **`LoadStateAsync`** from **`GetColumnFilterState`**, so distinct lists and selection state match the current data.

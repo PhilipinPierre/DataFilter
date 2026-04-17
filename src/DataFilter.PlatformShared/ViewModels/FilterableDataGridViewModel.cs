@@ -16,11 +16,24 @@ namespace DataFilter.PlatformShared.ViewModels;
 /// </summary>
 public partial class FilterableDataGridViewModel : ObservableObject, IFilterableDataGridViewModel
 {
+    private object? _lastLocalDataSourceSyncRef;
+
     IEnumerable IFilterableDataGridViewModel.FilteredItems => FilteredItems;
 
     public IFilterContext Context { get; } = new FilterContext();
     public IExcelFilterEngine FilterEngine { get; }
     public HashSet<string> FilterableProperties { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <inheritdoc />
+    public event EventHandler<FilterDescriptorsChangedEventArgs>? FilterDescriptorsChanged;
+
+    /// <summary>
+    /// Raises <see cref="FilterDescriptorsChanged"/>.
+    /// </summary>
+    protected virtual void OnFilterDescriptorsChanged(FilterDescriptorsChangedEventArgs? args = null)
+    {
+        FilterDescriptorsChanged?.Invoke(this, args ?? new FilterDescriptorsChangedEventArgs());
+    }
 
     /// <summary>
     /// Initializes a new instance with the default <see cref="ExcelFilterEngine"/>.
@@ -56,6 +69,8 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
     /// <inheritdoc />
     public async Task RefreshDataAsync()
     {
+        var localSourceChanged = false;
+
         if (AsyncDataProvider != null)
         {
             var pagedResult = await AsyncDataProvider.FetchDataAsync(Context);
@@ -63,6 +78,10 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
         }
         else
         {
+            localSourceChanged = !ReferenceEquals(_lastLocalDataSourceSyncRef, LocalDataSource);
+            _lastLocalDataSourceSyncRef = LocalDataSource;
+
+            ReconcileExcelFilterStatesWithLocalDistincts();
             // Materialize immediately: Apply returns a deferred IEnumerable; binding to it can skip
             // re-enumeration when the source list is replaced, so filters never visibly "reapply".
             var filtered = FilterEngine.Apply(LocalDataSource, ItemType, Context.Descriptors);
@@ -98,6 +117,9 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
                 FilteredItems = list;
             }
         }
+
+        if (AsyncDataProvider == null && localSourceChanged && Context.Descriptors.Count > 0)
+            OnFilterDescriptorsChanged(new FilterDescriptorsChangedEventArgs());
     }
 
     public async void ApplyColumnFilter(string propertyName, ExcelFilterState state)
@@ -111,6 +133,18 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
         await RefreshDataAsync();
     }
 
+    private void ReconcileExcelFilterStatesWithLocalDistincts()
+    {
+        foreach (var d in Context.Descriptors)
+        {
+            if (d is ExcelFilterDescriptor ed)
+            {
+                var distincts = FilterEngine.DistinctValuesExtractor.Extract(LocalDataSource, ItemType, ed.PropertyName);
+                ExcelFilterSelectionReconciler.ReconcileSelectedValues(ed.State, distincts);
+            }
+        }
+    }
+
     public async void ClearColumnFilter(string propertyName)
     {
         if (Context is FilterContext ctx)
@@ -119,6 +153,7 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
             ctx.Page = 1;
         }
         await RefreshDataAsync();
+        OnFilterDescriptorsChanged(new FilterDescriptorsChangedEventArgs { AffectedPropertyName = propertyName });
     }
 
     public async void ApplySort(string propertyName, bool isDescending)
@@ -200,11 +235,14 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
         if (pipeline == null) throw new ArgumentNullException(nameof(pipeline));
         if (Context is FilterContext ctx)
         {
-            pipeline.ApplyToContext(ctx);
+            var compiled = FilterPipelineCompiler.Compile(pipeline);
+            var excelDescriptors = FilterDescriptorToExcelConverter.ConvertCompiledPipeline(compiled);
+            ctx.ReplaceDescriptors(excelDescriptors);
             ctx.Page = 1;
         }
 
         await RefreshDataAsync();
+        OnFilterDescriptorsChanged(new FilterDescriptorsChangedEventArgs());
     }
 
     /// <inheritdoc />
@@ -262,6 +300,7 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
 
         new FilterSnapshotBuilder().RestoreSnapshot(Context, filteredSnapshot);
         await RefreshDataAsync();
+        OnFilterDescriptorsChanged(new FilterDescriptorsChangedEventArgs());
     }
 }
 

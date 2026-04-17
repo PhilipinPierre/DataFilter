@@ -30,6 +30,8 @@ The solution is divided into several main projects:
   - **Union (Additive)**: Merges new matches with the current selection (Logical OR).
   - **Intersection (Refinement)**: Keeps only items that match BOTH the current selection and the new criteria (Logical AND).
 - **Cumulative Filtering**: "Add to current selection" mode allows merging successive search results.
+- **Data source changes**: When **`LocalDataSource`** (or a collection view’s source) is **replaced**, call **`RefreshDataAsync`** on the grid ViewModel so **`SelectedValues`** are reconciled with the new distincts and column filters stay in sync (`FilterDescriptorsChanged` drives popup reload where applicable).
+- **Stacked filters on one column**: Multiple custom rules on the same column (**`AdditionalCustomCriteria`**) are **AND**-combined in **`ExcelFilterDescriptor`**; the filter popup reapplies **all** of them when refreshing distinct values.
 
 ### 📶 Multi-Column Sorting
 - **Sub-sorting**: Define secondary and tertiary order (e.g., Order by Name, then by Date).
