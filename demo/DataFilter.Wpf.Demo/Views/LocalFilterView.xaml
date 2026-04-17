@@ -10,6 +10,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -18,7 +19,24 @@
             <TextBlock Text="All data is loaded locally. Filters are applied in-memory instantly against the collection." FontSize="14" Foreground="Gray" />
         </StackPanel>
 
-        <controls:FilterableDataGrid Grid.Row="1"
+        <Border Grid.Row="1" Margin="10,0,10,10" Padding="10" BorderBrush="LightGray" BorderThickness="1" CornerRadius="4">
+            <StackPanel>
+                <TextBlock Text="Filter pipeline (JSON preset)" FontWeight="Bold" Margin="0,0,0,6" />
+                <TextBox Text="{Binding PipelineJson, UpdateSourceTrigger=PropertyChanged}"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto"
+                         MinHeight="100"
+                         FontFamily="Consolas"
+                         FontSize="12" />
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                    <Button Content="Sync from grid" Command="{Binding SyncPipelineFromGridCommand}" Margin="0,0,8,0" Padding="12,4" />
+                    <Button Content="Apply JSON" Command="{Binding ApplyPipelineJsonCommand}" Padding="12,4" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <controls:FilterableDataGrid Grid.Row="2"
                                      ViewModel="{Binding GridViewModel}"
                                      ItemsSource="{Binding GridViewModel.FilteredItems}"
                                      AutoGenerateColumns="True"

@@ -7,6 +7,7 @@ using DataFilter.Core.Abstractions;
 using DataFilter.Core.Engine;
 using DataFilter.Core.Enums;
 using DataFilter.Core.Models;
+using DataFilter.Core.Pipeline;
 using DataFilter.Core.Services;
 using DataFilter.Filtering.ExcelLike.Abstractions;
 using DataFilter.Filtering.ExcelLike.Models;
@@ -230,6 +231,26 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
 
             RefreshDataAsync();
         }
+    }
+
+    /// <inheritdoc />
+    public async Task ApplyFilterPipelineAsync(FilterPipeline pipeline)
+    {
+        if (pipeline == null) throw new ArgumentNullException(nameof(pipeline));
+        if (Context is FilterContext ctx)
+        {
+            pipeline.ApplyToContext(ctx);
+            _columnFilterStates.Clear();
+            SyncColumnFilterStatesFromContext();
+        }
+
+        await RefreshDataAsync();
+    }
+
+    /// <inheritdoc />
+    public FilterPipeline CreatePipelineFromCurrentSnapshot()
+    {
+        return FilterPipelineInterop.FromLegacySnapshot(ExtractSnapshot());
     }
 
     private void SyncColumnFilterStatesFromContext()

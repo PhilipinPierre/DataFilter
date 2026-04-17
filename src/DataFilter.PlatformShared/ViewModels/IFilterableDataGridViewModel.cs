@@ -1,6 +1,7 @@
 using System.Collections;
 using System.ComponentModel;
 using DataFilter.Core.Abstractions;
+using DataFilter.Core.Pipeline;
 using DataFilter.Filtering.ExcelLike.Abstractions;
 using DataFilter.Filtering.ExcelLike.Models;
 
@@ -25,6 +26,14 @@ public interface IFilterableDataGridViewModel : INotifyPropertyChanged
     Type? GetPropertyType(string propertyName);
     IFilterSnapshot ExtractSnapshot();
     void RestoreSnapshot(IFilterSnapshot snapshot);
+    /// <summary>
+    /// Replaces context filters with the compiled pipeline and refreshes data (page reset to 1).
+    /// </summary>
+    Task ApplyFilterPipelineAsync(FilterPipeline pipeline);
+    /// <summary>
+    /// Builds a mutable <see cref="FilterPipeline"/> from the current legacy snapshot (for UI editing / presets).
+    /// </summary>
+    FilterPipeline CreatePipelineFromCurrentSnapshot();
     HashSet<string> FilterableProperties { get; }
 }
 
@@ -36,4 +45,6 @@ public interface IFilterableDataGridViewModel<T> : IFilterableDataGridViewModel
     new IEnumerable<T> LocalDataSource { get; set; }
     new IEnumerable<T> FilteredItems { get; }
     new Task RefreshDataAsync();
+    new Task ApplyFilterPipelineAsync(FilterPipeline pipeline);
+    new FilterPipeline CreatePipelineFromCurrentSnapshot();
 }

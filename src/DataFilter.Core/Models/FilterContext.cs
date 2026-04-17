@@ -55,6 +55,19 @@ public class FilterContext : IFilterContext
         _descriptors.Clear();
     }
 
+    /// <inheritdoc />
+    public void ReplaceDescriptors(IReadOnlyList<IFilterDescriptor> descriptors)
+    {
+        if (descriptors == null) throw new ArgumentNullException(nameof(descriptors));
+
+        _descriptors.Clear();
+        foreach (IFilterDescriptor d in descriptors)
+        {
+            if (d == null) throw new ArgumentException("Descriptors cannot contain null entries.", nameof(descriptors));
+            _descriptors.Add(d);
+        }
+    }
+
     /// <summary>
     /// Sets a single sort criterion, replacing any existing sort.
     /// </summary>

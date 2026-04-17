@@ -3,6 +3,7 @@ using System.Reflection;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DataFilter.Core.Abstractions;
 using DataFilter.Core.Models;
+using DataFilter.Core.Pipeline;
 using DataFilter.Core.Services;
 using DataFilter.Filtering.ExcelLike.Abstractions;
 using DataFilter.Filtering.ExcelLike.Models;
@@ -191,6 +192,25 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
     public IFilterSnapshot ExtractSnapshot()
     {
         return new FilterSnapshotBuilder().CreateSnapshot(Context);
+    }
+
+    /// <inheritdoc />
+    public async Task ApplyFilterPipelineAsync(FilterPipeline pipeline)
+    {
+        if (pipeline == null) throw new ArgumentNullException(nameof(pipeline));
+        if (Context is FilterContext ctx)
+        {
+            pipeline.ApplyToContext(ctx);
+            ctx.Page = 1;
+        }
+
+        await RefreshDataAsync();
+    }
+
+    /// <inheritdoc />
+    public FilterPipeline CreatePipelineFromCurrentSnapshot()
+    {
+        return FilterPipelineInterop.FromLegacySnapshot(ExtractSnapshot());
     }
 
     private IReadOnlyList<FilterSnapshotEntry> CleanSnapshotEntries(IEnumerable<FilterSnapshotEntry> entries)

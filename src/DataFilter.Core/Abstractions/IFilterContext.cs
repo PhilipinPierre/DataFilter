@@ -31,6 +31,13 @@ public interface IFilterContext
     void ClearDescriptors();
 
     /// <summary>
+    /// Replaces all filter descriptors with an ordered list. Unlike column-oriented updates, duplicate
+    /// <see cref="IFilterDescriptor.PropertyName"/> values are allowed (e.g. from a compiled DataFilter pipeline model).
+    /// </summary>
+    /// <param name="descriptors">New descriptors, applied in order.</param>
+    void ReplaceDescriptors(IReadOnlyList<IFilterDescriptor> descriptors);
+
+    /// <summary>
     /// Clears all sort criteria.
     /// </summary>
     void ClearSort();
