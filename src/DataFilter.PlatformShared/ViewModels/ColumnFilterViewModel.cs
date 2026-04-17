@@ -102,6 +102,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
     {
         if (state == null) return false;
         return state.CustomOperator != null
+            || state.AdditionalCustomCriteria.Count > 0
             || !string.IsNullOrEmpty(state.SearchText)
             || !state.SelectAll
             || state.DistinctValues.Count != state.SelectedValues.Count;
@@ -215,6 +216,34 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
 
 
             bool effectiveAddToExisting = AddToExistingFilter && (_initialFilterActive || IsFilterActive);
+
+            // Stack a second custom rule (AND) on the same column instead of degrading to In(selected floats)
+            // from checkbox intersection — required for range filters to survive data regeneration.
+            bool mergeCustomWithExistingCustom = effectiveAddToExisting
+                && AccumulationMode == AccumulationMode.Intersection
+                && SelectedCustomOperator != null
+                && FilterState.CustomOperator != null;
+
+            if (mergeCustomWithExistingCustom)
+            {
+                FilterState.AdditionalCustomCriteria.Add(new ExcelFilterAdditionalCriterion
+                {
+                    Operator = SelectedCustomOperator!.Value,
+                    Value1 = string.IsNullOrEmpty(CustomValue1) ? null : CustomValue1,
+                    Value2 = string.IsNullOrEmpty(CustomValue2) ? null : CustomValue2
+                });
+
+                SelectedCustomOperator = null;
+                CustomValue1 = string.Empty;
+                CustomValue2 = string.Empty;
+                IsCustomFilterExpanded = false;
+
+                FilterState.SearchText = string.Empty;
+                OnPropertyChanged(nameof(IsFilterActive));
+                _onApplyAction?.Invoke(FilterState);
+                OnApply?.Invoke(this, EventArgs.Empty);
+                return;
+            }
 
             if (effectiveAddToExisting)
             {
@@ -561,10 +590,24 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
 
         _initialFilterActive = HasActiveExcelFilter(state);
 
+        if (!ReferenceEquals(FilterState, state))
+        {
+            FilterState.AdditionalCustomCriteria.Clear();
+            foreach (var c in state.AdditionalCustomCriteria)
+            {
+                FilterState.AdditionalCustomCriteria.Add(new ExcelFilterAdditionalCriterion
+                {
+                    Operator = c.Operator,
+                    Value1 = c.Value1,
+                    Value2 = c.Value2
+                });
+            }
+        }
+
         SelectedCustomOperator = state.CustomOperator;
         CustomValue1 = state.CustomValue1?.ToString() ?? string.Empty;
         CustomValue2 = state.CustomValue2?.ToString() ?? string.Empty;
-        IsCustomFilterExpanded = state.CustomOperator != null;
+        IsCustomFilterExpanded = state.CustomOperator != null || state.AdditionalCustomCriteria.Count > 0;
 
         SearchText = FilterState.SearchText;
         

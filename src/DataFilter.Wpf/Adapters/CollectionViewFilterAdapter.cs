@@ -215,20 +215,13 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
     /// <inheritdoc />
     public void RestoreSnapshot(IFilterSnapshot snapshot)
     {
-        // Re-use logic from FilterableDataGridViewModel or ideally centralize it in a service
-        // For now, let's implement basic restoration
         if (Context is FilterContext ctx)
         {
             new FilterSnapshotBuilder().RestoreSnapshot(ctx, snapshot);
-            
-            // Sync local dictionary
-            _columnFilterStates.Clear();
-            foreach (var descriptor in Context.Descriptors.OfType<ExcelFilterDescriptor>())
-            {
-                _columnFilterStates[descriptor.PropertyName] = descriptor.State;
-            }
 
-            // Sync sort descriptions
+            _columnFilterStates.Clear();
+            SyncColumnFilterStatesFromContext();
+
             CollectionView.SortDescriptions.Clear();
             foreach (var sort in Context.SortDescriptors)
             {
@@ -237,6 +230,155 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
 
             RefreshDataAsync();
         }
+    }
+
+    private void SyncColumnFilterStatesFromContext()
+    {
+        foreach (var descriptor in Context.Descriptors)
+        {
+            var propertyName = GetFilterPropertyName(descriptor);
+            if (string.IsNullOrEmpty(propertyName))
+                continue;
+
+            ExcelFilterState state;
+            if (descriptor is ExcelFilterDescriptor excelDesc)
+            {
+                state = CloneExcelFilterState(excelDesc.State);
+            }
+            else if (descriptor is IFilterGroup group)
+            {
+                state = BuildExcelFilterStateFromGroup(group);
+            }
+            else
+            {
+                continue;
+            }
+
+            _columnFilterStates[propertyName] = state;
+        }
+    }
+
+    private static string GetFilterPropertyName(IFilterDescriptor descriptor)
+    {
+        if (!string.IsNullOrEmpty(descriptor.PropertyName))
+            return descriptor.PropertyName;
+
+        if (descriptor is IFilterGroup g)
+        {
+            var first = g.Descriptors.FirstOrDefault();
+            return first?.PropertyName ?? string.Empty;
+        }
+
+        return string.Empty;
+    }
+
+    private static ExcelFilterState CloneExcelFilterState(ExcelFilterState s)
+    {
+        var clone = new ExcelFilterState
+        {
+            SearchText = s.SearchText,
+            UseWildcards = s.UseWildcards,
+            SelectAll = s.SelectAll,
+            CustomOperator = s.CustomOperator,
+            CustomValue1 = s.CustomValue1,
+            CustomValue2 = s.CustomValue2
+        };
+
+        foreach (var d in s.DistinctValues)
+            clone.DistinctValues.Add(d);
+        foreach (var v in s.SelectedValues)
+            clone.SelectedValues.Add(v);
+        foreach (var c in s.AdditionalCustomCriteria)
+        {
+            clone.AdditionalCustomCriteria.Add(new ExcelFilterAdditionalCriterion
+            {
+                Operator = c.Operator,
+                Value1 = c.Value1,
+                Value2 = c.Value2
+            });
+        }
+
+        return clone;
+    }
+
+    /// <summary>
+    /// Rebuilds Excel-like UI state from a restored filter group (e.g. after snapshot round-trip).
+    /// Custom/advanced rules are stored as operators on <see cref="FilterDescriptor"/>; manual list selection uses In/NotIn.
+    /// </summary>
+    private static ExcelFilterState BuildExcelFilterStateFromGroup(IFilterGroup group)
+    {
+        var state = new ExcelFilterState();
+        var children = group.Descriptors.OfType<FilterDescriptor>().ToList();
+
+        var customs = children.Where(d => d.Operator != FilterOperator.In).ToList();
+        var inRule = children.FirstOrDefault(d => d.Operator == FilterOperator.In);
+
+        if (customs.Count > 0)
+        {
+            ApplyCustomRuleToState(state, customs[0]);
+            for (int i = 1; i < customs.Count; i++)
+            {
+                var fd = customs[i];
+                if (fd.Operator == FilterOperator.Between && fd.Value is RangeValue rv)
+                {
+                    state.AdditionalCustomCriteria.Add(new ExcelFilterAdditionalCriterion
+                    {
+                        Operator = fd.Operator,
+                        Value1 = rv.Min,
+                        Value2 = rv.Max
+                    });
+                }
+                else
+                {
+                    state.AdditionalCustomCriteria.Add(new ExcelFilterAdditionalCriterion
+                    {
+                        Operator = fd.Operator,
+                        Value1 = fd.Value,
+                        Value2 = null
+                    });
+                }
+            }
+        }
+        else if (inRule != null)
+        {
+            ApplyInRuleToState(state, inRule);
+        }
+
+        return state;
+    }
+
+    private static void ApplyCustomRuleToState(ExcelFilterState state, FilterDescriptor fd)
+    {
+        state.CustomOperator = fd.Operator;
+        state.SelectedValues.Clear();
+        state.SelectAll = true;
+
+        if (fd.Operator == FilterOperator.Between && fd.Value is RangeValue rv)
+        {
+            state.CustomValue1 = rv.Min;
+            state.CustomValue2 = rv.Max;
+        }
+        else
+        {
+            state.CustomValue1 = fd.Value;
+            state.CustomValue2 = null;
+        }
+    }
+
+    private static void ApplyInRuleToState(ExcelFilterState state, FilterDescriptor fd)
+    {
+        state.CustomOperator = null;
+        state.CustomValue1 = null;
+        state.CustomValue2 = null;
+        state.SelectedValues.Clear();
+
+        if (fd.Value is IEnumerable enumerable and not string)
+        {
+            foreach (var v in enumerable)
+                state.SelectedValues.Add(v);
+        }
+
+        state.SelectAll = false;
     }
 
     private Func<T, bool>? _cachedPredicate;

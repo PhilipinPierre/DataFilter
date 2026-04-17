@@ -406,9 +406,10 @@ public class ColumnFilterViewModelTests
         // Act
         vm.ApplyCommand.Execute(null);
 
-        // Assert
-        var count = resultState.SelectedValues.Count;
-        Assert.True(count > 0, $"Got 0 items. All: {allItemsStates}. Snapshot for <95000: {snapshotItems}. Previous Selected: {currentSelected}");
-        Assert.Equal(3, count); // 70000, 80000, 90000
+        // Assert — second custom stacks as AND (GreaterThan + LessThan), not In(selected salary floats)
+        Assert.Equal(FilterOperator.GreaterThan, resultState!.CustomOperator);
+        Assert.Single(resultState.AdditionalCustomCriteria);
+        Assert.Equal(FilterOperator.LessThan, resultState.AdditionalCustomCriteria[0].Operator);
+        Assert.Equal("95000", resultState.AdditionalCustomCriteria[0].Value1?.ToString());
     }
 }

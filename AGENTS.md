@@ -1,0 +1,100 @@
+# Agent orientation (DataFilter)
+
+This repository is a .NET library for Excel-style data filtering, with multiple UI integrations and a server-side layer for LINQ expressions. This document summarizes structure, dependencies, and common pitfalls for working effectively in the codebase.
+
+## Solution and build files
+
+- **Solution**: `DataFilter.slnx` at the repository root (XML “solution folder” format). CI and local commands use this file.
+- **Packages**: Centralized versions in `Directory.Packages.props` (`ManagePackageVersionsCentrally`).
+- **Shared properties**: `Directory.Build.props` (nullable, modern C# language version).
+
+Useful commands: `dotnet restore DataFilter.slnx`, `dotnet build DataFilter.slnx`, `dotnet test DataFilter.slnx`.
+
+## Directory layout
+
+| Directory | Purpose |
+|-----------|---------|
+| `src/` | Library projects (NuGet packaging depends on configuration). |
+| `tests/` | xUnit tests aligned with `src/` projects (often one test project per package). |
+| `demo/` | Sample applications (WPF, Blazor Wasm/Server/Hybrid, WinForms, WinUI 3, MAUI, UWP XAML, etc.). |
+| `.github/workflows/` | Windows CI: build, tests, pack, and NuGet push on `v*` tags. |
+
+User-facing docs and UI customization live in `README.md`, `CUSTOMIZATION.md`, and per-project `README.md` files under `src/`.
+
+## Project map and dependencies
+
+```
+DataFilter.Core                    (no internal project references)
+    ↑
+    ├── DataFilter.Filtering.ExcelLike
+    ├── DataFilter.Expressions.Server
+    └── (referenced indirectly wherever base models / engine are needed)
+
+DataFilter.Filtering.ExcelLike
+    ↑
+    ├── DataFilter.PlatformShared  (Core + ExcelLike + CommunityToolkit.Mvvm)
+    └── also referenced by Wpf and Blazor without going through PlatformShared for some stacks
+
+DataFilter.PlatformShared
+    ↑
+    ├── DataFilter.Wpf            (adds WPF behaviors, XAML)
+    ├── DataFilter.WinForms
+    ├── DataFilter.Maui
+    ├── DataFilter.WinUI3
+    └── DataFilter.UwpXaml
+
+DataFilter.Blazor                 → Core + ExcelLike (not PlatformShared)
+```
+
+**Key point**: The logical core is **always** `DataFilter.Core`. Excel-like behavior (distinct values, composite descriptors, etc.) lives in **`DataFilter.Filtering.ExcelLike`**. **Shared** ViewModels (filterable grid, column) are in **`DataFilter.PlatformShared`** and are used by WPF, WinForms, MAUI, WinUI 3, and UWP XAML — **not** by Blazor, which defines its own types (`BlazorColumnFilterViewModel`, `IBlazorColumnFilterViewModel` in `DataFilter.Blazor`).
+
+## `src/` projects (role and targets)
+
+| Project | Role | Typical targets |
+|---------|------|-----------------|
+| **DataFilter.Core** | Abstractions (`IFilterEngine`, `IFilterContext`, `IFilterDescriptor`, `IAsyncDataProvider`), models (`FilterSnapshot`, `FilterDescriptor`, logical groups), engine (`FilterExpressionBuilder`, `ReflectionFilterEngine`), services (`FilterSnapshotBuilder`, `AsyncDataProviderAdapter`). No UI dependencies. | `net8.0`, `net9.0`, `netstandard2.0`, `netstandard2.1` |
+| **DataFilter.Filtering.ExcelLike** | Excel-style engine and models (`ExcelFilterEngine`, `ExcelFilterDescriptor`, distinct-value extractors, etc.). | `net8.0`, `net9.0` |
+| **DataFilter.PlatformShared** | Reusable ViewModels (`FilterableDataGridViewModel`, `ColumnFilterViewModel`) built on CommunityToolkit.Mvvm. | `net8.0`, `net9.0` |
+| **DataFilter.Wpf** | WPF controls and behaviors. References Core, ExcelLike, and PlatformShared. | `net8.0-windows`, `net9.0-windows` |
+| **DataFilter.Blazor** | Razor components (`DataFilterGrid`, `FilterPopup`, etc.) and Blazor-specific ViewModels. | `net8.0` (Razor SDK) |
+| **DataFilter.Maui** | MAUI integration; depends on PlatformShared. | Multi-target (`net9.0-android`, iOS, Windows, etc.) |
+| **DataFilter.WinForms** | Windows Forms integration via PlatformShared. | `net8.0-windows`, `net9.0-windows` |
+| **DataFilter.WinUI3** | WinUI 3; Windows App SDK. | `net8.0-windows10.0.19041.0` |
+| **DataFilter.UwpXaml** | UWP / Uno project (Uno toolkit in packages). | `net9.0-windows10.0.26100.0` |
+| **DataFilter.Expressions.Server** | Maps `FilterSnapshot` to `Expression<Func<T,bool>>` for EF / `IQueryable`. | `net8.0`, `net9.0` |
+
+Any change to **serializable models** or **contracts** (`IFilterContext`, snapshots) may affect **Core**, **Expressions.Server**, **tests**, and indirectly **all** UIs.
+
+## Cross-cutting concepts (where to look)
+
+1. **`IFilterContext` / `FilterContext`**: Current filter and sort state; UIs and data providers depend on it.
+2. **`FilterSnapshot` + `FilterSnapshotBuilder`**: Serialize / restore state for APIs, persistence, or server layers. `RestoreSnapshot` requires a concrete `FilterContext` instance (see `FilterSnapshotBuilder`).
+3. **`ReflectionFilterEngine` / `FilterExpressionBuilder`**: In-memory or client-side expression evaluation and building.
+4. **`IAsyncDataProvider<T>`**: Async loading, paging, distinct values for popups — central pattern for “remote data” scenarios.
+5. **ExcelLike**: Specialized descriptors (text, numeric, date) and domain logic separate from the generic Core engine.
+
+## Tests
+
+- Location: `tests/DataFilter.*.Tests`.
+- Framework: **xUnit**, **Moq** in some projects.
+- After changes to Core, ExcelLike, Expressions.Server, or shared ViewModels, run **`dotnet test DataFilter.slnx`** on the branch.
+
+## Notes for agents
+
+1. **Multi-targeting**: Core may compile for `netstandard2.0` — avoid very new .NET APIs without compile-time guards, and keep signatures consistent across packages.
+2. **Two ViewModel families**: Do not casually merge `PlatformShared` and `DataFilter.Blazor`; a WPF UI change does not automatically apply to Blazor without updating Razor components.
+3. **Windows platforms**: WPF / WinForms require `-windows` TFMs; mixing with “any” libraries needs careful conditional references.
+4. **MAUI / WinUI / UWP**: Heavier, sometimes OS-specific builds; CI uses **windows-latest** with .NET 8 and 9.
+5. **Snapshot consistency**: Changes to `FilterGroup`, snapshot entries, or enums (`FilterOperator`, `LogicalOperator`) must stay aligned with **Expressions.Server**, **FilterSnapshotBuilder**, and related tests.
+6. **Documentation**: Avoid duplicating this file at length; prefer existing per-project `README.md` files for usage details.
+
+## Good starting reads
+
+- `README.md` — product overview and quick start.
+- `src/DataFilter.Core/README.md` — abstractions and extending the engine.
+- `src/DataFilter.Expressions.Server/README.md` — server-side LINQ bridge.
+- `CUSTOMIZATION.md` — WPF themes and Blazor CSS.
+
+---
+
+*Generated to help onboard agents on this repository; update when major structural changes occur (new projects, renames, public breaking changes).*

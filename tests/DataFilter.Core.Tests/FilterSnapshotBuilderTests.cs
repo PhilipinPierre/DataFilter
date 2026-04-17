@@ -1,5 +1,6 @@
-﻿using DataFilter.Core.Enums;
+using DataFilter.Core.Enums;
 using Xunit;
+using DataFilter.Core.Abstractions;
 using DataFilter.Core.Models;
 using DataFilter.Core.Services;
 
@@ -67,9 +68,32 @@ public class FilterSnapshotBuilderTests
     {
         FilterContext context = new();
         FilterSnapshotBuilder builder = new();
-        Core.Abstractions.IFilterSnapshot snapshot = builder.CreateSnapshot(context);
+        IFilterSnapshot snapshot = builder.CreateSnapshot(context);
 
         Assert.Empty(snapshot.Entries);
         Assert.Empty(snapshot.SortEntries);
+    }
+
+    [Fact]
+    public void RestoreSnapshot_TwoColumnScopedFilterGroups_PreservesBothDescriptors()
+    {
+        FilterContext original = new();
+        var ageGroup = new FilterGroup(LogicalOperator.And, "Age");
+        ageGroup.Add(new FilterDescriptor("Age", FilterOperator.GreaterThan, 10));
+        original.AddOrUpdateDescriptor(ageGroup);
+
+        var nameGroup = new FilterGroup(LogicalOperator.And, "Name");
+        nameGroup.Add(new FilterDescriptor("Name", FilterOperator.Contains, "a"));
+        original.AddOrUpdateDescriptor(nameGroup);
+
+        FilterSnapshotBuilder builder = new();
+        IFilterSnapshot snapshot = builder.CreateSnapshot(original);
+
+        FilterContext restored = new();
+        builder.RestoreSnapshot(restored, snapshot);
+
+        Assert.Equal(2, restored.Descriptors.Count);
+        Assert.Equal("Age", restored.Descriptors[0].PropertyName);
+        Assert.Equal("Name", restored.Descriptors[1].PropertyName);
     }
 }

@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using DataFilter.Core.Abstractions;
 using DataFilter.Core.Enums;
 

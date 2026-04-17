@@ -1,4 +1,4 @@
-﻿using DataFilter.Core.Abstractions;
+using DataFilter.Core.Abstractions;
 using DataFilter.Core.Enums;
 
 namespace DataFilter.Core.Models;
@@ -14,7 +14,10 @@ public class FilterGroup : IFilterGroup
     public LogicalOperator LogicalOperator { get; }
 
     /// <inheritdoc />
-    public string PropertyName => string.Empty;
+    /// <remarks>
+    /// For column-scoped Excel-like snapshots, this must match the column key used by <see cref="FilterContext.AddOrUpdateDescriptor"/>.
+    /// </remarks>
+    public string PropertyName { get; }
 
     /// <inheritdoc />
     public FilterOperator Operator => FilterOperator.Equals;
@@ -29,9 +32,11 @@ public class FilterGroup : IFilterGroup
     /// Initializes a new instance of the <see cref="FilterGroup"/> class.
     /// </summary>
     /// <param name="logicalOperator">The logical operator to use for combining descriptors.</param>
-    public FilterGroup(LogicalOperator logicalOperator)
+    /// <param name="propertyName">Column or scope key for this group (must be unique per column when stored in <see cref="FilterContext"/>).</param>
+    public FilterGroup(LogicalOperator logicalOperator, string propertyName = "")
     {
         LogicalOperator = logicalOperator;
+        PropertyName = propertyName ?? string.Empty;
     }
 
     /// <summary>

@@ -62,12 +62,13 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
         }
         else
         {
-            var items = FilterEngine.Apply(LocalDataSource, ItemType, Context.Descriptors);
-            IEnumerable result = items;
+            // Materialize immediately: Apply returns a deferred IEnumerable; binding to it can skip
+            // re-enumeration when the source list is replaced, so filters never visibly "reapply".
+            var filtered = FilterEngine.Apply(LocalDataSource, ItemType, Context.Descriptors);
+            var list = filtered.Cast<object>().ToList();
 
             if (Context.SortDescriptors.Count > 0)
             {
-                var list = items.Cast<object>().ToList();
                 IOrderedEnumerable<object>? orderedItems = null;
 
                 foreach (var sort in Context.SortDescriptors)
@@ -89,13 +90,12 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
                     }
                 }
 
-                if (orderedItems != null)
-                {
-                    result = orderedItems;
-                }
+                FilteredItems = orderedItems != null ? orderedItems.ToList() : list;
             }
-
-            FilteredItems = result;
+            else
+            {
+                FilteredItems = list;
+            }
         }
     }
 
@@ -205,7 +205,7 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
                 {
                     valid.Add(new FilterSnapshotEntry
                     {
-                        PropertyName = string.Empty,
+                        PropertyName = entry.PropertyName ?? string.Empty,
                         Operator = string.Empty,
                         LogicalOperator = entry.LogicalOperator,
                         Children = validChildren.ToList()

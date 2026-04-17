@@ -1,4 +1,4 @@
-﻿using DataFilter.Core.Abstractions;
+using DataFilter.Core.Abstractions;
 using DataFilter.Core.Engine;
 using DataFilter.Core.Enums;
 using DataFilter.Core.Models;
@@ -58,6 +58,22 @@ public class ExcelFilterDescriptor : IFilterGroup
                     Operator = State.CustomOperator.Value,
                     Value = val
                 });
+
+                foreach (ExcelFilterAdditionalCriterion extra in State.AdditionalCustomCriteria)
+                {
+                    object? extraVal = extra.Value1;
+                    if (extra.Operator == FilterOperator.Between)
+                    {
+                        extraVal = new RangeValue(extra.Value1, extra.Value2);
+                    }
+
+                    list.Add(new SimpleDescriptor
+                    {
+                        PropertyName = this.PropertyName,
+                        Operator = extra.Operator,
+                        Value = extraVal
+                    });
+                }
             }
 
             // 2. Manual Selection (if not Select All)

@@ -1,4 +1,4 @@
-﻿using DataFilter.Core.Abstractions;
+using DataFilter.Core.Abstractions;
 using DataFilter.Core.Enums;
 using DataFilter.Core.Models;
 
@@ -88,7 +88,7 @@ public sealed class FilterSnapshotBuilder : IFilterSnapshotBuilder
                 ? parsed
                 : LogicalOperator.And;
 
-            FilterGroup group = new(logicalOp);
+            FilterGroup group = new(logicalOp, entry.PropertyName ?? string.Empty);
             foreach (FilterSnapshotEntry child in entry.Children)
             {
                 group.Add(EntryToDescriptor(child));

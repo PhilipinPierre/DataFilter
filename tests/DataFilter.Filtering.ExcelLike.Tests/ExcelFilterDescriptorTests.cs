@@ -1,4 +1,4 @@
-﻿using Xunit;
+using Xunit;
 using DataFilter.Filtering.ExcelLike.Models;
 using DataFilter.Filtering.ExcelLike.Services;
 using DataFilter.Core.Enums;
@@ -107,5 +107,26 @@ public class ExcelFilterDescriptorTests
         var range = (Core.Models.RangeValue)descriptors[0].Value!;
         Assert.Equal("10", range.Min);
         Assert.Equal("20", range.Max);
+    }
+
+    [Fact]
+    public void Descriptors_WithAdditionalCustomCriteria_EmitsMultipleAndCombinedRules()
+    {
+        var state = new ExcelFilterState();
+        state.CustomOperator = FilterOperator.GreaterThan;
+        state.CustomValue1 = "65000";
+        state.AdditionalCustomCriteria.Add(new ExcelFilterAdditionalCriterion
+        {
+            Operator = FilterOperator.LessThan,
+            Value1 = "85000",
+            Value2 = null
+        });
+
+        var descriptor = new ExcelFilterDescriptor("Salary", state);
+        var descriptors = descriptor.Descriptors;
+
+        Assert.Equal(2, descriptors.Count);
+        Assert.Equal(FilterOperator.GreaterThan, descriptors[0].Operator);
+        Assert.Equal(FilterOperator.LessThan, descriptors[1].Operator);
     }
 }

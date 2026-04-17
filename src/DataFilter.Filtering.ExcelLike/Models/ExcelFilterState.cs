@@ -1,6 +1,16 @@
-﻿using DataFilter.Core.Enums;
+using DataFilter.Core.Enums;
 
 namespace DataFilter.Filtering.ExcelLike.Models;
+
+/// <summary>
+/// Additional custom criterion AND-combined with <see cref="ExcelFilterState.CustomOperator"/> on the same column.
+/// </summary>
+public sealed class ExcelFilterAdditionalCriterion
+{
+    public FilterOperator Operator { get; set; }
+    public object? Value1 { get; set; }
+    public object? Value2 { get; set; }
+}
 
 /// <summary>
 /// Represents the state of an Excel-like filter for a specific column.
@@ -49,6 +59,11 @@ public class ExcelFilterState
     public object? CustomValue2 { get; set; }
 
     /// <summary>
+    /// Extra AND criteria on this column (e.g. a second custom rule applied with "add to existing" + intersection).
+    /// </summary>
+    public List<ExcelFilterAdditionalCriterion> AdditionalCustomCriteria { get; } = new();
+
+    /// <summary>
     /// Clears the filter state.
     /// </summary>
     public void Clear()
@@ -60,5 +75,6 @@ public class ExcelFilterState
         CustomOperator = null;
         CustomValue1 = null;
         CustomValue2 = null;
+        AdditionalCustomCriteria.Clear();
     }
 }
