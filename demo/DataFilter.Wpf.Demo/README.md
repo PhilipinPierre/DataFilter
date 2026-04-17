@@ -23,7 +23,7 @@ This project serves as both a showcase and a reference implementation for develo
 ## Demonstration Scenarios
 
 ### 1. Local Filtering
-Standard in-memory filtering of a collection of `Employee` objects. Showcase how to use `FilterableDataGrid` with simple property binding.
+Standard in-memory filtering of a collection of `Employee` objects. Showcase how to use `FilterableDataGrid` with simple property binding. This scenario also includes a **filter pipeline JSON** panel: **Sync from grid** exports the current filters to `FilterPipelineSnapshot` JSON (via `CreatePipelineFromCurrentSnapshot` and `FilterPipelineJson`), and **Apply JSON** loads a preset back with `ApplyFilterPipelineAsync`.
 
 ### 2. Async Filtering (Remote API Simulation)
 Simulates a long-running data fetch from a server. Demonstrates the use of `IAsyncDataProvider` to handle filtering and sorting on the "server side".

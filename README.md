@@ -38,6 +38,13 @@ The solution is divided into several main projects:
 - **Server-side Filtering**: Implement `IAsyncDataProvider<T>` to offload filtering and sorting to an API or database.
 - **On-demand Distinct Values**: Fetch unique values for the filter popup only when needed.
 
+### 🔗 Filter pipeline (ordered criteria, groups, presets)
+- **Structured graph**: Model filters as an ordered tree of **criterion** and **named group** nodes with stable IDs, per-node **enable/disable**, and **AND/OR** at the root and inside groups (`FilterPipeline`, `CriterionPipelineNode`, `GroupPipelineNode` in **DataFilter.Core**).
+- **Compilation**: `FilterPipelineCompiler` produces `IFilterDescriptor` instances for the existing engine; root-level **OR** is represented as a single logical group so behavior stays consistent with `FilterExpressionBuilder`.
+- **Persistence**: Serialize **`FilterPipelineSnapshot`** (schema-versioned DTO) to JSON or your store; map with `FilterPipelineSnapshotMapper`. Import from legacy UI state via **`FilterPipelineInterop.FromLegacySnapshot(IFilterSnapshot)`**.
+- **Context**: `IFilterContext.ReplaceDescriptors` applies the compiled list in order and allows **multiple criteria on the same property** when needed.
+- **ViewModels**: `FilterableDataGridViewModel` exposes **`ApplyFilterPipelineAsync`** and **`CreatePipelineFromCurrentSnapshot`** (see **DataFilter.PlatformShared**). The WPF demo **Local filter** scenario includes a JSON panel (sync from grid / apply preset).
+
 ## Quick Start (WPF)
 
 ```xml

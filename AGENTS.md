@@ -52,7 +52,7 @@ DataFilter.Blazor                 → Core + ExcelLike (not PlatformShared)
 
 | Project | Role | Typical targets |
 |---------|------|-----------------|
-| **DataFilter.Core** | Abstractions (`IFilterEngine`, `IFilterContext`, `IFilterDescriptor`, `IAsyncDataProvider`), models (`FilterSnapshot`, `FilterDescriptor`, logical groups), engine (`FilterExpressionBuilder`, `ReflectionFilterEngine`), services (`FilterSnapshotBuilder`, `AsyncDataProviderAdapter`). No UI dependencies. | `net8.0`, `net9.0`, `netstandard2.0`, `netstandard2.1` |
+| **DataFilter.Core** | Abstractions (`IFilterEngine`, `IFilterContext`, `IFilterDescriptor`, `IAsyncDataProvider`), models (`FilterSnapshot`, `FilterDescriptor`, logical groups), **filter pipeline** (`FilterPipeline`, `FilterPipelineSnapshot`, `FilterPipelineCompiler`, `FilterPipelineInterop`), engine (`FilterExpressionBuilder`, `ReflectionFilterEngine`), services (`FilterSnapshotBuilder`, `AsyncDataProviderAdapter`, `FilterPipelineSnapshotMapper`). No UI dependencies. | `net8.0`, `net9.0`, `netstandard2.0`, `netstandard2.1` |
 | **DataFilter.Filtering.ExcelLike** | Excel-style engine and models (`ExcelFilterEngine`, `ExcelFilterDescriptor`, distinct-value extractors, etc.). | `net8.0`, `net9.0` |
 | **DataFilter.PlatformShared** | Reusable ViewModels (`FilterableDataGridViewModel`, `ColumnFilterViewModel`) built on CommunityToolkit.Mvvm. | `net8.0`, `net9.0` |
 | **DataFilter.Wpf** | WPF controls and behaviors. References Core, ExcelLike, and PlatformShared. | `net8.0-windows`, `net9.0-windows` |
@@ -63,15 +63,16 @@ DataFilter.Blazor                 → Core + ExcelLike (not PlatformShared)
 | **DataFilter.UwpXaml** | UWP / Uno project (Uno toolkit in packages). | `net9.0-windows10.0.26100.0` |
 | **DataFilter.Expressions.Server** | Maps `FilterSnapshot` to `Expression<Func<T,bool>>` for EF / `IQueryable`. | `net8.0`, `net9.0` |
 
-Any change to **serializable models** or **contracts** (`IFilterContext`, snapshots) may affect **Core**, **Expressions.Server**, **tests**, and indirectly **all** UIs.
+Any change to **serializable models** or **contracts** (`IFilterContext`, snapshots, **`FilterPipelineSnapshot`**) may affect **Core**, **Expressions.Server**, **tests**, and indirectly **all** UIs.
 
 ## Cross-cutting concepts (where to look)
 
-1. **`IFilterContext` / `FilterContext`**: Current filter and sort state; UIs and data providers depend on it.
+1. **`IFilterContext` / `FilterContext`**: Current filter and sort state; UIs and data providers depend on it. **`ReplaceDescriptors`** sets an **ordered** list of descriptors and allows **duplicate `PropertyName` values** (unlike `AddOrUpdateDescriptor`, which replaces by column key). Used when applying a compiled **filter pipeline**.
 2. **`FilterSnapshot` + `FilterSnapshotBuilder`**: Serialize / restore state for APIs, persistence, or server layers. `RestoreSnapshot` requires a concrete `FilterContext` instance (see `FilterSnapshotBuilder`).
-3. **`ReflectionFilterEngine` / `FilterExpressionBuilder`**: In-memory or client-side expression evaluation and building.
-4. **`IAsyncDataProvider<T>`**: Async loading, paging, distinct values for popups — central pattern for “remote data” scenarios.
-5. **ExcelLike**: Specialized descriptors (text, numeric, date) and domain logic separate from the generic Core engine.
+3. **Filter pipeline** (`DataFilter.Core.Pipeline`): Mutable graph of **criterion** and **named group** nodes (`CriterionPipelineNode`, `GroupPipelineNode`) with stable IDs, **enable/disable**, and root / group **`LogicalOperator`**. **`FilterPipelineCompiler`** turns a pipeline into `IReadOnlyList<IFilterDescriptor>` (nested `FilterGroup` with internal keys like `__group_{id}`). **`FilterPipelineSnapshot`** is the JSON-oriented DTO; **`FilterPipelineSnapshotMapper`** maps to/from the graph; **`FilterPipelineInterop.FromLegacySnapshot`** builds a pipeline from an existing **`IFilterSnapshot`**. **`FilterPipelineContextExtensions.ApplyToContext`** applies the compiled descriptors to a `FilterContext`.
+4. **`ReflectionFilterEngine` / `FilterExpressionBuilder`**: In-memory or client-side expression evaluation and building.
+5. **`IAsyncDataProvider<T>`**: Async loading, paging, distinct values for popups — central pattern for “remote data” scenarios.
+6. **ExcelLike**: Specialized descriptors (text, numeric, date) and domain logic separate from the generic Core engine. Column popups still use **`AddOrUpdateDescriptor`** by property name; advanced UIs can drive **`ApplyFilterPipelineAsync`** (see PlatformShared) after editing a pipeline or preset.
 
 ## Tests
 
@@ -85,13 +86,14 @@ Any change to **serializable models** or **contracts** (`IFilterContext`, snapsh
 2. **Two ViewModel families**: Do not casually merge `PlatformShared` and `DataFilter.Blazor`; a WPF UI change does not automatically apply to Blazor without updating Razor components.
 3. **Windows platforms**: WPF / WinForms require `-windows` TFMs; mixing with “any” libraries needs careful conditional references.
 4. **MAUI / WinUI / UWP**: Heavier, sometimes OS-specific builds; CI uses **windows-latest** with .NET 8 and 9.
-5. **Snapshot consistency**: Changes to `FilterGroup`, snapshot entries, or enums (`FilterOperator`, `LogicalOperator`) must stay aligned with **Expressions.Server**, **FilterSnapshotBuilder**, and related tests.
+5. **Snapshot consistency**: Changes to `FilterGroup`, snapshot entries, **`FilterPipelineSnapshot` / `FilterPipelineNodeDto`**, or enums (`FilterOperator`, `LogicalOperator`) must stay aligned with **Expressions.Server**, **FilterSnapshotBuilder**, **pipeline mappers**, and related tests.
 6. **Documentation**: Avoid duplicating this file at length; prefer existing per-project `README.md` files for usage details.
 
 ## Good starting reads
 
-- `README.md` — product overview and quick start.
-- `src/DataFilter.Core/README.md` — abstractions and extending the engine.
+- `README.md` — product overview and quick start (includes **filter pipeline** summary).
+- `src/DataFilter.Core/README.md` — abstractions, **`FilterPipeline` / `FilterPipelineSnapshot`**, and extending the engine.
+- `src/DataFilter.PlatformShared/README.md` — shared ViewModels and **`ApplyFilterPipelineAsync`**.
 - `src/DataFilter.Expressions.Server/README.md` — server-side LINQ bridge.
 - `CUSTOMIZATION.md` — WPF themes and Blazor CSS.
 
