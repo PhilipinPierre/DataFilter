@@ -412,4 +412,111 @@ public class ColumnFilterViewModelTests
         Assert.Equal(FilterOperator.LessThan, resultState.AdditionalCustomCriteria[0].Operator);
         Assert.Equal("95000", resultState.AdditionalCustomCriteria[0].Value1?.ToString());
     }
+
+    /// <summary>
+    /// Same as <see cref="ApplyCommand_SalaryRange_SuccessiveFilters"/> but loads a <em>cloned</em> state
+    /// (different instance than <see cref="ColumnFilterViewModel.FilterState"/>), as after snapshot restore
+    /// or adapter sync — <see cref="ColumnFilterViewModel.LoadStateAsync"/> must copy CustomOperator onto FilterState.
+    /// </summary>
+    [Fact]
+    public async Task ApplyCommand_SalaryRange_SuccessiveFilters_WithClonedState()
+    {
+        ExcelFilterState? resultState = null;
+        var vm = new ColumnFilterViewModel(
+            async (s) =>
+                new List<object> { 50000m, 60000m, 70000m, 80000m, 90000m, 100000m },
+            (state) => resultState = state,
+            () => { },
+            propertyType: typeof(decimal));
+
+        var initialList = new List<object> { 50000m, 60000m, 70000m, 80000m, 90000m, 100000m };
+        await vm.InitializeAsync(initialList);
+
+        vm.SelectedCustomOperator = FilterOperator.GreaterThan;
+        vm.CustomValue1 = "65000";
+        vm.ApplyCommand.Execute(null);
+
+        Assert.NotNull(resultState);
+        Assert.Equal(4, resultState!.SelectedValues.Count);
+
+        var cloned = CloneExcelFilterState(resultState);
+        Assert.NotSame(vm.FilterState, cloned);
+
+        await vm.LoadStateAsync(cloned);
+
+        vm.AddToExistingFilter = true;
+        vm.AccumulationMode = AccumulationMode.Intersection;
+        vm.SelectedCustomOperator = FilterOperator.LessThan;
+        vm.CustomValue1 = "95000";
+
+        vm.ApplyCommand.Execute(null);
+
+        Assert.Equal(FilterOperator.GreaterThan, resultState!.CustomOperator);
+        Assert.Single(resultState.AdditionalCustomCriteria);
+        Assert.Equal(FilterOperator.LessThan, resultState.AdditionalCustomCriteria[0].Operator);
+        Assert.Equal("95000", resultState.AdditionalCustomCriteria[0].Value1?.ToString());
+    }
+
+    [Fact]
+    public async Task ApplyCommand_PreservesCustomOperator_WhenUnionAddToExisting()
+    {
+        ExcelFilterState? resultState = null;
+        var vm = new ColumnFilterViewModel(
+            async (s) =>
+                new List<object> { 50000m, 60000m, 70000m, 80000m, 90000m, 100000m },
+            (state) => resultState = state,
+            () => { },
+            propertyType: typeof(decimal));
+
+        await vm.InitializeAsync(new List<object> { 50000m, 60000m, 70000m, 80000m, 90000m, 100000m });
+
+        vm.SelectedCustomOperator = FilterOperator.GreaterThan;
+        vm.CustomValue1 = "65000";
+        vm.ApplyCommand.Execute(null);
+
+        Assert.NotNull(resultState);
+        Assert.Equal(FilterOperator.GreaterThan, resultState!.CustomOperator);
+
+        await vm.LoadStateAsync(resultState);
+
+        vm.AddToExistingFilter = true;
+        vm.AccumulationMode = AccumulationMode.Union;
+        var item50k = vm.FilterValues.First(x => x.Value is decimal d && d == 50000m);
+        item50k.IsSelected = true;
+
+        vm.ApplyCommand.Execute(null);
+
+        Assert.Equal(FilterOperator.GreaterThan, resultState!.CustomOperator);
+        Assert.Equal("65000", resultState.CustomValue1?.ToString());
+        Assert.Contains(50000m, resultState.SelectedValues);
+    }
+
+    private static ExcelFilterState CloneExcelFilterState(ExcelFilterState s)
+    {
+        var clone = new ExcelFilterState
+        {
+            SearchText = s.SearchText,
+            UseWildcards = s.UseWildcards,
+            SelectAll = s.SelectAll,
+            CustomOperator = s.CustomOperator,
+            CustomValue1 = s.CustomValue1,
+            CustomValue2 = s.CustomValue2
+        };
+
+        foreach (var d in s.DistinctValues)
+            clone.DistinctValues.Add(d);
+        foreach (var v in s.SelectedValues)
+            clone.SelectedValues.Add(v);
+        foreach (var c in s.AdditionalCustomCriteria)
+        {
+            clone.AdditionalCustomCriteria.Add(new ExcelFilterAdditionalCriterion
+            {
+                Operator = c.Operator,
+                Value1 = c.Value1,
+                Value2 = c.Value2
+            });
+        }
+
+        return clone;
+    }
 }

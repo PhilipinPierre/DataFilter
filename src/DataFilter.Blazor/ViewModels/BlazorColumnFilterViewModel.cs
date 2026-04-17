@@ -230,9 +230,13 @@ public partial class BlazorColumnFilterViewModel : ObservableObject, IBlazorColu
             }
 
             FilterState.SearchText = string.Empty;
-            FilterState.CustomOperator = SelectedCustomOperator;
-            FilterState.CustomValue1 = string.IsNullOrEmpty(CustomValue1) ? null : CustomValue1;
-            FilterState.CustomValue2 = string.IsNullOrEmpty(CustomValue2) ? null : CustomValue2;
+
+            if (!effectiveAddToExisting)
+            {
+                FilterState.CustomOperator = SelectedCustomOperator;
+                FilterState.CustomValue1 = string.IsNullOrEmpty(CustomValue1) ? null : CustomValue1;
+                FilterState.CustomValue2 = string.IsNullOrEmpty(CustomValue2) ? null : CustomValue2;
+            }
 
             OnPropertyChanged(nameof(IsFilterActive));
             _onApplyAction?.Invoke(FilterState);
@@ -443,6 +447,10 @@ public partial class BlazorColumnFilterViewModel : ObservableObject, IBlazorColu
                 });
             }
         }
+
+        FilterState.CustomOperator = state.CustomOperator;
+        FilterState.CustomValue1 = state.CustomValue1;
+        FilterState.CustomValue2 = state.CustomValue2;
 
         _initialFilterActive = state != null &&
             (!state.SelectAll || !string.IsNullOrEmpty(state.SearchText) || state.CustomOperator != null

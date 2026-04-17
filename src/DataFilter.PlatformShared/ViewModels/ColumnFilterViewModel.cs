@@ -261,7 +261,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
 
                 FilterState.SelectAll = false; // Cannot be "Select All" if we are accumulating partial results
 
-                // Reset custom filter as it's now part of the selected values
+                // Clear operator UI only; FilterState custom criteria must stay (see Apply below).
                 SelectedCustomOperator = null;
                 CustomValue1 = string.Empty;
                 CustomValue2 = string.Empty;
@@ -280,10 +280,12 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
 
             FilterState.SearchText = string.Empty; // Clear search text on apply as visible items were merged
 
-            // Apply Custom Filter (will be null if effectiveAddToExisting was true)
-            FilterState.CustomOperator = SelectedCustomOperator;
-            FilterState.CustomValue1 = string.IsNullOrEmpty(CustomValue1) ? null : CustomValue1;
-            FilterState.CustomValue2 = string.IsNullOrEmpty(CustomValue2) ? null : CustomValue2;
+            if (!effectiveAddToExisting)
+            {
+                FilterState.CustomOperator = SelectedCustomOperator;
+                FilterState.CustomValue1 = string.IsNullOrEmpty(CustomValue1) ? null : CustomValue1;
+                FilterState.CustomValue2 = string.IsNullOrEmpty(CustomValue2) ? null : CustomValue2;
+            }
 
             OnPropertyChanged(nameof(IsFilterActive));
             _onApplyAction?.Invoke(FilterState);
@@ -603,6 +605,10 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
                 });
             }
         }
+
+        FilterState.CustomOperator = state.CustomOperator;
+        FilterState.CustomValue1 = state.CustomValue1;
+        FilterState.CustomValue2 = state.CustomValue2;
 
         SelectedCustomOperator = state.CustomOperator;
         CustomValue1 = state.CustomValue1?.ToString() ?? string.Empty;
