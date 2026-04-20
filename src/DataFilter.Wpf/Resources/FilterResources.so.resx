@@ -4,43 +4,132 @@
     <xsd:element name="root" msdata:IsDataSet="true">
       <xsd:complexType>
         <xsd:choice maxOccurs="unbounded">
-          <xsd:element name="data"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /><xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" /></xsd:sequence><xsd:attribute name="name" type="xsd:string" /><xsd:attribute name="type" type="xsd:string" /><xsd:attribute name="mimetype" type="xsd:string" /></xsd:complexType></xsd:element>
-          <xsd:element name="resheader"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence><xsd:attribute name="name" type="xsd:string" use="required" /></xsd:complexType></xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
         </xsd:choice>
       </xsd:complexType>
     </xsd:element>
   </xsd:schema>
-  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
-  <resheader name="version"><value>2.0</value></resheader>
-  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <data name="SortAscending" xml:space="preserve"><value>U kala saar A ilaa Z</value></data>
-  <data name="SortDescending" xml:space="preserve"><value>U kala saar Z ilaa A</value></data>
-  <data name="AddSubSortAscending" xml:space="preserve"><value>Ku dar kala saarista A ilaa Z</value></data>
-  <data name="AddSubSortDescending" xml:space="preserve"><value>Ku dar kala saarista Z ilaa A</value></data>
-  <data name="AddToFilter" xml:space="preserve"><value>Ku dar xulashada hadda shaandhada</value></data>
-  <data name="AdvancedFilter" xml:space="preserve"><value>Shaandheyn Sare</value></data>
-  <data name="OperatorText" xml:space="preserve"><value>Hawl-fuliye:</value></data>
-  <data name="ValueText" xml:space="preserve"><value>Qiimaha:</value></data>
-  <data name="ToText" xml:space="preserve"><value>Ilaa:</value></data>
-  <data name="LoadingText" xml:space="preserve"><value>Waa la rarayaa...</value></data>
-  <data name="SelectAll" xml:space="preserve"><value>(Dooro Dhammaan)</value></data>
-  <data name="Ok" xml:space="preserve"><value>OK</value></data>
-  <data name="Clear" xml:space="preserve"><value>Masax</value></data>
-  <data name="Blanks" xml:space="preserve"><value>(Meelo banaan)</value></data>
-  <data name="FilterOperator_Equals" xml:space="preserve"><value>Waxay la mid tahay</value></data>
-  <data name="FilterOperator_NotEquals" xml:space="preserve"><value>Ma la mid aha</value></data>
-  <data name="FilterOperator_Contains" xml:space="preserve"><value>Waxay ka kooban tahay</value></data>
-  <data name="FilterOperator_NotContains" xml:space="preserve"><value>Kama koobna</value></data>
-  <data name="FilterOperator_StartsWith" xml:space="preserve"><value>Waxay ku bilaabataa</value></data>
-  <data name="FilterOperator_EndsWith" xml:space="preserve"><value>Waxay ku dhamaataa</value></data>
-  <data name="FilterOperator_GreaterThan" xml:space="preserve"><value>Way ka weyn tahay</value></data>
-  <data name="FilterOperator_GreaterThanOrEqual" xml:space="preserve"><value>Way ka weyn tahay ama la mid tahay</value></data>
-  <data name="FilterOperator_LessThan" xml:space="preserve"><value>Way ka yar tahay</value></data>
-  <data name="FilterOperator_LessThanOrEqual" xml:space="preserve"><value>Way ka yar tahay ama la mid tahay</value></data>
-  <data name="FilterOperator_Between" xml:space="preserve"><value>Inta u dhaxaysa</value></data>
-  <data name="FilterOperator_In" xml:space="preserve"><value>Ku dhex jira</value></data>
-  <data name="FilterOperator_NotIn" xml:space="preserve"><value>Kuma dhex jiro</value></data>
-  <data name="FilterOperator_IsNull" xml:space="preserve"><value>Waa eber (null)</value></data>
-  <data name="FilterOperator_IsNotNull" xml:space="preserve"><value>Ma aha eber</value></data>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="SortAscending" xml:space="preserve">
+    <value>U kala saar A ilaa Z</value>
+  </data>
+  <data name="SortDescending" xml:space="preserve">
+    <value>U kala saar Z ilaa A</value>
+  </data>
+  <data name="AddSubSortAscending" xml:space="preserve">
+    <value>Ku dar kala saarista A ilaa Z</value>
+  </data>
+  <data name="AddSubSortDescending" xml:space="preserve">
+    <value>Ku dar kala saarista Z ilaa A</value>
+  </data>
+  <data name="AddToFilter" xml:space="preserve">
+    <value>Ku dar xulashada hadda shaandhada</value>
+  </data>
+  <data name="AdvancedFilter" xml:space="preserve">
+    <value>Shaandheyn Sare</value>
+  </data>
+  <data name="OperatorText" xml:space="preserve">
+    <value>Hawl-fuliye:</value>
+  </data>
+  <data name="ValueText" xml:space="preserve">
+    <value>Qiimaha:</value>
+  </data>
+  <data name="ToText" xml:space="preserve">
+    <value>Ilaa:</value>
+  </data>
+  <data name="LoadingText" xml:space="preserve">
+    <value>Waa la rarayaa...</value>
+  </data>
+  <data name="SelectAll" xml:space="preserve">
+    <value>(Dooro Dhammaan)</value>
+  </data>
+  <data name="Ok" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="Clear" xml:space="preserve">
+    <value>Masax</value>
+  </data>
+  <data name="Blanks" xml:space="preserve">
+    <value>(Meelo banaan)</value>
+  </data>
+  <data name="FilterOperator_Equals" xml:space="preserve">
+    <value>Waxay la mid tahay</value>
+  </data>
+  <data name="FilterOperator_NotEquals" xml:space="preserve">
+    <value>Ma la mid aha</value>
+  </data>
+  <data name="FilterOperator_Contains" xml:space="preserve">
+    <value>Waxay ka kooban tahay</value>
+  </data>
+  <data name="FilterOperator_NotContains" xml:space="preserve">
+    <value>Kama koobna</value>
+  </data>
+  <data name="FilterOperator_StartsWith" xml:space="preserve">
+    <value>Waxay ku bilaabataa</value>
+  </data>
+  <data name="FilterOperator_EndsWith" xml:space="preserve">
+    <value>Waxay ku dhamaataa</value>
+  </data>
+  <data name="FilterOperator_GreaterThan" xml:space="preserve">
+    <value>Way ka weyn tahay</value>
+  </data>
+  <data name="FilterOperator_GreaterThanOrEqual" xml:space="preserve">
+    <value>Way ka weyn tahay ama la mid tahay</value>
+  </data>
+  <data name="FilterOperator_LessThan" xml:space="preserve">
+    <value>Way ka yar tahay</value>
+  </data>
+  <data name="FilterOperator_LessThanOrEqual" xml:space="preserve">
+    <value>Way ka yar tahay ama la mid tahay</value>
+  </data>
+  <data name="FilterOperator_Between" xml:space="preserve">
+    <value>Inta u dhaxaysa</value>
+  </data>
+  <data name="FilterOperator_In" xml:space="preserve">
+    <value>Ku dhex jira</value>
+  </data>
+  <data name="FilterOperator_NotIn" xml:space="preserve">
+    <value>Kuma dhex jiro</value>
+  </data>
+  <data name="FilterOperator_IsNull" xml:space="preserve">
+    <value>Waa eber (null)</value>
+  </data>
+  <data name="FilterOperator_IsNotNull" xml:space="preserve">
+    <value>Ma aha eber</value>
+  </data>
+  <data name="ModeUnion" xml:space="preserve">
+    <value>Ku dar (OR)</value>
+  </data>
+  <data name="ModeIntersection" xml:space="preserve">
+    <value>Refine (oo)</value>
+  </data>
 </root>

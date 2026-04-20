@@ -126,4 +126,10 @@
   <data name="FilterOperator_IsNotNull" xml:space="preserve">
     <value>Ei ole tyhjä</value>
   </data>
+  <data name="ModeUnion" xml:space="preserve">
+    <value>Lisää (TAI)</value>
+  </data>
+  <data name="ModeIntersection" xml:space="preserve">
+    <value>Tarkenna (JA)</value>
+  </data>
 </root>
