@@ -106,6 +106,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
         return state.CustomOperator != null
             || state.AdditionalCustomCriteria.Count > 0
             || state.OrSearchPatterns.Count > 0
+            || state.OrSelectedValues.Count > 0
             || !string.IsNullOrEmpty(state.SearchText)
             || !state.SelectAll
             || state.DistinctValues.Count != state.SelectedValues.Count;
@@ -261,6 +262,18 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
                         && FilterState.CustomValue1 is string s
                         && !string.IsNullOrEmpty(s)));
 
+            bool canRepresentUnionAsSearchOrWithPartialSelection =
+                effectiveAddToExisting
+                && AccumulationMode == AccumulationMode.Union
+                && !string.IsNullOrEmpty(SearchText)
+                && SelectAll != true
+                && (FilterState.OrSearchPatterns.Count > 0
+                    || (FilterState.CustomOperator == FilterOperator.StartsWith
+                        && FilterState.AdditionalCustomCriteria.Count == 0
+                        && FilterState.CustomValue2 == null
+                        && FilterState.CustomValue1 is string s2
+                        && !string.IsNullOrEmpty(s2)));
+
             if (effectiveAddToExisting)
             {
                 if (AccumulationMode == AccumulationMode.Intersection)
@@ -280,7 +293,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
                 // Union of custom rules cannot be represented with AdditionalCustomCriteria (AND-only).
                 // If a custom operator is active, the descriptor would ignore SelectedValues. So in Union mode,
                 // we materialize the OR result as an In(list) selection by clearing custom criteria.
-                if (!canRepresentUnionAsSearchOr && AccumulationMode == AccumulationMode.Union && FilterState.CustomOperator != null)
+                if (!canRepresentUnionAsSearchOr && !canRepresentUnionAsSearchOrWithPartialSelection && AccumulationMode == AccumulationMode.Union && FilterState.CustomOperator != null)
                 {
                     FilterState.CustomOperator = null;
                     FilterState.CustomValue1 = null;
@@ -394,6 +407,30 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
                     FilterState.SelectedValues.Clear();
                     FilterState.SelectAll = true;
                 }
+            }
+            else if (canRepresentUnionAsSearchOrWithPartialSelection)
+            {
+                // Example: StartsWith("Alice") then search "Henry" and select only two Henry values.
+                // Persist as OR(StartsWith("Alice"), In(["Henry 124","Henry 146"])) without materializing Alice values.
+                persistedSearchRule = true;
+
+                if (FilterState.CustomOperator == FilterOperator.StartsWith
+                    && FilterState.AdditionalCustomCriteria.Count == 0
+                    && FilterState.CustomValue2 == null
+                    && FilterState.CustomValue1 is string existing
+                    && !string.IsNullOrEmpty(existing))
+                {
+                    FilterState.OrSearchPatterns.Add(existing);
+                    FilterState.CustomOperator = null;
+                    FilterState.CustomValue1 = null;
+                    FilterState.CustomValue2 = null;
+                }
+
+                foreach (var v in selectedValuesSnapshot)
+                    FilterState.OrSelectedValues.Add(v);
+
+                FilterState.SelectedValues.Clear();
+                FilterState.SelectAll = true;
             }
 
             FilterState.SearchText = string.Empty; // Clear search text on apply as visible items were merged
@@ -735,6 +772,14 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
                     Value2 = c.Value2
                 });
             }
+
+            FilterState.OrSearchPatterns.Clear();
+            foreach (var p in state.OrSearchPatterns)
+                FilterState.OrSearchPatterns.Add(p);
+
+            FilterState.OrSelectedValues.Clear();
+            foreach (var v in state.OrSelectedValues)
+                FilterState.OrSelectedValues.Add(v);
         }
 
         FilterState.CustomOperator = state.CustomOperator;

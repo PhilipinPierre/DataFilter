@@ -94,7 +94,7 @@ public partial class BlazorColumnFilterViewModel : ObservableObject, IBlazorColu
     /// </summary>
     public bool IsFilterActive => FilterState != null &&
         (!FilterState.SelectAll || !string.IsNullOrEmpty(FilterState.SearchText) || FilterState.CustomOperator != null
-         || FilterState.AdditionalCustomCriteria.Count > 0 || FilterState.OrSearchPatterns.Count > 0);
+         || FilterState.AdditionalCustomCriteria.Count > 0 || FilterState.OrSearchPatterns.Count > 0 || FilterState.OrSelectedValues.Count > 0);
 
     /// <summary>
     /// Gets the list of available custom operators for the current data type.
@@ -216,6 +216,18 @@ public partial class BlazorColumnFilterViewModel : ObservableObject, IBlazorColu
                         && FilterState.CustomValue1 is string s
                         && !string.IsNullOrEmpty(s)));
 
+            bool canRepresentUnionAsSearchOrWithPartialSelection =
+                effectiveAddToExisting
+                && AccumulationMode == AccumulationMode.Union
+                && !string.IsNullOrEmpty(SearchText)
+                && SelectAll != true
+                && (FilterState.OrSearchPatterns.Count > 0
+                    || (FilterState.CustomOperator == FilterOperator.StartsWith
+                        && FilterState.AdditionalCustomCriteria.Count == 0
+                        && FilterState.CustomValue2 == null
+                        && FilterState.CustomValue1 is string s2
+                        && !string.IsNullOrEmpty(s2)));
+
             if (effectiveAddToExisting)
             {
                 if (AccumulationMode == AccumulationMode.Intersection)
@@ -229,7 +241,7 @@ public partial class BlazorColumnFilterViewModel : ObservableObject, IBlazorColu
                 }
                 FilterState.SelectAll = false;
 
-                if (!canRepresentUnionAsSearchOr && AccumulationMode == AccumulationMode.Union && FilterState.CustomOperator != null)
+                if (!canRepresentUnionAsSearchOr && !canRepresentUnionAsSearchOrWithPartialSelection && AccumulationMode == AccumulationMode.Union && FilterState.CustomOperator != null)
                 {
                     FilterState.CustomOperator = null;
                     FilterState.CustomValue1 = null;
@@ -330,6 +342,28 @@ public partial class BlazorColumnFilterViewModel : ObservableObject, IBlazorColu
                     FilterState.SelectedValues.Clear();
                     FilterState.SelectAll = true;
                 }
+            }
+            else if (canRepresentUnionAsSearchOrWithPartialSelection)
+            {
+                persistedSearchRule = true;
+
+                if (FilterState.CustomOperator == FilterOperator.StartsWith
+                    && FilterState.AdditionalCustomCriteria.Count == 0
+                    && FilterState.CustomValue2 == null
+                    && FilterState.CustomValue1 is string existing
+                    && !string.IsNullOrEmpty(existing))
+                {
+                    FilterState.OrSearchPatterns.Add(existing);
+                    FilterState.CustomOperator = null;
+                    FilterState.CustomValue1 = null;
+                    FilterState.CustomValue2 = null;
+                }
+
+                foreach (var v in selectedValuesSnapshot)
+                    FilterState.OrSelectedValues.Add(v);
+
+                FilterState.SelectedValues.Clear();
+                FilterState.SelectAll = true;
             }
 
             FilterState.SearchText = string.Empty;
@@ -561,6 +595,14 @@ public partial class BlazorColumnFilterViewModel : ObservableObject, IBlazorColu
                     Value2 = c.Value2
                 });
             }
+
+            FilterState.OrSearchPatterns.Clear();
+            foreach (var p in state.OrSearchPatterns)
+                FilterState.OrSearchPatterns.Add(p);
+
+            FilterState.OrSelectedValues.Clear();
+            foreach (var v in state.OrSelectedValues)
+                FilterState.OrSelectedValues.Add(v);
         }
 
         FilterState.CustomOperator = state.CustomOperator;

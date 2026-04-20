@@ -146,4 +146,23 @@ public class ExcelFilterDescriptorTests
         Assert.Equal(2, group.Descriptors.Count);
         Assert.All(group.Descriptors, d => Assert.Equal(FilterOperator.StartsWith, d.Operator));
     }
+
+    [Fact]
+    public void Descriptors_WithOrSearchPatternsAndOrSelectedValues_EmitsOrGroupWithStartsWithAndIn()
+    {
+        var state = new ExcelFilterState();
+        state.OrSearchPatterns.Add("Alice");
+        state.OrSelectedValues.Add("Henry 124");
+        state.OrSelectedValues.Add("Henry 146");
+
+        var descriptor = new ExcelFilterDescriptor("Name", state);
+        var descriptors = descriptor.Descriptors;
+
+        Assert.Single(descriptors);
+        var group = Assert.IsType<DataFilter.Core.Models.FilterGroup>(descriptors[0]);
+        Assert.Equal(LogicalOperator.Or, group.LogicalOperator);
+        Assert.Equal(2, group.Descriptors.Count);
+        Assert.Contains(group.Descriptors, d => d.Operator == FilterOperator.StartsWith && (d.Value?.ToString() ?? "") == "Alice");
+        Assert.Contains(group.Descriptors, d => d.Operator == FilterOperator.In);
+    }
 }

@@ -76,8 +76,8 @@ public class ExcelFilterDescriptor : IFilterGroup
                 }
             }
 
-            // 2. OR-combined search patterns (expressed as a nested OR group)
-            if (State.OrSearchPatterns.Count > 0)
+            // 2. OR-combined search patterns / explicit selections (expressed as a nested OR group)
+            if (State.OrSearchPatterns.Count > 0 || State.OrSelectedValues.Count > 0)
             {
                 var orGroup = new FilterGroup(LogicalOperator.Or, this.PropertyName);
                 foreach (string pattern in State.OrSearchPatterns.Where(s => !string.IsNullOrEmpty(s)).Distinct(StringComparer.OrdinalIgnoreCase))
@@ -90,6 +90,16 @@ public class ExcelFilterDescriptor : IFilterGroup
                     });
                 }
 
+                if (State.OrSelectedValues.Count > 0)
+                {
+                    orGroup.Add(new SimpleDescriptor
+                    {
+                        PropertyName = this.PropertyName,
+                        Operator = FilterOperator.In,
+                        Value = State.OrSelectedValues.ToList()
+                    });
+                }
+
                 if (orGroup.Descriptors.Count > 0)
                     list.Add(orGroup);
             }
@@ -98,7 +108,8 @@ public class ExcelFilterDescriptor : IFilterGroup
             // In Excel, if you use a custom filter, it usually resets the list selection.
             // But we can support combining them if needed. 
             // For now, if CustomOperator is None, use manual selection.
-            else if (State.CustomOperator == null && (!State.SelectAll || State.DistinctValues.Count != State.SelectedValues.Count))
+            else if (State.CustomOperator == null && State.OrSearchPatterns.Count == 0 && State.OrSelectedValues.Count == 0
+                     && (!State.SelectAll || State.DistinctValues.Count != State.SelectedValues.Count))
             {
                 list.Add(new SimpleDescriptor
                 {

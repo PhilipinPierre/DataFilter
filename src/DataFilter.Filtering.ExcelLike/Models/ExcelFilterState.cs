@@ -70,6 +70,12 @@ public class ExcelFilterState
     public List<string> OrSearchPatterns { get; } = new();
 
     /// <summary>
+    /// Explicit values that participate in the OR group (e.g. StartsWith("Alice") OR In(["Henry 1","Henry 2"])).
+    /// Used when the user narrows via search but then selects only a subset of the visible results.
+    /// </summary>
+    public HashSet<object> OrSelectedValues { get; } = new();
+
+    /// <summary>
     /// Clears the filter state.
     /// </summary>
     public void Clear()
@@ -83,5 +89,6 @@ public class ExcelFilterState
         CustomValue2 = null;
         AdditionalCustomCriteria.Clear();
         OrSearchPatterns.Clear();
+        OrSelectedValues.Clear();
     }
 }

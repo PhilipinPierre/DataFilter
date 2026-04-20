@@ -33,17 +33,38 @@ public static class ExcelFilterStateFromFilterDescriptor
         if (group.LogicalOperator != LogicalOperator.And)
             return false;
 
-        var children = group.Descriptors.OfType<FilterDescriptor>().ToList();
-        if (children.Count == 0)
+        var directCriteria = new List<FilterDescriptor>();
+        FilterGroup? orGroup = null;
+        foreach (var d in group.Descriptors)
+        {
+            switch (d)
+            {
+                case FilterDescriptor fd:
+                    directCriteria.Add(fd);
+                    break;
+                case FilterGroup fg when fg.LogicalOperator == LogicalOperator.Or:
+                    orGroup = fg;
+                    break;
+                default:
+                    return false;
+            }
+        }
+
+        if (directCriteria.Count == 0 && orGroup == null)
             return false;
 
-        if (children.Select(c => c.PropertyName).Distinct(StringComparer.OrdinalIgnoreCase).Count() != 1)
+        var allPropertyNames = new List<string>();
+        allPropertyNames.AddRange(directCriteria.Select(c => c.PropertyName));
+        if (orGroup != null)
+            allPropertyNames.AddRange(orGroup.Descriptors.OfType<FilterDescriptor>().Select(c => c.PropertyName));
+
+        if (allPropertyNames.Distinct(StringComparer.OrdinalIgnoreCase).Count() != 1)
             return false;
 
-        string propertyName = children[0].PropertyName;
+        string propertyName = allPropertyNames[0];
         var state = new ExcelFilterState();
-        var customs = children.Where(d => d.Operator != FilterOperator.In).ToList();
-        var inRule = children.FirstOrDefault(d => d.Operator == FilterOperator.In);
+        var customs = directCriteria.Where(d => d.Operator != FilterOperator.In).ToList();
+        var inRule = directCriteria.FirstOrDefault(d => d.Operator == FilterOperator.In);
 
         if (customs.Count > 0)
         {
@@ -71,11 +92,37 @@ public static class ExcelFilterStateFromFilterDescriptor
                 }
             }
         }
-        else if (inRule != null)
+
+        if (orGroup != null)
+        {
+            foreach (var child in orGroup.Descriptors.OfType<FilterDescriptor>())
+            {
+                if (child.Operator == FilterOperator.StartsWith && child.Value is string p && !string.IsNullOrEmpty(p))
+                {
+                    state.OrSearchPatterns.Add(p);
+                }
+                else if (child.Operator == FilterOperator.In)
+                {
+                    if (child.Value is IEnumerable enumerable && child.Value is not string)
+                    {
+                        foreach (var v in enumerable)
+                            state.OrSelectedValues.Add(v);
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+            state.SelectAll = true;
+            state.SelectedValues.Clear();
+        }
+        else if (inRule != null && customs.Count == 0)
         {
             ApplyInRuleToState(state, inRule);
         }
-        else
+        else if (customs.Count == 0)
         {
             return false;
         }
