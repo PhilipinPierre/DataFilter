@@ -1,28 +1,26 @@
 using System.Globalization;
 using System.Windows.Data;
 using DataFilter.Core.Enums;
-using DataFilter.Wpf.Resources;
+using DataFilter.Localization;
 
 namespace DataFilter.Wpf.Converters;
 
-public class AccumulationModeToLocalizedDescriptionConverter : IValueConverter
+public class AccumulationModeToLocalizedDescriptionConverter : IMultiValueConverter
 {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object Convert(object[] values, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (value is AccumulationMode mode)
+        if (values.Length > 0 && values[0] is AccumulationMode mode)
         {
             return mode switch
             {
-                AccumulationMode.Union => FilterResources.ModeUnion,
-                AccumulationMode.Intersection => FilterResources.ModeIntersection,
-                _ => value.ToString() ?? string.Empty
+                AccumulationMode.Union => LocalizationManager.Instance["ModeUnion"],
+                AccumulationMode.Intersection => LocalizationManager.Instance["ModeIntersection"],
+                _ => mode.ToString()
             };
         }
         return string.Empty;
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-        throw new NotImplementedException();
-    }
+    public object[] ConvertBack(object value, Type[] targetTypes, object? parameter, CultureInfo culture)
+        => throw new NotImplementedException();
 }

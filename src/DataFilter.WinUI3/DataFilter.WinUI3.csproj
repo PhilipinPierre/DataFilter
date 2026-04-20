@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DataFilter.PlatformShared\DataFilter.PlatformShared.csproj" />
+    <ProjectReference Include="..\DataFilter.Localization\DataFilter.Localization.csproj" />
   </ItemGroup>
   
 </Project>

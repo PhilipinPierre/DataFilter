@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using DataFilter.Filtering.ExcelLike.Models;
 using System.ComponentModel;
 using Microsoft.Maui.ApplicationModel;
+using DataFilter.Localization;
 
 namespace DataFilter.Maui.Controls;
 
@@ -16,6 +17,18 @@ public sealed class FilterPopupView : ContentView
     private readonly CollectionView _itemsView;
     private readonly VerticalStackLayout _advancedLayout;
     private ObservableCollection<FilterValueItem>? _subscribedFilterValues;
+    private readonly Label _addToFilterLabel;
+    private readonly Button _advancedToggle;
+    private readonly Label _operatorLabel;
+    private readonly Label _valueLabel;
+    private Label? _selectAllLabel;
+    private readonly Entry _searchEntry;
+    private readonly Button _okButton;
+    private readonly Button _clearButton;
+    private readonly Picker _modePicker;
+    private readonly Picker _opPicker;
+    private readonly ObservableCollection<LocalizedItem> _localizedAccModes = new();
+    private readonly ObservableCollection<LocalizedItem> _localizedOperators = new();
 
     public FilterPopupView()
     {
@@ -40,36 +53,49 @@ public sealed class FilterPopupView : ContentView
         root.Add(new BoxView { HeightRequest = 1 });
 
         // 2. Search & Accumulation
-        var search = new Entry { Placeholder = "Search...", Margin = new Thickness(0, 0, 0, 4) };
-        search.SetBinding(Entry.TextProperty, new Binding("SearchText", BindingMode.TwoWay));
-        root.Add(search);
+        _searchEntry = new Entry { Margin = new Thickness(0, 0, 0, 4) };
+        _searchEntry.SetBinding(Entry.TextProperty, new Binding("SearchText", BindingMode.TwoWay));
+        root.Add(_searchEntry);
 
         var accPanel = new HorizontalStackLayout { Spacing = 8 };
         var addToFilter = new CheckBox();
         addToFilter.SetBinding(CheckBox.IsCheckedProperty, new Binding("AddToExistingFilter", BindingMode.TwoWay));
         accPanel.Add(addToFilter);
-        accPanel.Add(new Label { Text = "Add to filter", VerticalTextAlignment = TextAlignment.Center, FontSize = 12 });
+        _addToFilterLabel = new Label { VerticalTextAlignment = TextAlignment.Center, FontSize = 12 };
+        accPanel.Add(_addToFilterLabel);
         
-        var modePicker = new Picker { FontSize = 11, WidthRequest = 100 };
-        modePicker.ItemsSource = Enum.GetValues<AccumulationMode>();
-        modePicker.SetBinding(Picker.SelectedItemProperty, new Binding("AccumulationMode", BindingMode.TwoWay));
-        modePicker.SetBinding(VisualElement.IsVisibleProperty, new Binding("AddToExistingFilter"));
-        accPanel.Add(modePicker);
+        _modePicker = new Picker { FontSize = 11, WidthRequest = 140, ItemDisplayBinding = new Binding(nameof(LocalizedItem.Text)) };
+        _modePicker.ItemsSource = _localizedAccModes;
+        _modePicker.SelectedIndexChanged += (_, _) =>
+        {
+            if (ViewModel == null) return;
+            if (_modePicker.SelectedItem is LocalizedItem { Value: AccumulationMode mode })
+                ViewModel.AccumulationMode = mode;
+        };
+        _modePicker.SetBinding(VisualElement.IsVisibleProperty, new Binding("AddToExistingFilter"));
+        accPanel.Add(_modePicker);
         root.Add(accPanel);
 
         // 3. Advanced Filter
-        var advancedToggle = new Button { Text = "Advanced Filter", FontSize = 12, BackgroundColor = Colors.Transparent, Padding = 0, HeightRequest = 30 };
-        advancedToggle.SetAppThemeColor(Button.TextColorProperty, Colors.Blue, Color.FromArgb("#ac99ea"));
-        advancedToggle.Clicked += (s, e) => _advancedLayout.IsVisible = !_advancedLayout.IsVisible;
-        root.Add(advancedToggle);
+        _advancedToggle = new Button { FontSize = 12, BackgroundColor = Colors.Transparent, Padding = 0, HeightRequest = 30 };
+        _advancedToggle.SetAppThemeColor(Button.TextColorProperty, Colors.Blue, Color.FromArgb("#ac99ea"));
+        _advancedToggle.Clicked += (s, e) => _advancedLayout.IsVisible = !_advancedLayout.IsVisible;
+        root.Add(_advancedToggle);
 
-        _advancedLayout.Add(new Label { Text = "Operator", FontSize = 10 });
-        var opPicker = new Picker();
-        opPicker.SetBinding(Picker.ItemsSourceProperty, new Binding("AvailableOperators"));
-        opPicker.SetBinding(Picker.SelectedItemProperty, new Binding("SelectedCustomOperator", BindingMode.TwoWay));
-        _advancedLayout.Add(opPicker);
+        _operatorLabel = new Label { FontSize = 10 };
+        _advancedLayout.Add(_operatorLabel);
+        _opPicker = new Picker { ItemDisplayBinding = new Binding(nameof(LocalizedItem.Text)) };
+        _opPicker.ItemsSource = _localizedOperators;
+        _opPicker.SelectedIndexChanged += (_, _) =>
+        {
+            if (ViewModel == null) return;
+            if (_opPicker.SelectedItem is LocalizedItem { Value: FilterOperator op })
+                ViewModel.SelectedCustomOperator = op;
+        };
+        _advancedLayout.Add(_opPicker);
 
-        _advancedLayout.Add(new Label { Text = "Value", FontSize = 10 });
+        _valueLabel = new Label { FontSize = 10 };
+        _advancedLayout.Add(_valueLabel);
         var val1 = new Entry();
         val1.SetBinding(Entry.TextProperty, new Binding("CustomValue1", BindingMode.TwoWay));
         _advancedLayout.Add(val1);
@@ -83,16 +109,19 @@ public sealed class FilterPopupView : ContentView
 
         // 5. Actions
         var actions = new Grid { ColumnDefinitions = { new ColumnDefinition(), new ColumnDefinition() }, ColumnSpacing = 10 };
-        var ok = new Button { Text = "OK" };
-        ok.SetBinding(Button.CommandProperty, new Binding("ApplyCommand"));
-        actions.Add(ok, 0, 0);
+        _okButton = new Button();
+        _okButton.SetBinding(Button.CommandProperty, new Binding("ApplyCommand"));
+        actions.Add(_okButton, 0, 0);
 
-        var clear = new Button { Text = "Clear" };
-        clear.SetBinding(Button.CommandProperty, new Binding("ClearCommand"));
-        actions.Add(clear, 1, 0);
+        _clearButton = new Button();
+        _clearButton.SetBinding(Button.CommandProperty, new Binding("ClearCommand"));
+        actions.Add(_clearButton, 1, 0);
         root.Add(actions);
 
         Content = root;
+
+        LocalizationManager.Instance.CultureChanged += (_, _) => ApplyLocalization();
+        ApplyLocalization();
     }
 
     private sealed class FlatFilterItem
@@ -113,7 +142,8 @@ public sealed class FilterPopupView : ContentView
         var cbAll = new CheckBox();
         cbAll.SetBinding(CheckBox.IsCheckedProperty, new Binding("SelectAll", BindingMode.TwoWay));
         selectAllHeader.Add(cbAll);
-        selectAllHeader.Add(new Label { Text = "(Select All)", VerticalTextAlignment = TextAlignment.Center });
+        _selectAllLabel = new Label { VerticalTextAlignment = TextAlignment.Center };
+        selectAllHeader.Add(_selectAllLabel);
 
         return new CollectionView
         {
@@ -163,6 +193,8 @@ public sealed class FilterPopupView : ContentView
         ViewModel.OnClear += ViewModel_OnClear;
         SubscribeFilterValues(vm.FilterValues);
         UpdateItemsList();
+        BuildLocalizedLists();
+        ApplyLocalization();
 
         // Ensure distinct values are loaded on first display (SearchText starts empty so it won't auto-trigger).
         MainThread.BeginInvokeOnMainThread(async () =>
@@ -216,5 +248,45 @@ public sealed class FilterPopupView : ContentView
         _flatItems.Add(new FlatFilterItem(item, indent));
         foreach (var child in item.Children)
             Flatten(child, indent + 1);
+    }
+
+    private void BuildLocalizedLists()
+    {
+        _localizedAccModes.Clear();
+        _localizedAccModes.Add(new LocalizedItem(AccumulationMode.Union, LocalizationManager.Instance["ModeUnion"]));
+        _localizedAccModes.Add(new LocalizedItem(AccumulationMode.Intersection, LocalizationManager.Instance["ModeIntersection"]));
+
+        _localizedOperators.Clear();
+        if (ViewModel == null) return;
+        foreach (var op in ViewModel.AvailableOperators)
+            _localizedOperators.Add(new LocalizedItem(op, LocalizationManager.Instance[$"FilterOperator_{op}"]));
+    }
+
+    private void ApplyLocalization()
+    {
+        _searchEntry.Placeholder = LocalizationManager.Instance["SearchPlaceholder"];
+        _addToFilterLabel.Text = LocalizationManager.Instance["AddToFilter"];
+        _advancedToggle.Text = LocalizationManager.Instance["AdvancedFilter"];
+        _operatorLabel.Text = LocalizationManager.Instance["OperatorText"];
+        _valueLabel.Text = LocalizationManager.Instance["ValueText"];
+        if (_selectAllLabel != null)
+            _selectAllLabel.Text = LocalizationManager.Instance["SelectAll"];
+        _okButton.Text = LocalizationManager.Instance["Ok"];
+        _clearButton.Text = LocalizationManager.Instance["Clear"];
+
+        BuildLocalizedLists();
+    }
+
+    private sealed class LocalizedItem
+    {
+        public LocalizedItem(object value, string text)
+        {
+            Value = value;
+            Text = text;
+        }
+
+        public object Value { get; }
+        public string Text { get; }
+        public override string ToString() => Text;
     }
 }

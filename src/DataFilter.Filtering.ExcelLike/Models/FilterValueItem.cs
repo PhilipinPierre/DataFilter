@@ -28,7 +28,8 @@ public partial class FilterValueItem : ObservableObject
     [ObservableProperty]
     private bool _isExpanded;
 
-    public string DisplayText { get; set; }
+    [ObservableProperty]
+    private string _displayText;
 
     public ObservableCollection<FilterValueItem> Children { get; } = new();
 
@@ -36,11 +37,11 @@ public partial class FilterValueItem : ObservableObject
 
     public FilterValueItem(string displayText, object? value, FilterValueItem? parent = null, bool isSelected = true)
     {
-        DisplayText = displayText;
+        _displayText = displayText;
         _value = value;
         Parent = parent;
         _isSelected = isSelected;
-        _isNull = isSelected == null;
+        _isNull = false;
         _isExpanded = false;
     }
 

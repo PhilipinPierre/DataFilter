@@ -1,3 +1,5 @@
+using DataFilter.Core.Enums;
+using DataFilter.Localization;
 using DataFilter.PlatformShared.ViewModels;
 using System.ComponentModel;
 using System.Windows.Forms;
@@ -69,15 +71,16 @@ public sealed class FilterPopupControl : UserControl
         _selectAll.CheckedChanged += (_, _) => OnSelectAllChanged(_selectAll.Checked);
         _advanced.CheckedChanged += (_, _) => _advancedPanel.Visible = _advanced.Checked;
 
-        _accumulationMode.Items.Add("Union");
-        _accumulationMode.Items.Add("Intersection");
+        _accumulationMode.DisplayMember = nameof(LocalizedItem.Text);
+        _accumulationMode.ValueMember = nameof(LocalizedItem.Value);
+        _accumulationMode.Items.Add(new LocalizedItem(AccumulationMode.Union, LocalizationManager.Instance["ModeUnion"]));
+        _accumulationMode.Items.Add(new LocalizedItem(AccumulationMode.Intersection, LocalizationManager.Instance["ModeIntersection"]));
         _accumulationMode.SelectedIndex = 0;
         _accumulationMode.SelectedIndexChanged += (_, _) =>
         {
             if (ViewModel == null) return;
-            ViewModel.AccumulationMode = _accumulationMode.SelectedIndex == 0
-                ? DataFilter.Core.Enums.AccumulationMode.Union
-                : DataFilter.Core.Enums.AccumulationMode.Intersection;
+            if (_accumulationMode.SelectedItem is LocalizedItem { Value: AccumulationMode mode })
+                ViewModel.AccumulationMode = mode;
         };
         _values.AfterCheck += (s, e) =>
         {
@@ -92,9 +95,12 @@ public sealed class FilterPopupControl : UserControl
 
         _operator.SelectedIndexChanged += (_, _) =>
         {
-            if (ViewModel == null || _operator.SelectedItem is not DataFilter.Core.Enums.FilterOperator op) return;
-            ViewModel.SelectedCustomOperator = op;
-            _custom2.Visible = op == DataFilter.Core.Enums.FilterOperator.Between;
+            if (ViewModel == null) return;
+            if (_operator.SelectedItem is LocalizedItem { Value: FilterOperator op })
+            {
+                ViewModel.SelectedCustomOperator = op;
+                _custom2.Visible = op == FilterOperator.Between;
+            }
         };
         _custom1.TextChanged += (_, _) => { if (ViewModel != null) ViewModel.CustomValue1 = _custom1.Text; };
         _custom2.TextChanged += (_, _) => { if (ViewModel != null) ViewModel.CustomValue2 = _custom2.Text; };
@@ -103,6 +109,17 @@ public sealed class FilterPopupControl : UserControl
         _sortDesc.Click += (_, _) => ViewModel?.SortDescendingCommand.Execute(null);
         _addSortAsc.Click += (_, _) => ViewModel?.AddSubSortAscendingCommand.Execute(null);
         _addSortDesc.Click += (_, _) => ViewModel?.AddSubSortDescendingCommand.Execute(null);
+
+        LocalizationManager.Instance.CultureChanged += (_, _) =>
+        {
+            if (IsDisposed) return;
+            if (InvokeRequired)
+                BeginInvoke(new Action(ApplyLocalization));
+            else
+                ApplyLocalization();
+        };
+
+        ApplyLocalization();
     }
 
     public async Task BindAsync(ColumnFilterViewModel viewModel, IEnumerable<object> distinctValues)
@@ -112,7 +129,10 @@ public sealed class FilterPopupControl : UserControl
         ViewModel.OnApply += (_, _) => RequestClose?.Invoke();
         ViewModel.OnClear += (_, _) => RequestClose?.Invoke();
         _operator.Items.Clear();
-        foreach (var op in ViewModel.AvailableOperators) _operator.Items.Add(op);
+        _operator.DisplayMember = nameof(LocalizedItem.Text);
+        _operator.ValueMember = nameof(LocalizedItem.Value);
+        foreach (var op in ViewModel.AvailableOperators)
+            _operator.Items.Add(new LocalizedItem(op, LocalizationManager.Instance[$"FilterOperator_{op}"]));
         await ViewModel.InitializeAsync(distinctValues);
         ReloadTree();
     }
@@ -149,6 +169,52 @@ public sealed class FilterPopupControl : UserControl
             node.Nodes.Add(BuildNode(child));
         }
         return node;
+    }
+
+    private void ApplyLocalization()
+    {
+        _search.PlaceholderText = LocalizationManager.Instance["SearchPlaceholder"];
+        _addToExisting.Text = LocalizationManager.Instance["AddToFilter"];
+        _selectAll.Text = LocalizationManager.Instance["SelectAll"];
+        _loading.Text = LocalizationManager.Instance["LoadingText"];
+        _advanced.Text = LocalizationManager.Instance["AdvancedFilter"];
+        _sortAsc.Text = LocalizationManager.Instance["SortAscending"];
+        _sortDesc.Text = LocalizationManager.Instance["SortDescending"];
+        _addSortAsc.Text = LocalizationManager.Instance["AddSubSortAscending"];
+        _addSortDesc.Text = LocalizationManager.Instance["AddSubSortDescending"];
+        _ok.Text = LocalizationManager.Instance["Ok"];
+        _clear.Text = LocalizationManager.Instance["Clear"];
+        _custom1.PlaceholderText = LocalizationManager.Instance["ValueText"];
+        _custom2.PlaceholderText = LocalizationManager.Instance["ToText"];
+
+        for (int i = 0; i < _accumulationMode.Items.Count; i++)
+        {
+            if (_accumulationMode.Items[i] is LocalizedItem { Value: AccumulationMode mode } item)
+                item.Text = mode == AccumulationMode.Union ? LocalizationManager.Instance["ModeUnion"] : LocalizationManager.Instance["ModeIntersection"];
+        }
+        _accumulationMode.Refresh();
+
+        for (int i = 0; i < _operator.Items.Count; i++)
+        {
+            if (_operator.Items[i] is LocalizedItem { Value: FilterOperator op } item)
+                item.Text = LocalizationManager.Instance[$"FilterOperator_{op}"];
+        }
+        _operator.Refresh();
+
+        ReloadTree();
+    }
+
+    private sealed class LocalizedItem
+    {
+        public LocalizedItem(object value, string text)
+        {
+            Value = value;
+            Text = text;
+        }
+
+        public object Value { get; }
+        public string Text { get; set; }
+        public override string ToString() => Text;
     }
 
     public void ApplyTheme(bool isDark)

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.ComponentModel;
+using System.Globalization;
 using DataFilter.Core.Abstractions;
 using DataFilter.Core.Pipeline;
 using DataFilter.Filtering.ExcelLike.Abstractions;
@@ -10,6 +11,11 @@ namespace DataFilter.PlatformShared.ViewModels;
 public interface IFilterableDataGridViewModel : INotifyPropertyChanged
 {
     IEnumerable FilteredItems { get; }
+    /// <summary>
+    /// Optional override culture used by UI integrations to localize filter popups at runtime.
+    /// When null, integrations should use <see cref="CultureInfo.CurrentUICulture"/>.
+    /// </summary>
+    CultureInfo? CultureOverride { get; }
     /// <summary>CLR type of items in <see cref="LocalDataSource"/> (homogeneous collection).</summary>
     Type ItemType { get; set; }
     IFilterContext Context { get; }

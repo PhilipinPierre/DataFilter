@@ -1,5 +1,6 @@
 using System.Collections;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -40,6 +41,9 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
 
     /// <inheritdoc />
     public Type ItemType { get; set; } = typeof(T);
+
+    /// <inheritdoc />
+    public CultureInfo? CultureOverride { get; set; }
 
     /// <inheritdoc />
     public HashSet<string> FilterableProperties { get; } = new(StringComparer.OrdinalIgnoreCase);

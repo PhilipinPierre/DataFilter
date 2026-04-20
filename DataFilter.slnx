@@ -19,9 +19,9 @@
     <Project Path="src/DataFilter.Core/DataFilter.Core.csproj" />
     <Project Path="src/DataFilter.Expressions.Server/DataFilter.Expressions.Server.csproj" />
     <Project Path="src/DataFilter.Filtering.ExcelLike/DataFilter.Filtering.ExcelLike.csproj" />
+    <Project Path="src/DataFilter.Localization/DataFilter.Localization.csproj" />
     <Project Path="src/DataFilter.Maui/DataFilter.Maui.csproj" Id="5329f65e-ccd3-4962-abd7-9a4789a3ff2e" />
     <Project Path="src/DataFilter.PlatformShared/DataFilter.PlatformShared.csproj" />
-    <Project Path="src/DataFilter.UwpXaml/DataFilter.UwpXaml.csproj" Id="5e48e9e1-de4e-47c8-8541-4ff295e37594" />
     <Project Path="src/DataFilter.WinForms/DataFilter.WinForms.csproj" />
     <Project Path="src/DataFilter.WinUI3/DataFilter.WinUI3.csproj" Id="c41650e8-f1e0-43f1-a104-ef7217646cdf" />
     <Project Path="src/DataFilter.Wpf/DataFilter.Wpf.csproj" />
@@ -32,7 +32,6 @@
     <Project Path="tests/DataFilter.Expressions.Server.Tests/DataFilter.Expressions.Server.Tests.csproj" />
     <Project Path="tests/DataFilter.Filtering.ExcelLike.Tests/DataFilter.Filtering.ExcelLike.Tests.csproj" />
     <Project Path="tests/DataFilter.Maui.Tests/DataFilter.Maui.Tests.csproj" />
-    <Project Path="tests/DataFilter.UwpXaml.Tests/DataFilter.UwpXaml.Tests.csproj" />
     <Project Path="tests/DataFilter.WinForms.Tests/DataFilter.WinForms.Tests.csproj" />
     <Project Path="tests/DataFilter.WinUI3.Tests/DataFilter.WinUI3.Tests.csproj" />
     <Project Path="tests/DataFilter.Wpf.Tests/DataFilter.Wpf.Tests.csproj" />

@@ -3,6 +3,8 @@
 @using DataFilter.Filtering.ExcelLike.Models
 @using System.ComponentModel
 @using Microsoft.JSInterop
+@using DataFilter.Localization
+@implements IDisposable
 @inject IJSRuntime JSRuntime
 
 @if (Visible)
@@ -11,10 +13,10 @@
         <div class="df-popup-body">
             <!-- Sort Buttons -->
             <div class="df-sort-section">
-                <button class="df-sort-button" @onclick="() => ViewModel.SortAscendingCommand.Execute(null)">Sort A to Z</button>
-                <button class="df-sort-button" @onclick="() => ViewModel.SortDescendingCommand.Execute(null)">Sort Z to A</button>
-                <button class="df-sort-button" @onclick="() => ViewModel.AddSubSortAscendingCommand.Execute(null)">Add Sort A to Z</button>
-                <button class="df-sort-button" @onclick="() => ViewModel.AddSubSortDescendingCommand.Execute(null)">Add Sort Z to A</button>
+                <button class="df-sort-button" @onclick="() => ViewModel.SortAscendingCommand.Execute(null)">@LocalizationManager.Instance["SortAscending"]</button>
+                <button class="df-sort-button" @onclick="() => ViewModel.SortDescendingCommand.Execute(null)">@LocalizationManager.Instance["SortDescending"]</button>
+                <button class="df-sort-button" @onclick="() => ViewModel.AddSubSortAscendingCommand.Execute(null)">@LocalizationManager.Instance["AddSubSortAscending"]</button>
+                <button class="df-sort-button" @onclick="() => ViewModel.AddSubSortDescendingCommand.Execute(null)">@LocalizationManager.Instance["AddSubSortDescending"]</button>
             </div>
 
             <hr />
@@ -25,12 +27,12 @@
                        value="@ViewModel.SearchText" 
                        @oninput="OnSearchInput" 
                        class="df-search-input" 
-                       placeholder="Search..." />
+                       placeholder="@LocalizationManager.Instance["SearchPlaceholder"]" />
                 
                 <div class="df-accumulation-options">
                     <label class="df-checkbox-label">
                         <input type="checkbox" @bind="ViewModel.AddToExistingFilter" />
-                        Add selection to filter
+                        @LocalizationManager.Instance["AddToFilter"]
                     </label>
                     
                     @if (ViewModel.AddToExistingFilter)
@@ -38,7 +40,7 @@
                         <select @bind="ViewModel.AccumulationMode" class="df-accumulation-select">
                             @foreach (var mode in Enum.GetValues<AccumulationMode>())
                             {
-                                <option value="@mode">@mode</option>
+                                <option value="@mode">@GetAccumulationModeText(mode)</option>
                             }
                         </select>
                     }
@@ -48,7 +50,7 @@
             <!-- Custom Filter -->
             <div class="df-custom-filter-section">
                 <div class="df-custom-filter-header" @onclick="ToggleCustomFilter">
-                    <span>Advanced Filter</span>
+                    <span>@LocalizationManager.Instance["AdvancedFilter"]</span>
                     <span>@(ViewModel.IsCustomFilterExpanded ? "▲" : "▼")</span>
                 </div>
                 @if (ViewModel.IsCustomFilterExpanded)
@@ -58,15 +60,15 @@
                             <option value="">(None)</option>
                             @foreach (var op in ViewModel.AvailableOperators)
                             {
-                                <option value="@op">@op</option>
+                                <option value="@op">@GetOperatorText(op)</option>
                             }
                         </select>
 
-                        <input type="text" @bind="ViewModel.CustomValue1" class="df-custom-input" placeholder="Value 1" />
+                        <input type="text" @bind="ViewModel.CustomValue1" class="df-custom-input" placeholder="@LocalizationManager.Instance["ValueText"]" />
 
                         @if (ViewModel.SelectedCustomOperator == FilterOperator.Between)
                         {
-                            <input type="text" @bind="ViewModel.CustomValue2" class="df-custom-input" placeholder="Value 2" />
+                            <input type="text" @bind="ViewModel.CustomValue2" class="df-custom-input" placeholder="@LocalizationManager.Instance["ToText"]" />
                         }
                     </div>
                 }
@@ -75,7 +77,7 @@
             <!-- Loading Indicator -->
             @if (ViewModel.IsLoading)
             {
-                <div class="df-loading">Loading...</div>
+                <div class="df-loading">@LocalizationManager.Instance["LoadingText"]</div>
             }
 
             <!-- Filter List -->
@@ -85,7 +87,7 @@
                            checked="@ViewModel.SelectAll" 
                            indeterminate="@(ViewModel.SelectAll == null)"
                            @onchange="ToggleSelectAll" />
-                    <span>(Select All)</span>
+                    <span>@LocalizationManager.Instance["SelectAll"]</span>
                 </div>
                 
                 @foreach (var item in ViewModel.FilterValues)
@@ -97,8 +99,8 @@
 
         <!-- Footer Buttons -->
         <div class="df-footer-buttons">
-            <button class="df-btn-primary" @onclick="Apply">OK</button>
-            <button class="df-btn-secondary" @onclick="Clear">Clear</button>
+            <button class="df-btn-primary" @onclick="Apply">@LocalizationManager.Instance["Ok"]</button>
+            <button class="df-btn-secondary" @onclick="Clear">@LocalizationManager.Instance["Clear"]</button>
         </div>
 
         <div id="@_resizeHandleId" class="df-resize-handle"></div>
@@ -117,7 +119,27 @@
     protected override void OnInitialized()
     {
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+        LocalizationManager.Instance.CultureChanged += OnCultureChanged;
     }
+
+    public void Dispose()
+    {
+        ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        LocalizationManager.Instance.CultureChanged -= OnCultureChanged;
+    }
+
+    private void OnCultureChanged(object? sender, EventArgs e) => InvokeAsync(StateHasChanged);
+
+    private static string GetOperatorText(FilterOperator op)
+        => LocalizationManager.Instance[$"FilterOperator_{op}"];
+
+    private static string GetAccumulationModeText(AccumulationMode mode)
+        => mode switch
+        {
+            AccumulationMode.Union => LocalizationManager.Instance["ModeUnion"],
+            AccumulationMode.Intersection => LocalizationManager.Instance["ModeIntersection"],
+            _ => mode.ToString()
+        };
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -164,8 +186,4 @@
         VisibleChanged.InvokeAsync(false);
     }
 
-    public void Dispose()
-    {
-        ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
-    }
 }

@@ -48,6 +48,7 @@
   <data name="LoadingText" xml:space="preserve"><value>Loading...</value></data>
   <data name="Ok" xml:space="preserve"><value>OK</value></data>
   <data name="OperatorText" xml:space="preserve"><value>Operator:</value></data>
+  <data name="SearchPlaceholder" xml:space="preserve"><value>Search...</value></data>
   <data name="SelectAll" xml:space="preserve"><value>(Select All)</value></data>
   <data name="SortAscending" xml:space="preserve"><value>Sort A to Z</value></data>
   <data name="SortDescending" xml:space="preserve"><value>Sort Z to A</value></data>

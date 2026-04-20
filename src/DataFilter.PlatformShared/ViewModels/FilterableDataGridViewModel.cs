@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Globalization;
 using System.Reflection;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DataFilter.Core.Abstractions;
@@ -20,6 +21,9 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
 
     IEnumerable IFilterableDataGridViewModel.FilteredItems => FilteredItems;
 
+    /// <inheritdoc />
+    public CultureInfo? CultureOverride { get; }
+
     public IFilterContext Context { get; } = new FilterContext();
     public IExcelFilterEngine FilterEngine { get; }
     public HashSet<string> FilterableProperties { get; } = new(StringComparer.OrdinalIgnoreCase);
@@ -39,16 +43,25 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
     /// Initializes a new instance with the default <see cref="ExcelFilterEngine"/>.
     /// </summary>
     public FilterableDataGridViewModel()
-        : this(new ExcelFilterEngine())
+        : this(new ExcelFilterEngine(), cultureOverride: null)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance with an optional UI culture override (used by popup integrations).
+    /// </summary>
+    public FilterableDataGridViewModel(CultureInfo? cultureOverride)
+        : this(new ExcelFilterEngine(), cultureOverride)
     {
     }
 
     /// <summary>
     /// Initializes a new instance with a specific filter engine.
     /// </summary>
-    protected FilterableDataGridViewModel(IExcelFilterEngine filterEngine)
+    protected FilterableDataGridViewModel(IExcelFilterEngine filterEngine, CultureInfo? cultureOverride)
     {
         FilterEngine = filterEngine ?? throw new ArgumentNullException(nameof(filterEngine));
+        CultureOverride = cultureOverride;
     }
 
     [ObservableProperty]
@@ -316,7 +329,15 @@ public class FilterableDataGridViewModel<T> : FilterableDataGridViewModel, IFilt
     /// Initializes a new instance with <see cref="ItemType"/> set to <typeparamref name="T"/>.
     /// </summary>
     public FilterableDataGridViewModel()
-        : base(new ExcelFilterEngine<T>())
+        : this(cultureOverride: null)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance with <see cref="ItemType"/> set to <typeparamref name="T"/> and an optional UI culture override.
+    /// </summary>
+    public FilterableDataGridViewModel(CultureInfo? cultureOverride)
+        : base(new ExcelFilterEngine<T>(), cultureOverride)
     {
         ItemType = typeof(T);
     }

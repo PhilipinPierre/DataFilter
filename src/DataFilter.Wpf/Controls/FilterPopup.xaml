@@ -8,7 +8,7 @@
              xmlns:behaviors="clr-namespace:DataFilter.Wpf.Behaviors"
              xmlns:viewmodels="clr-namespace:DataFilter.Wpf.ViewModels"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-             xmlns:res="clr-namespace:DataFilter.Wpf.Resources"
+             xmlns:loc="clr-namespace:DataFilter.Localization;assembly=DataFilter.Localization"
              xmlns:core="clr-namespace:DataFilter.Core.Enums;assembly=DataFilter.Core"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=viewmodels:ColumnFilterViewModel}"
@@ -48,16 +48,16 @@
         <!-- Sort Buttons -->
         <StackPanel Grid.Row="0"
                     Margin="0,0,0,5">
-            <Button Content="{x:Static res:FilterResources.SortAscending}"
+            <Button Content="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[SortAscending]}"
                     Command="{Binding SortAscendingCommand}"
                     Margin="0,2" />
-            <Button Content="{x:Static res:FilterResources.SortDescending}"
+            <Button Content="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[SortDescending]}"
                     Command="{Binding SortDescendingCommand}"
                     Margin="0,2" />
-            <Button Content="{x:Static res:FilterResources.AddSubSortAscending}"
+            <Button Content="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[AddSubSortAscending]}"
                     Command="{Binding AddSubSortAscendingCommand}"
                     Margin="0,2" />
-            <Button Content="{x:Static res:FilterResources.AddSubSortDescending}"
+            <Button Content="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[AddSubSortDescending]}"
                     Command="{Binding AddSubSortDescendingCommand}"
                     Margin="0,2" />
             <Separator Margin="0,5" />
@@ -73,7 +73,7 @@
                 </i:Interaction.Behaviors>
             </TextBox>
             <StackPanel Margin="0,5,0,0">
-                <CheckBox Content="{x:Static res:FilterResources.AddToFilter}"
+                <CheckBox Content="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[AddToFilter]}"
                           IsChecked="{Binding AddToExistingFilter}"
                           VerticalAlignment="Center"
                           FontSize="11" />
@@ -86,7 +86,14 @@
                           Height="20">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding Converter={StaticResource ModeConverter}}" />
+                            <TextBlock>
+                                <TextBlock.Text>
+                                    <MultiBinding Converter="{StaticResource ModeConverter}">
+                                        <Binding />
+                                        <Binding Source="{x:Static loc:LocalizationManager.Instance}" Path="Version" />
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
@@ -95,28 +102,35 @@
 
         <!-- Custom Filter -->
         <Expander Grid.Row="2"
-                  Header="{x:Static res:FilterResources.AdvancedFilter}"
+                  Header="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[AdvancedFilter]}"
                   IsExpanded="{Binding IsCustomFilterExpanded}"
                   Margin="0,0,0,5"
                   Padding="2">
             <StackPanel Margin="5">
-                <TextBlock Text="{x:Static res:FilterResources.OperatorText}" FontSize="10" Foreground="Gray"/>
+                <TextBlock Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[OperatorText]}" FontSize="10" Foreground="Gray"/>
                 <ComboBox ItemsSource="{Binding AvailableOperators}"
                           SelectedItem="{Binding SelectedCustomOperator}"
                           Margin="0,2,0,5">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding Converter={StaticResource OperatorConverter}}" />
+                            <TextBlock>
+                                <TextBlock.Text>
+                                    <MultiBinding Converter="{StaticResource OperatorConverter}">
+                                        <Binding />
+                                        <Binding Source="{x:Static loc:LocalizationManager.Instance}" Path="Version" />
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
 
-                <TextBlock Text="{x:Static res:FilterResources.ValueText}" FontSize="10" Foreground="Gray"/>
+                <TextBlock Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[ValueText]}" FontSize="10" Foreground="Gray"/>
                 <TextBox Text="{Binding CustomValue1, UpdateSourceTrigger=PropertyChanged}"
                          Margin="0,2"/>
 
                 <StackPanel Visibility="{Binding SelectedCustomOperator, Converter={StaticResource BoolToVis}, ConverterParameter=Between}">
-                    <TextBlock Text="{x:Static res:FilterResources.ToText}" FontSize="10" Foreground="Gray" Margin="0,5,0,0"/>
+                    <TextBlock Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[ToText]}" FontSize="10" Foreground="Gray" Margin="0,5,0,0"/>
                     <TextBox Text="{Binding CustomValue2, UpdateSourceTrigger=PropertyChanged}"
                              Margin="0,2"/>
                 </StackPanel>
@@ -125,7 +139,7 @@
 
         <!-- Loading Indicator -->
         <TextBlock Grid.Row="3"
-                   Text="{x:Static res:FilterResources.LoadingText}"
+                   Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[LoadingText]}"
                    HorizontalAlignment="Center"
                    Margin="0,5"
                    Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}" />
@@ -148,7 +162,7 @@
             </Grid.Style>
 
             <CheckBox Grid.Row="0"
-                      Content="{x:Static res:FilterResources.SelectAll}"
+                      Content="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[SelectAll]}"
                       Margin="2"
                       IsChecked="{Binding SelectAll}"
                       IsThreeState="True"
@@ -195,11 +209,11 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <Button Grid.Column="0"
-                    Content="{x:Static res:FilterResources.Ok}"
+                    Content="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[Ok]}"
                     Command="{Binding ApplyCommand}"
                     Style="{DynamicResource FilterButtonStyle}" />
             <Button Grid.Column="2"
-                    Content="{x:Static res:FilterResources.Clear}"
+                    Content="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[Clear]}"
                     Command="{Binding ClearCommand}"
                     Style="{DynamicResource FilterButtonStyle}" />
         </Grid>

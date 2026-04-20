@@ -1,6 +1,6 @@
 ﻿using DataFilter.Core.Engine;
 using DataFilter.Filtering.ExcelLike.Models;
-using DataFilter.Wpf.Resources;
+using DataFilter.Localization;
 
 namespace DataFilter.Wpf.ViewModels;
 
@@ -17,7 +17,7 @@ public partial class ColumnFilterViewModel : PlatformShared.ViewModels.ColumnFil
         Action<bool>? onAddSubSort = null,
         Type? propertyType = null,
         IFilterEvaluator? filterEvaluator = null)
-        : base(distinctValuesProvider, onApply, onClear, onSort, onAddSubSort, propertyType, filterEvaluator, FilterResources.Blanks)
+        : base(distinctValuesProvider, onApply, onClear, onSort, onAddSubSort, propertyType, filterEvaluator, blanksDisplayTextProvider: () => LocalizationManager.Instance["Blanks"])
     {
     }
 

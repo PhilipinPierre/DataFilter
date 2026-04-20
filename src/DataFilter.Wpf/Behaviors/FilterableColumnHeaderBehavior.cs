@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using DataFilter.Localization;
 using DataFilter.Wpf.Controls;
 using DataFilter.Wpf.ViewModels;
 using Microsoft.Xaml.Behaviors;
@@ -24,6 +25,7 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
     private ColumnFilterVm? _viewModel;
     private bool _contentInjected;
     private GridFilterVm? _filterParentSubscriptions;
+    private System.Globalization.CultureInfo? _cultureBeforePopup;
 
     #region IsFilterable Attached Property
 
@@ -381,6 +383,13 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         }
         else
         {
+            // Apply a per-grid culture override for the popup lifetime (if provided).
+            if (ParentViewModel is GridFilterVm parentVmWithCulture && parentVmWithCulture.CultureOverride != null)
+            {
+                _cultureBeforePopup = LocalizationManager.Instance.Culture;
+                LocalizationManager.Instance.SetCulture(parentVmWithCulture.CultureOverride);
+            }
+
             await _viewModel.SearchCommand.ExecuteAsync(string.Empty);
             if (ParentViewModel is GridFilterVm parentVm && !string.IsNullOrEmpty(PropertyName))
             {
@@ -428,6 +437,12 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         var window = Window.GetWindow(AssociatedObject);
         if (window != null)
             window.PreviewMouseLeftButtonDown -= OnWindowMouseDown;
+
+        if (_cultureBeforePopup != null)
+        {
+            LocalizationManager.Instance.SetCulture(_cultureBeforePopup);
+            _cultureBeforePopup = null;
+        }
     }
 
     private void OnWindowMouseDown(object sender, MouseButtonEventArgs e)

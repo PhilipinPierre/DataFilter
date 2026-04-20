@@ -129,4 +129,7 @@
   <data name="ModeUnion" xml:space="preserve">
     <value>Add (OR)</value>
   </data>
+  <data name="ModeIntersection" xml:space="preserve">
+    <value>Refine (AND)</value>
+  </data>
 </root>

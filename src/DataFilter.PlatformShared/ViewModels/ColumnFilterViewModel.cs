@@ -4,6 +4,7 @@ using DataFilter.Core.Engine;
 using DataFilter.Core.Enums;
 using DataFilter.Filtering.ExcelLike.Models;
 using DataFilter.Filtering.ExcelLike.Services;
+using DataFilter.Localization;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -172,7 +173,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
     public event EventHandler<string>? OnSearchTextChangedEvent;
 
     private readonly IFilterEvaluator _filterEvaluator;
-    private readonly string _blanksDisplayText;
+    private readonly Func<string> _blanksDisplayTextProvider;
 
     public ColumnFilterViewModel(
         Func<string, System.Threading.Tasks.Task<IEnumerable<object>>> distinctValuesProvider,
@@ -182,9 +183,10 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
         Action<bool>? onAddSubSort = null,
         Type? propertyType = null,
         IFilterEvaluator? filterEvaluator = null,
-        string blanksDisplayText = "(Blanks)")
+        string blanksDisplayText = "(Blanks)",
+        Func<string>? blanksDisplayTextProvider = null)
     {
-        _blanksDisplayText = blanksDisplayText;
+        _blanksDisplayTextProvider = blanksDisplayTextProvider ?? (() => blanksDisplayText);
         _distinctValuesProvider = distinctValuesProvider;
         _onApplyAction = onApply;
         _onClearAction = onClear;
@@ -490,11 +492,17 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
         });
 
         InitializeAvailableOperators();
+
+        // If the blanks text is localization-driven, keep the UI in sync at runtime.
+        if (blanksDisplayTextProvider != null)
+        {
+            LocalizationManager.Instance.CultureChanged += (_, _) => UpdateBlanksDisplayTexts();
+        }
     }
 
     public ColumnFilterViewModel()
     {
-        _blanksDisplayText = "(Blanks)";
+        _blanksDisplayTextProvider = () => "(Blanks)";
         ApplyCommand = new RelayCommand(() => OnApply?.Invoke(this, EventArgs.Empty));
         ClearCommand = new RelayCommand(ClearFilter);
         SortAscendingCommand = new RelayCommand(() => { });
@@ -697,7 +705,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
         foreach (var val in distinctValues)
         {
             var isSelected = FilterState.SelectAll || (val != null && FilterState.SelectedValues.Contains(val));
-            var display = val?.ToString() ?? _blanksDisplayText;
+            var display = val?.ToString() ?? _blanksDisplayTextProvider();
             var item = new FilterValueItem(display, val, null, isSelected);
             newFilterValues.Add(item);
 
@@ -718,7 +726,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
             else if (val == null)
             {
                 var isSelected = FilterState.SelectAll || FilterState.SelectedValues.Contains(val!);
-                blankItem = new FilterValueItem(_blanksDisplayText, null, null, isSelected);
+                blankItem = new FilterValueItem(_blanksDisplayTextProvider(), null, null, isSelected);
                 FilterState.DistinctValues.Add(val!);
             }
         }
@@ -753,6 +761,28 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
 
         if (blankItem != null)
             newFilterValues.Add(blankItem);
+    }
+
+    private void UpdateBlanksDisplayTexts()
+    {
+        var blanks = _blanksDisplayTextProvider();
+        foreach (var item in FilterValues)
+        {
+            UpdateBlanksDisplayTextsRecursive(item, blanks);
+        }
+    }
+
+    private static void UpdateBlanksDisplayTextsRecursive(FilterValueItem item, string blanks)
+    {
+        if (item.Children.Count > 0)
+        {
+            foreach (var child in item.Children)
+                UpdateBlanksDisplayTextsRecursive(child, blanks);
+            return;
+        }
+
+        if (item.Value == null)
+            item.DisplayText = blanks;
     }
 
     private void InitializeTimeTree(IEnumerable<object> distinctValues, List<FilterValueItem> newFilterValues)

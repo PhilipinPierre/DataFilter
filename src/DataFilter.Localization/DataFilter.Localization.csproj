@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net8.0;net9.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <!-- Link the existing RESX files that currently live in DataFilter.Wpf, so we centralize compilation in one assembly
+       without duplicating or moving files in this automated change. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\DataFilter.Wpf\Resources\FilterResources.resx"
+                      Link="Resources\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\DataFilter.Wpf\Resources\FilterResources.*.resx"
+                      Link="Resources\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>
+
