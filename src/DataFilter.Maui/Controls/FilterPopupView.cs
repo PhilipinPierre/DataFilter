@@ -2,6 +2,8 @@
 using DataFilter.Core.Enums;
 using System.Collections.ObjectModel;
 using DataFilter.Filtering.ExcelLike.Models;
+using System.ComponentModel;
+using Microsoft.Maui.ApplicationModel;
 
 namespace DataFilter.Maui.Controls;
 
@@ -11,11 +13,13 @@ public sealed class FilterPopupView : ContentView
 
     private readonly VerticalStackLayout _itemsLayout;
     private readonly VerticalStackLayout _advancedLayout;
+    private ObservableCollection<FilterValueItem>? _subscribedFilterValues;
 
     public FilterPopupView()
     {
         Padding = 10;
-        BackgroundColor = Colors.White;
+        // Follow the app theme (dark/light) instead of forcing white.
+        this.SetAppThemeColor(BackgroundColorProperty, Colors.White, Color.FromArgb("#1f1f1f"));
         WidthRequest = 280;
         MinimumHeightRequest = 350;
 
@@ -31,7 +35,7 @@ public sealed class FilterPopupView : ContentView
         sortGrid.Add(CreateSortButton("Add A-Z", "AddSubSortAscendingCommand"), 0, 1);
         sortGrid.Add(CreateSortButton("Add Z-A", "AddSubSortDescendingCommand"), 1, 1);
         root.Add(sortGrid);
-        root.Add(new BoxView { HeightRequest = 1, Color = Colors.LightGray });
+        root.Add(new BoxView { HeightRequest = 1 });
 
         // 2. Search & Accumulation
         var search = new Entry { Placeholder = "Search...", Margin = new Thickness(0, 0, 0, 4) };
@@ -52,23 +56,24 @@ public sealed class FilterPopupView : ContentView
         root.Add(accPanel);
 
         // 3. Advanced Filter
-        var advancedToggle = new Button { Text = "Advanced Filter", FontSize = 12, BackgroundColor = Colors.Transparent, TextColor = Colors.Blue, Padding = 0, HeightRequest = 30 };
+        var advancedToggle = new Button { Text = "Advanced Filter", FontSize = 12, BackgroundColor = Colors.Transparent, Padding = 0, HeightRequest = 30 };
+        advancedToggle.SetAppThemeColor(Button.TextColorProperty, Colors.Blue, Color.FromArgb("#ac99ea"));
         advancedToggle.Clicked += (s, e) => _advancedLayout.IsVisible = !_advancedLayout.IsVisible;
         root.Add(advancedToggle);
 
-        _advancedLayout.Add(new Label { Text = "Operator", FontSize = 10, TextColor = Colors.Gray });
+        _advancedLayout.Add(new Label { Text = "Operator", FontSize = 10 });
         var opPicker = new Picker();
         opPicker.SetBinding(Picker.ItemsSourceProperty, new Binding("AvailableOperators"));
         opPicker.SetBinding(Picker.SelectedItemProperty, new Binding("SelectedCustomOperator", BindingMode.TwoWay));
         _advancedLayout.Add(opPicker);
 
-        _advancedLayout.Add(new Label { Text = "Value", FontSize = 10, TextColor = Colors.Gray });
+        _advancedLayout.Add(new Label { Text = "Value", FontSize = 10 });
         var val1 = new Entry();
         val1.SetBinding(Entry.TextProperty, new Binding("CustomValue1", BindingMode.TwoWay));
         _advancedLayout.Add(val1);
 
         root.Add(_advancedLayout);
-        root.Add(new BoxView { HeightRequest = 1, Color = Colors.LightGray });
+        root.Add(new BoxView { HeightRequest = 1 });
 
         // 4. List Section
         var scroll = new ScrollView { Content = _itemsLayout, HeightRequest = 200 };
@@ -97,11 +102,53 @@ public sealed class FilterPopupView : ContentView
 
     public void Bind(ColumnFilterViewModel vm)
     {
+        if (ViewModel != null)
+        {
+            ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+            UnsubscribeFilterValues();
+        }
+
         ViewModel = vm;
         BindingContext = vm;
-        ViewModel.FilterValues.CollectionChanged += (s, e) => UpdateItemsList();
+        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        SubscribeFilterValues(vm.FilterValues);
         UpdateItemsList();
+
+        // Ensure distinct values are loaded on first display (SearchText starts empty so it won't auto-trigger).
+        MainThread.BeginInvokeOnMainThread(async () =>
+        {
+            if (ViewModel?.SearchCommand != null)
+                await ViewModel.SearchCommand.ExecuteAsync(string.Empty);
+        });
     }
+
+    private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ColumnFilterViewModel.FilterValues) && ViewModel != null)
+        {
+            SubscribeFilterValues(ViewModel.FilterValues);
+            UpdateItemsList();
+        }
+    }
+
+    private void SubscribeFilterValues(ObservableCollection<FilterValueItem> values)
+    {
+        if (ReferenceEquals(_subscribedFilterValues, values))
+            return;
+
+        UnsubscribeFilterValues();
+        _subscribedFilterValues = values;
+        _subscribedFilterValues.CollectionChanged += FilterValues_CollectionChanged;
+    }
+
+    private void UnsubscribeFilterValues()
+    {
+        if (_subscribedFilterValues != null)
+            _subscribedFilterValues.CollectionChanged -= FilterValues_CollectionChanged;
+        _subscribedFilterValues = null;
+    }
+
+    private void FilterValues_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e) => UpdateItemsList();
 
     private void UpdateItemsList()
     {
