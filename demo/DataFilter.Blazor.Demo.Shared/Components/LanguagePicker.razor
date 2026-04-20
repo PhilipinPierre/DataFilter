@@ -1,0 +1,55 @@
+@using System.Globalization
+@using DataFilter.Localization
+@implements IDisposable
+
+<div class="language-picker">
+    <label class="me-2">Language</label>
+    <select class="form-select form-select-sm d-inline-block" style="width: 220px"
+            value="@_selectedName"
+            @onchange="OnChange">
+        @foreach (var c in _cultures)
+        {
+            <option value="@c.Name">@GetLabel(c)</option>
+        }
+    </select>
+</div>
+
+@code {
+    private IReadOnlyList<CultureInfo> _cultures = Array.Empty<CultureInfo>();
+    private string _selectedName = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        _cultures = LocalizationManager.GetAvailableCultures();
+        _selectedName = LocalizationManager.Instance.Culture.Name;
+        LocalizationManager.Instance.CultureChanged += OnCultureChanged;
+    }
+
+    private void OnCultureChanged(object? sender, EventArgs e)
+    {
+        _selectedName = LocalizationManager.Instance.Culture.Name;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void OnChange(ChangeEventArgs e)
+    {
+        var name = e.Value?.ToString() ?? string.Empty;
+        _selectedName = name;
+
+        // Invariant culture => fallback (neutral) resources.
+        var culture = string.IsNullOrWhiteSpace(name)
+            ? CultureInfo.InvariantCulture
+            : CultureInfo.GetCultureInfo(name);
+
+        LocalizationManager.Instance.SetCulture(culture);
+    }
+
+    private static string GetLabel(CultureInfo culture)
+        => culture == CultureInfo.InvariantCulture
+            ? "Default"
+            : culture.NativeName;
+
+    public void Dispose()
+        => LocalizationManager.Instance.CultureChanged -= OnCultureChanged;
+}
+

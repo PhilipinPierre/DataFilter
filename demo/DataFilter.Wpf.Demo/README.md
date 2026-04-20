@@ -49,3 +49,9 @@ Shows how to apply the provided Light and Dark themes to the filter controls.
 - `DataFilter.Core`
 - `DataFilter.Filtering.ExcelLike`
 - `CommunityToolkit.Mvvm`
+
+## Runtime language switching (localization test)
+
+This demo includes a **Language** dropdown in the top bar to switch the UI culture at runtime.
+
+The available languages come from the satellite resource assemblies embedded in **`DataFilter.Localization`**.

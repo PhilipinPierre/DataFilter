@@ -1,6 +1,8 @@
 using System;
 using System.ComponentModel;
 using System.Globalization;
+using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using DataFilter.Localization.Resources;
 
@@ -16,11 +18,54 @@ public sealed class LocalizationManager : INotifyPropertyChanged
 
     private CultureInfo? _cultureOverride;
     private int _version;
+    private static IReadOnlyList<CultureInfo>? _availableCultures;
 
     private LocalizationManager()
     {
         // Initialize from the current UI culture.
         FilterResources.Culture = CultureInfo.CurrentUICulture;
+    }
+
+    /// <summary>
+    /// Returns the list of cultures that have localized resources available in <c>DataFilter.Localization</c>.
+    /// Includes <see cref="CultureInfo.InvariantCulture"/> to represent the fallback (neutral) resources.
+    /// </summary>
+    public static IReadOnlyList<CultureInfo> GetAvailableCultures()
+    {
+        if (_availableCultures is not null)
+            return _availableCultures;
+
+        var assembly = typeof(FilterResources).Assembly;
+        var cultures = new List<CultureInfo> { CultureInfo.InvariantCulture };
+
+        // Scan all known cultures and keep the ones that have a satellite assembly.
+        // This matches what's actually deployed with the app (e.g., culture folders next to the app).
+        foreach (var culture in CultureInfo.GetCultures(CultureTypes.NeutralCultures | CultureTypes.SpecificCultures))
+        {
+            if (culture.Equals(CultureInfo.InvariantCulture))
+                continue;
+
+            try
+            {
+                _ = assembly.GetSatelliteAssembly(culture);
+                cultures.Add(culture);
+            }
+            catch (FileNotFoundException)
+            {
+                // No satellite resources for this culture.
+            }
+            catch (CultureNotFoundException)
+            {
+                // Ignore invalid cultures on some platforms.
+            }
+        }
+
+        _availableCultures = cultures
+            .Distinct()
+            .OrderBy(c => c == CultureInfo.InvariantCulture ? string.Empty : c.NativeName)
+            .ToArray();
+
+        return _availableCultures;
     }
 
     /// <summary>

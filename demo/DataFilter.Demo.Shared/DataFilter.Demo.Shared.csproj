@@ -11,6 +11,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <ProjectReference Include="..\..\src\DataFilter.Core\DataFilter.Core.csproj" />
     <ProjectReference Include="..\..\src\DataFilter.Filtering.ExcelLike\DataFilter.Filtering.ExcelLike.csproj" />
+    <ProjectReference Include="..\..\src\DataFilter.Localization\DataFilter.Localization.csproj" />
   </ItemGroup>
 
 </Project>

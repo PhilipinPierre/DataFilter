@@ -35,6 +35,11 @@ All demos **must** use the shared demo data model and generator from `DataFilter
 
 Every demo app **must** expose the following shell-level controls and behaviors:
 
+- **Language selector (runtime localization test)**
+  - A dropdown/picker that switches the UI language **at runtime**.
+  - The list of languages **must** come from the cultures available in `DataFilter.Localization` resources.
+  - Changing the language should call `LocalizationManager.Instance.SetCulture(...)`.
+
 - **Row count input**
   - A numeric input that controls the number of `Employee` rows to generate.
   - Must support at least \(1\) to \(100000\) rows (platform-dependent upper bounds are allowed, but must be documented in the demo UI).

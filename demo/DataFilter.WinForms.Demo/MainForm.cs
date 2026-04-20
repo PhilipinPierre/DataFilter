@@ -1,6 +1,8 @@
 ﻿using DataFilter.Demo.Shared.Services;
 using DataFilter.WinForms.Demo.ViewModels;
 using DataFilter.WinForms.Demo.Views;
+using DataFilter.Localization;
+using System.Globalization;
 
 namespace DataFilter.WinForms.Demo;
 
@@ -9,6 +11,7 @@ public sealed class MainForm : Form
     private readonly NumericUpDown _rowCountInput;
     private readonly Button _regenerateBtn;
     private readonly Button _clearFiltersBtn;
+    private readonly ComboBox _languageCombo;
     private readonly TabControl _tabControl;
 
     private readonly LocalFilterScenarioViewModel _localVm;
@@ -67,7 +70,18 @@ public sealed class MainForm : Form
         _regenerateBtn = new Button { Text = "Regenerate Data", AutoSize = true, Margin = new Padding(0, 0, 10, 0) };
         _clearFiltersBtn = new Button { Text = "Clear filters", AutoSize = true };
 
-        flowLayout.Controls.AddRange(new Control[] { lblRowCount, _rowCountInput, _regenerateBtn, _clearFiltersBtn });
+        var lblLanguage = new Label { Text = "Language:", AutoSize = true, Margin = new Padding(15, 7, 5, 0) };
+        _languageCombo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 220, Margin = new Padding(0, 3, 10, 0) };
+
+        var languageOptions = LocalizationManager.GetAvailableCultures()
+            .Select(c => new LanguageOption(c))
+            .ToList();
+        _languageCombo.DataSource = languageOptions;
+        _languageCombo.DisplayMember = nameof(LanguageOption.Label);
+        _languageCombo.ValueMember = nameof(LanguageOption.Culture);
+        _languageCombo.SelectedValue = LocalizationManager.Instance.Culture;
+
+        flowLayout.Controls.AddRange(new Control[] { lblRowCount, _rowCountInput, _regenerateBtn, _clearFiltersBtn, lblLanguage, _languageCombo });
 
         // --- Tabs ---
         _tabControl = new TabControl { Dock = DockStyle.Fill };
@@ -93,6 +107,23 @@ public sealed class MainForm : Form
         // --- Events ---
         _regenerateBtn.Click += (s, e) => Regenerate();
         _clearFiltersBtn.Click += async (s, e) => await ClearFiltersAsync();
+        _languageCombo.SelectedValueChanged += (_, __) =>
+        {
+            if (_languageCombo.SelectedValue is CultureInfo culture)
+                LocalizationManager.Instance.SetCulture(culture);
+        };
+    }
+
+    private sealed class LanguageOption
+    {
+        public LanguageOption(CultureInfo culture)
+        {
+            Culture = culture;
+            Label = culture == CultureInfo.InvariantCulture ? "Default" : culture.NativeName;
+        }
+
+        public CultureInfo Culture { get; }
+        public string Label { get; }
     }
 
     private void AddTab(string title, Control content)
