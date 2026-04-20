@@ -26,6 +26,8 @@ The solution is divided into several main projects:
 - **Contextual Operators**: 
   - **Text**: Contains, Not Contains, Starts with, Ends with, Equals, Not Equals.
   - **Numbers/Dates/Time**: Greater than, Less than, Between, Equals, Not Equals.
+- **Search persistence without `In(list)`**: When the user filters distinct values using `SearchText` and keeps **Select All** enabled, the filter is persisted as a **search rule** (e.g., `StartsWith` + pattern) instead of serializing the resulting list of selected distinct values. This allows reapplying saved filters safely when data has changed.
+- **Wildcards in search patterns**: Text operators support `*` (any sequence) and `?` (single character) directly in the Core evaluation pipeline, so saved search rules replay consistently.
 - **Additive & Refinement Modes**: 
   - **Union (Additive)**: Merges new matches with the current selection (Logical OR).
   - **Intersection (Refinement)**: Keeps only items that match BOTH the current selection and the new criteria (Logical AND).

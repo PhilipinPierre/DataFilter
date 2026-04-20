@@ -105,6 +105,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
         if (state == null) return false;
         return state.CustomOperator != null
             || state.AdditionalCustomCriteria.Count > 0
+            || state.OrSearchPatterns.Count > 0
             || !string.IsNullOrEmpty(state.SearchText)
             || !state.SelectAll
             || state.DistinctValues.Count != state.SelectedValues.Count;
@@ -224,7 +225,8 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
             bool mergeCustomWithExistingCustom = effectiveAddToExisting
                 && AccumulationMode == AccumulationMode.Intersection
                 && SelectedCustomOperator != null
-                && FilterState.CustomOperator != null;
+                && FilterState.CustomOperator != null
+                && (string.IsNullOrEmpty(SearchText) || SelectAll != true);
 
             if (mergeCustomWithExistingCustom)
             {
@@ -247,6 +249,18 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
                 return;
             }
 
+            bool canRepresentUnionAsSearchOr =
+                effectiveAddToExisting
+                && AccumulationMode == AccumulationMode.Union
+                && !string.IsNullOrEmpty(SearchText)
+                && SelectAll == true
+                && (FilterState.OrSearchPatterns.Count > 0
+                    || (FilterState.CustomOperator == FilterOperator.StartsWith
+                        && FilterState.AdditionalCustomCriteria.Count == 0
+                        && FilterState.CustomValue2 == null
+                        && FilterState.CustomValue1 is string s
+                        && !string.IsNullOrEmpty(s)));
+
             if (effectiveAddToExisting)
             {
                 if (AccumulationMode == AccumulationMode.Intersection)
@@ -262,6 +276,17 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
                 }
 
                 FilterState.SelectAll = false; // Cannot be "Select All" if we are accumulating partial results
+
+                // Union of custom rules cannot be represented with AdditionalCustomCriteria (AND-only).
+                // If a custom operator is active, the descriptor would ignore SelectedValues. So in Union mode,
+                // we materialize the OR result as an In(list) selection by clearing custom criteria.
+                if (!canRepresentUnionAsSearchOr && AccumulationMode == AccumulationMode.Union && FilterState.CustomOperator != null)
+                {
+                    FilterState.CustomOperator = null;
+                    FilterState.CustomValue1 = null;
+                    FilterState.CustomValue2 = null;
+                    FilterState.AdditionalCustomCriteria.Clear();
+                }
 
                 // Clear operator UI only; FilterState custom criteria must stay (see Apply below).
                 SelectedCustomOperator = null;
@@ -280,9 +305,100 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
                 FilterState.SelectAll = string.IsNullOrEmpty(SearchText) && SelectAll == true;
             }
 
+            bool persistedSearchRule = false;
+
+            // Persist simple search as a rule (avoid serializing the resulting In(list) when possible).
+            // Conditions intentionally minimal: SearchText non-empty + SelectAll == true.
+            //
+            // Important: when adding to an existing filter, we must NOT wipe the prior rule.
+            // - Intersection mode can be represented as an additional AND criterion on the same column.
+            // - Union mode is represented using OrSearchPatterns (StartsWith(pattern1) OR StartsWith(pattern2) ...),
+            //   so we can persist the rule without materializing an In(list).
+            if (!string.IsNullOrEmpty(SearchText) && SelectAll == true)
+            {
+                if (canRepresentUnionAsSearchOr)
+                {
+                    persistedSearchRule = true;
+
+                    // Move any existing single StartsWith rule into OrSearchPatterns so we can accumulate.
+                    if (FilterState.CustomOperator == FilterOperator.StartsWith
+                        && FilterState.AdditionalCustomCriteria.Count == 0
+                        && FilterState.CustomValue2 == null
+                        && FilterState.CustomValue1 is string existing
+                        && !string.IsNullOrEmpty(existing))
+                    {
+                        FilterState.OrSearchPatterns.Add(existing);
+                        FilterState.CustomOperator = null;
+                        FilterState.CustomValue1 = null;
+                        FilterState.CustomValue2 = null;
+                    }
+
+                    if (!FilterState.OrSearchPatterns.Contains(SearchText))
+                        FilterState.OrSearchPatterns.Add(SearchText);
+
+                    SelectedCustomOperator = null;
+                    CustomValue1 = string.Empty;
+                    CustomValue2 = string.Empty;
+                    IsCustomFilterExpanded = false;
+
+                    FilterState.SelectedValues.Clear();
+                    FilterState.SelectAll = true;
+                }
+                else if (effectiveAddToExisting && AccumulationMode == AccumulationMode.Union)
+                {
+                    // Union with an existing non-search filter must stay materialized as In(list).
+                    // Do not convert it into a single StartsWith rule (would drop the previous selection intent).
+                }
+                else
+                {
+                    persistedSearchRule = true;
+
+                    if (effectiveAddToExisting)
+                    {
+                        // Ensure the existing custom operator is materialized in FilterState before stacking.
+                        if (FilterState.CustomOperator == null && SelectedCustomOperator != null)
+                        {
+                            FilterState.CustomOperator = SelectedCustomOperator;
+                            FilterState.CustomValue1 = string.IsNullOrEmpty(CustomValue1) ? null : CustomValue1;
+                            FilterState.CustomValue2 = string.IsNullOrEmpty(CustomValue2) ? null : CustomValue2;
+                        }
+
+                        if (FilterState.CustomOperator != null || FilterState.AdditionalCustomCriteria.Count > 0)
+                        {
+                            FilterState.AdditionalCustomCriteria.Add(new ExcelFilterAdditionalCriterion
+                            {
+                                Operator = FilterOperator.StartsWith,
+                                Value1 = SearchText,
+                                Value2 = null
+                            });
+                        }
+                        else
+                        {
+                            FilterState.CustomOperator = FilterOperator.StartsWith;
+                            FilterState.CustomValue1 = SearchText;
+                            FilterState.CustomValue2 = null;
+                        }
+                    }
+                    else
+                    {
+                        FilterState.CustomOperator = FilterOperator.StartsWith;
+                        FilterState.CustomValue1 = SearchText;
+                        FilterState.CustomValue2 = null;
+                    }
+
+                    SelectedCustomOperator = null;
+                    CustomValue1 = string.Empty;
+                    CustomValue2 = string.Empty;
+                    IsCustomFilterExpanded = false;
+
+                    FilterState.SelectedValues.Clear();
+                    FilterState.SelectAll = true;
+                }
+            }
+
             FilterState.SearchText = string.Empty; // Clear search text on apply as visible items were merged
 
-            if (!effectiveAddToExisting)
+            if (!effectiveAddToExisting && !persistedSearchRule)
             {
                 FilterState.CustomOperator = SelectedCustomOperator;
                 FilterState.CustomValue1 = string.IsNullOrEmpty(CustomValue1) ? null : CustomValue1;
@@ -625,12 +741,19 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
         FilterState.CustomValue1 = state.CustomValue1;
         FilterState.CustomValue2 = state.CustomValue2;
 
+        bool isPersistedSearchRule =
+            state.CustomOperator == FilterOperator.StartsWith
+            && state.AdditionalCustomCriteria.Count == 0
+            && state.CustomValue2 == null
+            && state.CustomValue1 is string s
+            && !string.IsNullOrEmpty(s);
+
         SelectedCustomOperator = state.CustomOperator;
         CustomValue1 = state.CustomValue1?.ToString() ?? string.Empty;
         CustomValue2 = state.CustomValue2?.ToString() ?? string.Empty;
-        IsCustomFilterExpanded = state.CustomOperator != null || state.AdditionalCustomCriteria.Count > 0;
+        IsCustomFilterExpanded = !isPersistedSearchRule && (state.CustomOperator != null || state.AdditionalCustomCriteria.Count > 0);
 
-        SearchText = FilterState.SearchText;
+        SearchText = isPersistedSearchRule ? (string)state.CustomValue1! : FilterState.SearchText;
 
         // List-only filters: map SelectedValues onto the current FilterValues (new distincts after item source change).
         // Custom / advanced filters: ApplySelectionStateToItemsRecursive uses In-list semantics and would overwrite

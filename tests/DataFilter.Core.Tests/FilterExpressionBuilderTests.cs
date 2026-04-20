@@ -133,6 +133,17 @@ public class FilterExpressionBuilderTests
     }
 
     [Fact]
+    public void BuildExpression_StartsWith_Wildcard_FiltersCorrectly()
+    {
+        var descriptor = new FilterDescriptor("Name", FilterOperator.StartsWith, "Al*");
+        var func = Engine.FilterExpressionBuilder.BuildExpression<TestItem>(descriptor).Compile();
+
+        Assert.True(func(new TestItem { Name = "Alice Smith" }));
+        Assert.True(func(new TestItem { Name = "Al" }));
+        Assert.False(func(new TestItem { Name = "Bob" }));
+    }
+
+    [Fact]
     public void BuildExpression_EndsWith_IsCaseInsensitive()
     {
         var descriptor = new FilterDescriptor("Name", FilterOperator.EndsWith, "SMITH");
@@ -150,6 +161,17 @@ public class FilterExpressionBuilderTests
 
         Assert.True(func(new TestItem { Name = "alice" }));
         Assert.False(func(new TestItem { Name = "alice smith" }));
+    }
+
+    [Fact]
+    public void BuildExpression_Equals_Wildcard_FiltersCorrectly()
+    {
+        var descriptor = new FilterDescriptor("Name", FilterOperator.Equals, "ali*");
+        var func = Engine.FilterExpressionBuilder.BuildExpression<TestItem>(descriptor).Compile();
+
+        Assert.True(func(new TestItem { Name = "alice" }));
+        Assert.True(func(new TestItem { Name = "alice smith" }));
+        Assert.False(func(new TestItem { Name = "bob" }));
     }
 
     [Fact]

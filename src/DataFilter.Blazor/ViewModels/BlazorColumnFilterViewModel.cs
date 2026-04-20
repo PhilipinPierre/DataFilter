@@ -94,7 +94,7 @@ public partial class BlazorColumnFilterViewModel : ObservableObject, IBlazorColu
     /// </summary>
     public bool IsFilterActive => FilterState != null &&
         (!FilterState.SelectAll || !string.IsNullOrEmpty(FilterState.SearchText) || FilterState.CustomOperator != null
-         || FilterState.AdditionalCustomCriteria.Count > 0);
+         || FilterState.AdditionalCustomCriteria.Count > 0 || FilterState.OrSearchPatterns.Count > 0);
 
     /// <summary>
     /// Gets the list of available custom operators for the current data type.
@@ -180,7 +180,8 @@ public partial class BlazorColumnFilterViewModel : ObservableObject, IBlazorColu
             bool mergeCustomWithExistingCustom = effectiveAddToExisting
                 && AccumulationMode == AccumulationMode.Intersection
                 && SelectedCustomOperator != null
-                && FilterState.CustomOperator != null;
+                && FilterState.CustomOperator != null
+                && (string.IsNullOrEmpty(SearchText) || SelectAll != true);
 
             if (mergeCustomWithExistingCustom)
             {
@@ -203,6 +204,18 @@ public partial class BlazorColumnFilterViewModel : ObservableObject, IBlazorColu
                 return;
             }
 
+            bool canRepresentUnionAsSearchOr =
+                effectiveAddToExisting
+                && AccumulationMode == AccumulationMode.Union
+                && !string.IsNullOrEmpty(SearchText)
+                && SelectAll == true
+                && (FilterState.OrSearchPatterns.Count > 0
+                    || (FilterState.CustomOperator == FilterOperator.StartsWith
+                        && FilterState.AdditionalCustomCriteria.Count == 0
+                        && FilterState.CustomValue2 == null
+                        && FilterState.CustomValue1 is string s
+                        && !string.IsNullOrEmpty(s)));
+
             if (effectiveAddToExisting)
             {
                 if (AccumulationMode == AccumulationMode.Intersection)
@@ -215,6 +228,14 @@ public partial class BlazorColumnFilterViewModel : ObservableObject, IBlazorColu
                         FilterState.SelectedValues.Add(val);
                 }
                 FilterState.SelectAll = false;
+
+                if (!canRepresentUnionAsSearchOr && AccumulationMode == AccumulationMode.Union && FilterState.CustomOperator != null)
+                {
+                    FilterState.CustomOperator = null;
+                    FilterState.CustomValue1 = null;
+                    FilterState.CustomValue2 = null;
+                    FilterState.AdditionalCustomCriteria.Clear();
+                }
 
                 SelectedCustomOperator = null;
                 CustomValue1 = string.Empty;
@@ -231,9 +252,89 @@ public partial class BlazorColumnFilterViewModel : ObservableObject, IBlazorColu
                 FilterState.SelectAll = string.IsNullOrEmpty(SearchText) && SelectAll == true;
             }
 
+            bool persistedSearchRule = false;
+            if (!string.IsNullOrEmpty(SearchText) && SelectAll == true)
+            {
+                if (canRepresentUnionAsSearchOr)
+                {
+                    persistedSearchRule = true;
+
+                    if (FilterState.CustomOperator == FilterOperator.StartsWith
+                        && FilterState.AdditionalCustomCriteria.Count == 0
+                        && FilterState.CustomValue2 == null
+                        && FilterState.CustomValue1 is string existing
+                        && !string.IsNullOrEmpty(existing))
+                    {
+                        FilterState.OrSearchPatterns.Add(existing);
+                        FilterState.CustomOperator = null;
+                        FilterState.CustomValue1 = null;
+                        FilterState.CustomValue2 = null;
+                    }
+
+                    if (!FilterState.OrSearchPatterns.Contains(SearchText))
+                        FilterState.OrSearchPatterns.Add(SearchText);
+
+                    SelectedCustomOperator = null;
+                    CustomValue1 = string.Empty;
+                    CustomValue2 = string.Empty;
+                    IsCustomFilterExpanded = false;
+
+                    FilterState.SelectedValues.Clear();
+                    FilterState.SelectAll = true;
+                }
+                else if (effectiveAddToExisting && AccumulationMode == AccumulationMode.Union)
+                {
+                    // Union with an existing non-search filter must stay materialized as In(list).
+                }
+                else
+                {
+                    persistedSearchRule = true;
+
+                    if (effectiveAddToExisting)
+                    {
+                        if (FilterState.CustomOperator == null && SelectedCustomOperator != null)
+                        {
+                            FilterState.CustomOperator = SelectedCustomOperator;
+                            FilterState.CustomValue1 = string.IsNullOrEmpty(CustomValue1) ? null : CustomValue1;
+                            FilterState.CustomValue2 = string.IsNullOrEmpty(CustomValue2) ? null : CustomValue2;
+                        }
+
+                        if (FilterState.CustomOperator != null || FilterState.AdditionalCustomCriteria.Count > 0)
+                        {
+                            FilterState.AdditionalCustomCriteria.Add(new ExcelFilterAdditionalCriterion
+                            {
+                                Operator = FilterOperator.StartsWith,
+                                Value1 = SearchText,
+                                Value2 = null
+                            });
+                        }
+                        else
+                        {
+                            FilterState.CustomOperator = FilterOperator.StartsWith;
+                            FilterState.CustomValue1 = SearchText;
+                            FilterState.CustomValue2 = null;
+                        }
+                    }
+                    else
+                    {
+                        FilterState.CustomOperator = FilterOperator.StartsWith;
+                        FilterState.CustomValue1 = SearchText;
+                        FilterState.CustomValue2 = null;
+                    }
+
+                    SelectedCustomOperator = null;
+                    CustomValue1 = string.Empty;
+                    CustomValue2 = string.Empty;
+                    IsCustomFilterExpanded = false;
+
+                    FilterState.SelectedValues.Clear();
+                    FilterState.SelectAll = true;
+                }
+            }
+
             FilterState.SearchText = string.Empty;
 
-            if (!effectiveAddToExisting)
+            if (!effectiveAddToExisting && !persistedSearchRule)
             {
                 FilterState.CustomOperator = SelectedCustomOperator;
                 FilterState.CustomValue1 = string.IsNullOrEmpty(CustomValue1) ? null : CustomValue1;
@@ -466,6 +567,13 @@ public partial class BlazorColumnFilterViewModel : ObservableObject, IBlazorColu
         FilterState.CustomValue1 = state.CustomValue1;
         FilterState.CustomValue2 = state.CustomValue2;
 
+        bool isPersistedSearchRule =
+            state.CustomOperator == FilterOperator.StartsWith
+            && state.AdditionalCustomCriteria.Count == 0
+            && state.CustomValue2 == null
+            && state.CustomValue1 is string s
+            && !string.IsNullOrEmpty(s);
+
         _initialFilterActive = state != null &&
             (!state.SelectAll || !string.IsNullOrEmpty(state.SearchText) || state.CustomOperator != null
              || state.AdditionalCustomCriteria.Count > 0);
@@ -473,9 +581,9 @@ public partial class BlazorColumnFilterViewModel : ObservableObject, IBlazorColu
         SelectedCustomOperator = state.CustomOperator;
         CustomValue1 = state.CustomValue1?.ToString() ?? string.Empty;
         CustomValue2 = state.CustomValue2?.ToString() ?? string.Empty;
-        IsCustomFilterExpanded = state.CustomOperator != null || state.AdditionalCustomCriteria.Count > 0;
+        IsCustomFilterExpanded = !isPersistedSearchRule && (state.CustomOperator != null || state.AdditionalCustomCriteria.Count > 0);
 
-        SearchText = FilterState.SearchText;
+        SearchText = isPersistedSearchRule ? (string)state.CustomValue1! : FilterState.SearchText;
 
         if (state.CustomOperator == null)
         {

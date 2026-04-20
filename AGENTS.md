@@ -78,6 +78,12 @@ Any change to **serializable models** or **contracts** (`IFilterContext`, snapsh
 
 When **`LocalDataSource`** (or the collection view’s **`SourceCollection`**) is **replaced**, distinct value identities change. The grid must keep **`ExcelFilterState.SelectedValues`** aligned with canonical instances from the current data, and the **column popup** must **reload distincts** and **reapply** the same logical filter as the context.
 
+### Search persistence rule (avoid serializing distinct lists)
+
+The column popup supports `SearchText` to narrow the *distinct values list*. When the user applies a search and keeps **Select All** enabled, the implementation converts that UI intent into a **single persisted search rule** (stored as a text operator + pattern) instead of serializing the resulting `In(list)` values. This prevents saved filters from becoming stale when data evolves.
+
+Wildcards (`*`, `?`) are supported in **Core** text operators (expression builder + evaluator), so persisted patterns replay consistently without needing ExcelLike-only logic.
+
 | Piece | Role |
 |-------|------|
 | **`ExcelFilterSelectionReconciler`** (`Filtering.ExcelLike`) | Maps `SelectedValues` to instances present in the current distinct list (reference equality first, then `Equals`). **`dropSelectionsNotInDistinct`**: default **`true`** when reconciling **descriptor state** (e.g. `FilterableDataGridViewModel.RefreshDataAsync`, `CollectionViewFilterAdapter`) so stale entries are removed. **`false`** in **`ColumnFilterViewModel.InitializeAsync`** / **`BlazorColumnFilterViewModel.InitializeAsync`** so search-narrowed distinct lists do not drop off-screen selections needed for “add to existing”. |

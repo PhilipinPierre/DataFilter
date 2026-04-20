@@ -129,4 +129,21 @@ public class ExcelFilterDescriptorTests
         Assert.Equal(FilterOperator.GreaterThan, descriptors[0].Operator);
         Assert.Equal(FilterOperator.LessThan, descriptors[1].Operator);
     }
+
+    [Fact]
+    public void Descriptors_WithOrSearchPatterns_EmitsNestedOrGroupWithStartsWithCriteria()
+    {
+        var state = new ExcelFilterState();
+        state.OrSearchPatterns.Add("Alice");
+        state.OrSearchPatterns.Add("Henry");
+
+        var descriptor = new ExcelFilterDescriptor("Name", state);
+        var descriptors = descriptor.Descriptors;
+
+        Assert.Single(descriptors);
+        var group = Assert.IsType<DataFilter.Core.Models.FilterGroup>(descriptors[0]);
+        Assert.Equal(LogicalOperator.Or, group.LogicalOperator);
+        Assert.Equal(2, group.Descriptors.Count);
+        Assert.All(group.Descriptors, d => Assert.Equal(FilterOperator.StartsWith, d.Operator));
+    }
 }

@@ -134,9 +134,11 @@ public class ColumnFilterViewModelTests
 
         // Assert
         Assert.NotNull(resultState);
-        Assert.Equal(2, resultState!.SelectedValues.Count);
-        Assert.Contains("Alice", resultState.SelectedValues);
+
+        Assert.Null(resultState!.CustomOperator);
+        Assert.Equal(2, resultState.SelectedValues.Count);
         Assert.Contains("Bob", resultState.SelectedValues);
+        Assert.Contains("Alice", resultState.SelectedValues);
     }
 
     [Fact]
@@ -307,7 +309,12 @@ public class ColumnFilterViewModelTests
 
         // Assert
         Assert.NotNull(resultState);
-        Assert.Equal(2, resultState!.SelectedValues.Count);
+
+        // In Union accumulation mode, adding a search result to an existing list-based selection
+        // materializes the union as an In(list) selection.
+        Assert.Null(resultState!.CustomOperator);
+        Assert.False(resultState.SelectAll);
+        Assert.Equal(2, resultState.SelectedValues.Count);
         Assert.Contains("Alice", resultState.SelectedValues);
         Assert.Contains("Bob", resultState.SelectedValues);
     }
@@ -353,9 +360,50 @@ public class ColumnFilterViewModelTests
         vm.ApplyCommand.Execute(null);
 
         // Assert
-        Assert.Equal(2, resultState!.SelectedValues.Count);
+        Assert.Null(resultState!.CustomOperator);
+        Assert.False(resultState.SelectAll);
+        Assert.Equal(2, resultState.SelectedValues.Count);
         Assert.Contains("Item0", resultState.SelectedValues);
         Assert.Contains("Item1000", resultState.SelectedValues);
+    }
+
+    [Fact]
+    public async Task ApplyCommand_WithSearchAndSelectAllVisible_Intersection_PersistsAsStackedCustomCriteria()
+    {
+        // Arrange
+        ExcelFilterState? resultState = null;
+        var vm = new ColumnFilterViewModel(
+            async (s) =>
+            {
+                var all = new List<object> { "Alice", "Bob", "Charlie" };
+                if (string.IsNullOrEmpty(s)) return all;
+                return all.Where(x => x.ToString()!.Contains(s, StringComparison.OrdinalIgnoreCase));
+            },
+            (state) => resultState = state,
+            () => { },
+            propertyType: typeof(string)
+        );
+        await vm.InitializeAsync(new List<object> { "Alice", "Bob", "Charlie" });
+
+        // Seed with an existing custom filter
+        vm.SelectedCustomOperator = FilterOperator.EndsWith;
+        vm.CustomValue1 = "e";
+        vm.ApplyCommand.Execute(null);
+
+        await vm.LoadStateAsync(resultState!);
+
+        // Act: Add a search rule via AddToExisting + Intersection
+        vm.AddToExistingFilter = true;
+        vm.AccumulationMode = AccumulationMode.Intersection;
+        vm.SearchText = "Bob";
+        await vm.InitializeAsync(new List<object> { "Bob" });
+        vm.SelectAll = true;
+        vm.ApplyCommand.Execute(null);
+
+        // Assert: existing custom + added search are AND-stacked
+        Assert.NotNull(resultState);
+        Assert.Equal(FilterOperator.EndsWith, resultState!.CustomOperator);
+        Assert.Contains(resultState.AdditionalCustomCriteria, c => c.Operator == FilterOperator.StartsWith && (c.Value1?.ToString() ?? "") == "Bob");
     }
 
     [Fact]
@@ -486,8 +534,9 @@ public class ColumnFilterViewModelTests
 
         vm.ApplyCommand.Execute(null);
 
-        Assert.Equal(FilterOperator.GreaterThan, resultState!.CustomOperator);
-        Assert.Equal("65000", resultState.CustomValue1?.ToString());
+        // Union cannot be represented as stacked AND criteria; it materializes to list selection (In).
+        Assert.Null(resultState!.CustomOperator);
+        Assert.Null(resultState.CustomValue1);
         Assert.Contains(50000m, resultState.SelectedValues);
     }
 

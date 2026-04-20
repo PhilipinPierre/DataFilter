@@ -151,6 +151,32 @@ public static class FilterExpressionBuilder
 
     private static Expression BuildOperationExpression(Expression left, FilterOperator filterOperator, object? rightValue)
     {
+        if (rightValue is string pattern && WildcardPattern.ContainsWildcard(pattern))
+        {
+            var wildcard = Expression.Call(
+                typeof(WildcardPattern),
+                nameof(WildcardPattern.IsMatch),
+                Type.EmptyTypes,
+                EnsureString(left),
+                Expression.Constant(pattern));
+
+            switch (filterOperator)
+            {
+                case FilterOperator.Equals:
+                    return wildcard;
+                case FilterOperator.NotEquals:
+                    return Expression.Not(wildcard);
+                case FilterOperator.Contains:
+                    return wildcard;
+                case FilterOperator.NotContains:
+                    return Expression.Not(wildcard);
+                case FilterOperator.StartsWith:
+                    return wildcard;
+                case FilterOperator.EndsWith:
+                    return wildcard;
+            }
+        }
+
         switch (filterOperator)
         {
             case FilterOperator.IsNull:

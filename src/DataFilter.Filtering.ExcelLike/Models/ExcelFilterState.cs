@@ -64,6 +64,12 @@ public class ExcelFilterState
     public List<ExcelFilterAdditionalCriterion> AdditionalCustomCriteria { get; } = new();
 
     /// <summary>
+    /// Search patterns that should be combined with OR on the same column (e.g. StartsWith("Alice") OR StartsWith("Henry")).
+    /// This allows persisting "search + SelectAll" unions without materializing an In(list).
+    /// </summary>
+    public List<string> OrSearchPatterns { get; } = new();
+
+    /// <summary>
     /// Clears the filter state.
     /// </summary>
     public void Clear()
@@ -76,5 +82,6 @@ public class ExcelFilterState
         CustomValue1 = null;
         CustomValue2 = null;
         AdditionalCustomCriteria.Clear();
+        OrSearchPatterns.Clear();
     }
 }

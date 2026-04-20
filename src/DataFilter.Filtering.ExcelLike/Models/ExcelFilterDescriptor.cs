@@ -76,11 +76,29 @@ public class ExcelFilterDescriptor : IFilterGroup
                 }
             }
 
+            // 2. OR-combined search patterns (expressed as a nested OR group)
+            if (State.OrSearchPatterns.Count > 0)
+            {
+                var orGroup = new FilterGroup(LogicalOperator.Or, this.PropertyName);
+                foreach (string pattern in State.OrSearchPatterns.Where(s => !string.IsNullOrEmpty(s)).Distinct(StringComparer.OrdinalIgnoreCase))
+                {
+                    orGroup.Add(new SimpleDescriptor
+                    {
+                        PropertyName = this.PropertyName,
+                        Operator = FilterOperator.StartsWith,
+                        Value = pattern
+                    });
+                }
+
+                if (orGroup.Descriptors.Count > 0)
+                    list.Add(orGroup);
+            }
+
             // 2. Manual Selection (if not Select All)
             // In Excel, if you use a custom filter, it usually resets the list selection.
             // But we can support combining them if needed. 
             // For now, if CustomOperator is None, use manual selection.
-            else if (!State.SelectAll || State.DistinctValues.Count != State.SelectedValues.Count)
+            else if (State.CustomOperator == null && (!State.SelectAll || State.DistinctValues.Count != State.SelectedValues.Count))
             {
                 list.Add(new SimpleDescriptor
                 {

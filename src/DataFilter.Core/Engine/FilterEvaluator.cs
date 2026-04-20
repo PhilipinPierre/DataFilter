@@ -20,6 +20,22 @@ public class FilterEvaluator : IFilterEvaluator
         if (itemValue is string s)
         {
             string s1 = v1?.ToString() ?? string.Empty;
+
+            if (WildcardPattern.ContainsWildcard(s1))
+            {
+                bool m = WildcardPattern.IsMatch(s, s1);
+                return op switch
+                {
+                    FilterOperator.Equals => m,
+                    FilterOperator.NotEquals => !m,
+                    FilterOperator.Contains => m,
+                    FilterOperator.NotContains => !m,
+                    FilterOperator.StartsWith => m,
+                    FilterOperator.EndsWith => m,
+                    _ => false
+                };
+            }
+
             return op switch
             {
                 FilterOperator.Equals => s.Equals(s1, StringComparison.OrdinalIgnoreCase),
