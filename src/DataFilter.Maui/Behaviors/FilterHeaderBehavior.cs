@@ -8,13 +8,22 @@ public static class FilterHeaderBehavior
     public static FilterPopupView CreatePopup(IFilterableDataGridViewModel vm, string propertyName)
     {
         var popup = new FilterPopupView();
-        popup.Bind(new ColumnFilterViewModel(
+        var columnVm = new ColumnFilterViewModel(
             search => vm.GetDistinctValuesAsync(propertyName, search),
             state => vm.ApplyColumnFilter(propertyName, state),
             () => vm.ClearColumnFilter(propertyName),
             isDesc => vm.ApplySort(propertyName, isDesc),
             isDesc => vm.AddSubSort(propertyName, isDesc),
-            vm.GetPropertyType(propertyName)));
+            vm.GetPropertyType(propertyName));
+
+        // Match WPF/WinUI behavior: load existing column state into the popup VM.
+        var existingState = vm.GetColumnFilterState(propertyName);
+        if (existingState != null)
+        {
+            _ = columnVm.LoadStateAsync(existingState);
+        }
+
+        popup.Bind(columnVm);
         return popup;
     }
 }

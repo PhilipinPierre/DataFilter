@@ -23,7 +23,7 @@
         </Border>
 
         <ListView Grid.Row="2" Margin="8"
-                  ItemsSource="{Binding ViewModel.GridViewModel.FilteredItems}"
+                  ItemsSource="{Binding GridViewModel.FilteredItems}"
                   SeparatorVisibility="Default"
                   SelectionMode="None">
             <ListView.ItemTemplate>
@@ -45,7 +45,7 @@
                 <TapGestureRecognizer Tapped="OnClosePopup" />
             </BoxView.GestureRecognizers>
         </BoxView>
-        <Frame x:Name="PopupFrame" Grid.Row="2" VerticalOptions="Start" HorizontalOptions="Center" Margin="20" Padding="0"
+        <Frame x:Name="PopupFrame" Grid.Row="0" Grid.RowSpan="3" VerticalOptions="Start" HorizontalOptions="Start" Margin="0" Padding="0"
                IsVisible="False" HasShadow="True" CornerRadius="8"
                BackgroundColor="{AppThemeBinding Light=White, Dark=#1f1f1f}"
                BorderColor="{AppThemeBinding Light=#C8C8C8, Dark=#404040}">

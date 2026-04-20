@@ -2,7 +2,8 @@
 <?xaml-comp compile="true" ?>
 <ResourceDictionary 
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:models="clr-namespace:DataFilter.Demo.Shared.Models;assembly=DataFilter.Demo.Shared">
 
     <Style TargetType="ActivityIndicator">
         <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}" />
@@ -455,7 +456,7 @@
 
     <DataTemplate x:Key="EmployeeItemTemplate">
         <ViewCell>
-            <HorizontalStackLayout Spacing="0" Padding="10,0">
+            <HorizontalStackLayout Spacing="0" Padding="10,0" x:DataType="models:Employee">
                 <Label Text="{Binding Id}" WidthRequest="60" VerticalOptions="Center" />
                 <Label Text="{Binding Name}" WidthRequest="150" VerticalOptions="Center" FontAttributes="Bold" />
                 <Label Text="{Binding Department}" WidthRequest="120" VerticalOptions="Center" />

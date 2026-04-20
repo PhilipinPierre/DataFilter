@@ -10,8 +10,10 @@ namespace DataFilter.Maui.Controls;
 public sealed class FilterPopupView : ContentView
 {
     public ColumnFilterViewModel? ViewModel { get; private set; }
+    public event EventHandler? CloseRequested;
 
-    private readonly VerticalStackLayout _itemsLayout;
+    private readonly ObservableCollection<FlatFilterItem> _flatItems = new();
+    private readonly CollectionView _itemsView;
     private readonly VerticalStackLayout _advancedLayout;
     private ObservableCollection<FilterValueItem>? _subscribedFilterValues;
 
@@ -23,7 +25,7 @@ public sealed class FilterPopupView : ContentView
         WidthRequest = 280;
         MinimumHeightRequest = 350;
 
-        _itemsLayout = new VerticalStackLayout { Spacing = 2 };
+        _itemsView = CreateItemsView();
         _advancedLayout = new VerticalStackLayout { Spacing = 4, IsVisible = false };
 
         var root = new VerticalStackLayout { Spacing = 10 };
@@ -76,8 +78,8 @@ public sealed class FilterPopupView : ContentView
         root.Add(new BoxView { HeightRequest = 1 });
 
         // 4. List Section
-        var scroll = new ScrollView { Content = _itemsLayout, HeightRequest = 200 };
-        root.Add(scroll);
+        _itemsView.HeightRequest = 200;
+        root.Add(_itemsView);
 
         // 5. Actions
         var actions = new Grid { ColumnDefinitions = { new ColumnDefinition(), new ColumnDefinition() }, ColumnSpacing = 10 };
@@ -93,6 +95,50 @@ public sealed class FilterPopupView : ContentView
         Content = root;
     }
 
+    private sealed class FlatFilterItem
+    {
+        public FlatFilterItem(FilterValueItem item, int indent)
+        {
+            Item = item;
+            Margin = new Thickness(indent * 20, 0, 0, 0);
+        }
+
+        public FilterValueItem Item { get; }
+        public Thickness Margin { get; }
+    }
+
+    private CollectionView CreateItemsView()
+    {
+        var selectAllHeader = new HorizontalStackLayout { Spacing = 8, Padding = new Thickness(0, 0, 0, 6) };
+        var cbAll = new CheckBox();
+        cbAll.SetBinding(CheckBox.IsCheckedProperty, new Binding("SelectAll", BindingMode.TwoWay));
+        selectAllHeader.Add(cbAll);
+        selectAllHeader.Add(new Label { Text = "(Select All)", VerticalTextAlignment = TextAlignment.Center });
+
+        return new CollectionView
+        {
+            ItemsSource = _flatItems,
+            Header = selectAllHeader,
+            ItemsLayout = new LinearItemsLayout(ItemsLayoutOrientation.Vertical) { ItemSpacing = 2 },
+            ItemTemplate = new DataTemplate(() =>
+            {
+                var row = new HorizontalStackLayout { Spacing = 8 };
+                row.SetBinding(MarginProperty, new Binding(nameof(FlatFilterItem.Margin)));
+
+                var cb = new CheckBox();
+                cb.SetBinding(CheckBox.IsCheckedProperty, new Binding("Item.IsSelected", BindingMode.TwoWay));
+
+                var label = new Label { VerticalTextAlignment = TextAlignment.Center };
+                label.SetBinding(Label.TextProperty, new Binding("Item.DisplayText"));
+
+                row.Add(cb);
+                row.Add(label);
+
+                return row;
+            })
+        };
+    }
+
     private Button CreateSortButton(string text, string commandPath)
     {
         var btn = new Button { Text = text, FontSize = 10, HeightRequest = 35, Padding = 2 };
@@ -105,12 +151,16 @@ public sealed class FilterPopupView : ContentView
         if (ViewModel != null)
         {
             ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+            ViewModel.OnApply -= ViewModel_OnApply;
+            ViewModel.OnClear -= ViewModel_OnClear;
             UnsubscribeFilterValues();
         }
 
         ViewModel = vm;
         BindingContext = vm;
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        ViewModel.OnApply += ViewModel_OnApply;
+        ViewModel.OnClear += ViewModel_OnClear;
         SubscribeFilterValues(vm.FilterValues);
         UpdateItemsList();
 
@@ -121,6 +171,9 @@ public sealed class FilterPopupView : ContentView
                 await ViewModel.SearchCommand.ExecuteAsync(string.Empty);
         });
     }
+
+    private void ViewModel_OnApply(object? sender, EventArgs e) => CloseRequested?.Invoke(this, EventArgs.Empty);
+    private void ViewModel_OnClear(object? sender, EventArgs e) => CloseRequested?.Invoke(this, EventArgs.Empty);
 
     private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -152,34 +205,16 @@ public sealed class FilterPopupView : ContentView
 
     private void UpdateItemsList()
     {
-        _itemsLayout.Children.Clear();
         if (ViewModel == null) return;
-
-        var selectAll = new HorizontalStackLayout { Spacing = 8 };
-        var cbAll = new CheckBox();
-        cbAll.SetBinding(CheckBox.IsCheckedProperty, new Binding("SelectAll", BindingMode.TwoWay));
-        selectAll.Add(cbAll);
-        selectAll.Add(new Label { Text = "(Select All)", VerticalTextAlignment = TextAlignment.Center });
-        _itemsLayout.Add(selectAll);
-
+        _flatItems.Clear();
         foreach (var item in ViewModel.FilterValues)
-        {
-            AddFilterItemView(item, 0);
-        }
+            Flatten(item, 0);
     }
 
-    private void AddFilterItemView(FilterValueItem item, int indent)
+    private void Flatten(FilterValueItem item, int indent)
     {
-        var panel = new HorizontalStackLayout { Spacing = 8, Margin = new Thickness(indent * 20, 0, 0, 0) };
-        var cb = new CheckBox();
-        cb.SetBinding(CheckBox.IsCheckedProperty, new Binding("IsSelected", BindingMode.TwoWay, source: item));
-        panel.Add(cb);
-        panel.Add(new Label { Text = item.DisplayText, VerticalTextAlignment = TextAlignment.Center });
-        _itemsLayout.Add(panel);
-
+        _flatItems.Add(new FlatFilterItem(item, indent));
         foreach (var child in item.Children)
-        {
-            AddFilterItemView(child, indent + 1);
-        }
+            Flatten(child, indent + 1);
     }
 }

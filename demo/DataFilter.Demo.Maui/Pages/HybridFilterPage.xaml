@@ -32,7 +32,7 @@
         </Border>
 
         <ListView Grid.Row="3" Margin="8"
-                  ItemsSource="{Binding ViewModel.GridViewModel.FilteredItems}"
+                  ItemsSource="{Binding GridViewModel.FilteredItems}"
                   ItemTemplate="{StaticResource EmployeeItemTemplate}"
                   SeparatorVisibility="Default"
                   SelectionMode="None" />
@@ -43,7 +43,7 @@
                 <TapGestureRecognizer Tapped="OnClosePopup" />
             </BoxView.GestureRecognizers>
         </BoxView>
-        <Frame x:Name="PopupFrame" Grid.Row="3" VerticalOptions="Start" HorizontalOptions="Center" Margin="20" Padding="0"
+        <Frame x:Name="PopupFrame" Grid.Row="0" Grid.RowSpan="4" VerticalOptions="Start" HorizontalOptions="Start" Margin="0" Padding="0"
                IsVisible="False" HasShadow="True" CornerRadius="8"
                BackgroundColor="{AppThemeBinding Light=White, Dark=#1f1f1f}"
                BorderColor="{AppThemeBinding Light=#C8C8C8, Dark=#404040}">

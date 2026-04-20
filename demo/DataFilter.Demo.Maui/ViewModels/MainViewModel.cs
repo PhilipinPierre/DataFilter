@@ -10,6 +10,42 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private int _rowCount = 1000;
 
+    [ObservableProperty]
+    private string _rowCountText = "1000";
+
+    partial void OnRowCountChanged(int value)
+    {
+        var normalized = value <= 0 ? 1 : value;
+        if (normalized != value)
+        {
+            RowCount = normalized;
+            return;
+        }
+
+        var str = RowCount.ToString();
+        if (!string.Equals(RowCountText, str, StringComparison.Ordinal))
+            RowCountText = str;
+    }
+
+    partial void OnRowCountTextChanged(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return;
+
+        var digitsOnly = new string(value.Where(char.IsDigit).ToArray());
+        if (digitsOnly.Length == 0)
+            return;
+
+        if (!string.Equals(value, digitsOnly, StringComparison.Ordinal))
+        {
+            RowCountText = digitsOnly;
+            return;
+        }
+
+        if (int.TryParse(digitsOnly, out var parsed) && parsed > 0 && parsed != RowCount)
+            RowCount = parsed;
+    }
+
     public LocalFilterScenarioViewModel LocalFilterScenario { get; }
     public AsyncFilterScenarioViewModel AsyncFilterScenario { get; }
     public HybridFilterScenarioViewModel HybridFilterScenario { get; }
@@ -32,6 +68,7 @@ public partial class MainViewModel : ObservableObject
         ListViewScenario = listViewScenario;
         CollectionViewScenario = collectionViewScenario;
 
+        RowCountText = RowCount.ToString();
         Regenerate();
     }
 
