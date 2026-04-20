@@ -11,6 +11,15 @@ The foundation of the DataFilter library, providing pure filtering logic, abstra
 
 ## Key Concepts
 
+### Wildcards in text operators (`*`, `?`)
+
+Core text operators (`Equals`, `NotEquals`, `Contains`, `NotContains`, `StartsWith`, `EndsWith`) support wildcard patterns:
+
+- `*` matches any sequence of characters
+- `?` matches a single character
+
+This behavior is implemented in `FilterEvaluator` and `FilterExpressionBuilder`, so it applies consistently to in-memory filtering and compiled expressions. It also means persisted presets/snapshots that store a text operator + pattern will replay correctly without needing UI-specific logic.
+
 ### `FilterSnapshot`
 A serializable representation of a filtering state that can be passed between layers (e.g., from Blazor UI to Web API). Describes **what** is filtered using flat or nested `FilterSnapshotEntry` rows (including logical groups for Excel-style column scopes).
 

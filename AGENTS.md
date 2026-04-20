@@ -83,8 +83,8 @@ When **`LocalDataSource`** (or the collection view’s **`SourceCollection`**) i
 The column popup supports `SearchText` to narrow the *distinct values list*. To keep presets stable when data evolves, the implementation avoids serializing the resulting `In(list)` whenever possible and persists **search intent** instead:
 
 - **search + SelectAll** ⇒ persist as a **pattern rule** (`StartsWith(pattern)`), not as a list of distinct values
-- **Union (OR) of multiple searches** (e.g. `Alice` then `Henry`) ⇒ persist as **`StartsWith("Alice") OR StartsWith("Henry")`** (see `ExcelFilterState.OrSearchPatterns`)
-- **Union with partial selection after search** (e.g. `Alice` then `Henry` but only 2 Henry values checked) ⇒ persist as **`StartsWith("Alice") OR In(["Henry 124","Henry 146"])`** (see `ExcelFilterState.OrSelectedValues`)
+- **Union (OR) of multiple searches** (e.g. `Alice` then `Henry`) ⇒ persist as **`StartsWith("Alice") OR StartsWith("Henry")`** via `ExcelFilterState.OrSearchPatterns`
+- **Union with partial selection after search** (e.g. `Alice` then `Henry` but only 2 Henry values checked) ⇒ persist as **`StartsWith("Alice") OR In(["Henry 124","Henry 146"])`** via `ExcelFilterState.OrSelectedValues`
 
 Wildcards (`*`, `?`) are supported in **Core** text operators (expression builder + evaluator), so persisted patterns replay consistently without needing ExcelLike-only logic.
 
