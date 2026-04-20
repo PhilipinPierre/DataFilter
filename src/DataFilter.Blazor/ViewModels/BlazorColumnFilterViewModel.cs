@@ -500,14 +500,97 @@ public partial class BlazorColumnFilterViewModel : ObservableObject, IBlazorColu
         SyncFilterStateSelectedValues();
         _internalUpdate = false;
 
-        if (FilterState.CustomOperator != null)
+        if (HasAdvancedFilterCriteria(FilterState))
         {
             SelectedCustomOperator = FilterState.CustomOperator;
             CustomValue1 = FilterState.CustomValue1?.ToString() ?? string.Empty;
             CustomValue2 = FilterState.CustomValue2?.ToString() ?? string.Empty;
-            UpdateSelectionFromCustomFilter();
+            ApplySelectionPreviewFromAppliedFilter();
             UpdateSelectionSnapshot();
         }
+    }
+
+    private static bool HasAdvancedFilterCriteria(ExcelFilterState? state)
+    {
+        if (state == null) return false;
+        return state.CustomOperator != null
+            || state.AdditionalCustomCriteria.Count > 0
+            || state.OrSearchPatterns.Count > 0
+            || state.OrSelectedValues.Count > 0;
+    }
+
+    private void ApplySelectionPreviewFromAppliedFilter()
+    {
+        if (_internalUpdate || FilterValues.Count == 0) return;
+        if (!HasAdvancedFilterCriteria(FilterState)) return;
+
+        _internalUpdate = true;
+        try
+        {
+            foreach (var item in FilterValues)
+            {
+                ApplyItemMatchFromAppliedFilterRecursive(item);
+            }
+
+            UpdateSelectAllState();
+            SyncFilterStateSelectedValues();
+        }
+        finally
+        {
+            _internalUpdate = false;
+        }
+    }
+
+    private void ApplyItemMatchFromAppliedFilterRecursive(FilterValueItem item)
+    {
+        if (item.Children.Count > 0)
+        {
+            foreach (var child in item.Children)
+                ApplyItemMatchFromAppliedFilterRecursive(child);
+
+            item.UpdateStateFromChildren();
+            return;
+        }
+
+        item.IsSelected = ValueMatchesAppliedFilter(item.Value);
+    }
+
+    private bool ValueMatchesAppliedFilter(object? itemValue)
+    {
+        bool customOk = true;
+        if (FilterState.CustomOperator != null)
+        {
+            if (!_filterEvaluator.EvaluateOperator(itemValue, FilterState.CustomOperator.Value, FilterState.CustomValue1, FilterState.CustomValue2))
+                customOk = false;
+
+            if (customOk)
+            {
+                foreach (var extra in FilterState.AdditionalCustomCriteria)
+                {
+                    if (!_filterEvaluator.EvaluateOperator(itemValue, extra.Operator, extra.Value1, extra.Value2))
+                        return false;
+                }
+            }
+        }
+
+        bool hasOrGroup = FilterState.OrSearchPatterns.Count > 0 || FilterState.OrSelectedValues.Count > 0;
+        if (!hasOrGroup)
+            return customOk;
+
+        if (!customOk)
+            return false;
+
+        if (FilterState.OrSelectedValues.Contains(itemValue!))
+            return true;
+
+        foreach (var pattern in FilterState.OrSearchPatterns)
+        {
+            if (string.IsNullOrEmpty(pattern)) continue;
+            if (_filterEvaluator.EvaluateOperator(itemValue, FilterOperator.StartsWith, pattern, null))
+                return true;
+        }
+
+        return false;
     }
 
     private void InitializeFlatList(IEnumerable<object> distinctValues, List<FilterValueItem> newFilterValues)
@@ -627,7 +710,7 @@ public partial class BlazorColumnFilterViewModel : ObservableObject, IBlazorColu
 
         SearchText = isPersistedSearchRule ? (string)state.CustomValue1! : FilterState.SearchText;
 
-        if (state.CustomOperator == null)
+        if (!HasAdvancedFilterCriteria(state))
         {
             foreach (var item in FilterValues)
                 ApplySelectionStateToItemsRecursive(item, state.SelectedValues);
@@ -637,9 +720,9 @@ public partial class BlazorColumnFilterViewModel : ObservableObject, IBlazorColu
 
         _internalUpdate = false;
 
-        if (state.CustomOperator != null && FilterValues.Count > 0)
+        if (HasAdvancedFilterCriteria(state) && FilterValues.Count > 0)
         {
-            UpdateSelectionFromCustomFilter();
+            ApplySelectionPreviewFromAppliedFilter();
             UpdateSelectionSnapshot();
         }
 

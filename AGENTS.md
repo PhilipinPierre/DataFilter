@@ -80,7 +80,11 @@ When **`LocalDataSource`** (or the collection view’s **`SourceCollection`**) i
 
 ### Search persistence rule (avoid serializing distinct lists)
 
-The column popup supports `SearchText` to narrow the *distinct values list*. When the user applies a search and keeps **Select All** enabled, the implementation converts that UI intent into a **single persisted search rule** (stored as a text operator + pattern) instead of serializing the resulting `In(list)` values. This prevents saved filters from becoming stale when data evolves.
+The column popup supports `SearchText` to narrow the *distinct values list*. To keep presets stable when data evolves, the implementation avoids serializing the resulting `In(list)` whenever possible and persists **search intent** instead:
+
+- **search + SelectAll** ⇒ persist as a **pattern rule** (`StartsWith(pattern)`), not as a list of distinct values
+- **Union (OR) of multiple searches** (e.g. `Alice` then `Henry`) ⇒ persist as **`StartsWith("Alice") OR StartsWith("Henry")`** (see `ExcelFilterState.OrSearchPatterns`)
+- **Union with partial selection after search** (e.g. `Alice` then `Henry` but only 2 Henry values checked) ⇒ persist as **`StartsWith("Alice") OR In(["Henry 124","Henry 146"])`** (see `ExcelFilterState.OrSelectedValues`)
 
 Wildcards (`*`, `?`) are supported in **Core** text operators (expression builder + evaluator), so persisted patterns replay consistently without needing ExcelLike-only logic.
 

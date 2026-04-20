@@ -27,6 +27,7 @@ The solution is divided into several main projects:
   - **Text**: Contains, Not Contains, Starts with, Ends with, Equals, Not Equals.
   - **Numbers/Dates/Time**: Greater than, Less than, Between, Equals, Not Equals.
 - **Search persistence without `In(list)`**: When the user filters distinct values using `SearchText` and keeps **Select All** enabled, the filter is persisted as a **search rule** (e.g., `StartsWith` + pattern) instead of serializing the resulting list of selected distinct values. This allows reapplying saved filters safely when data has changed.
+- **Search unions without `In(list)`**: Repeated searches in **Union (OR)** mode are persisted as **OR-combined rules** (e.g., `StartsWith("Alice") OR StartsWith("Henry")`). If the user selects only a subset of a searched group, that group is persisted as `In(subset)` inside the OR, without materializing other groups.
 - **Wildcards in search patterns**: Text operators support `*` (any sequence) and `?` (single character) directly in the Core evaluation pipeline, so saved search rules replay consistently.
 - **Additive & Refinement Modes**: 
   - **Union (Additive)**: Merges new matches with the current selection (Logical OR).
