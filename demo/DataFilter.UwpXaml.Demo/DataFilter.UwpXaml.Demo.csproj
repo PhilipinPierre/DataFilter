@@ -15,13 +15,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<ApplicationDefinition Remove="App.xaml" />
-		<ApplicationDefinition Include="App.xaml" />
-		<Page Remove="**\*.xaml" />
-		<Page Include="**\*.xaml" Exclude="App.xaml" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<ProjectReference Include="..\..\src\DataFilter.UwpXaml\DataFilter.UwpXaml.csproj" />
 		<ProjectReference Include="..\DataFilter.Demo.Shared\DataFilter.Demo.Shared.csproj" />
 	</ItemGroup>

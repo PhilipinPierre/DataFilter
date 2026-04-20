@@ -7,10 +7,6 @@
     <Project Path="demo/DataFilter.Blazor.Demo.Wasm/DataFilter.Blazor.Demo.Wasm/DataFilter.Blazor.Demo.Wasm.csproj" />
     <Project Path="demo/DataFilter.Demo.Maui/DataFilter.Maui.Demo.csproj" />
     <Project Path="demo/DataFilter.Demo.Shared/DataFilter.Demo.Shared.csproj" />
-    <Project Path="demo/DataFilter.UwpXaml.Demo/DataFilter.UwpXaml.Demo.csproj" Id="5117c6a7-0717-4925-8cb3-30898e3e5c28">
-      <Platform Project="x64" />
-      <Deploy />
-    </Project>
     <Project Path="demo/DataFilter.WinForms.Demo/DataFilter.WinForms.Demo.csproj" />
     <Project Path="demo/DataFilter.WinUI3.Demo/DataFilter.WinUI3.Demo.csproj">
       <Platform Project="x64" />
