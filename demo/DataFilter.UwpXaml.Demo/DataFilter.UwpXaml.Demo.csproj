@@ -21,13 +21,6 @@
 		<Page Include="**\*.xaml" Exclude="App.xaml" />
 	</ItemGroup>
 
-	<Target Name="IncludeXamlGeneratedFiles" BeforeTargets="CoreCompile">
-		<ItemGroup>
-			<Compile Include="obj\**\*.g.i.cs" />
-			<Compile Include="obj\**\*.g.cs" Exclude="obj\**\*.GlobalUsings.g.cs;obj\**\*.AssemblyAttributes.cs" />
-		</ItemGroup>
-	</Target>
-
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\DataFilter.UwpXaml\DataFilter.UwpXaml.csproj" />
 		<ProjectReference Include="..\DataFilter.Demo.Shared\DataFilter.Demo.Shared.csproj" />
