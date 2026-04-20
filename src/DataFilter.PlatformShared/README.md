@@ -2,6 +2,22 @@
 
 Shared view-model logic for DataFilter UI specializations (WinForms, MAUI, WinUI 3, Uno/UWP XAML).
 
+## Localization
+
+All popup UI stacks should source their user-facing strings (buttons, section headers, operator names, etc.)
+from **`DataFilter.Localization.LocalizationManager`** so language switching works at runtime.
+
+### Per-grid culture override
+
+`IFilterableDataGridViewModel` exposes:
+
+- **`CultureInfo? CultureOverride`**: optional UI override culture used by integrations when showing popups.
+
+`FilterableDataGridViewModel` provides constructors:
+
+- `new FilterableDataGridViewModel(CultureInfo? cultureOverride)`
+- `new FilterableDataGridViewModel<T>(CultureInfo? cultureOverride)`
+
 ## Filter pipeline integration
 
 `IFilterableDataGridViewModel` (implemented by `FilterableDataGridViewModel` and WPF’s `CollectionViewFilterAdapter`) includes:

@@ -103,6 +103,36 @@ Customization is done by overriding these classes in your app's stylesheet.
 
 See [CUSTOMIZATION.md](CUSTOMIZATION.md) for full details on both platforms.
 
+## Localization (popup internationalization)
+
+Popup UI texts (Sort / Advanced filter / operators / etc.) are shared across UI stacks via **`DataFilter.Localization`**.
+
+### Runtime language switching
+
+To switch the UI language at runtime:
+
+```csharp
+using System.Globalization;
+using DataFilter.Localization;
+
+LocalizationManager.Instance.SetCulture(new CultureInfo("fr"));
+```
+
+### Forcing a culture per grid
+
+UI integrations can force the popup culture via `IFilterableDataGridViewModel.CultureOverride`.
+
+```csharp
+using System.Globalization;
+using DataFilter.PlatformShared.ViewModels;
+
+var vm = new FilterableDataGridViewModel<MyItem>(new CultureInfo("fr"))
+{
+    LocalDataSource = items
+};
+await vm.RefreshDataAsync();
+```
+
 ## Unit Testing
 The solution includes a comprehensive test suite (75+ tests) covering:
 - Core expression building logic.

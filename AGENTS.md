@@ -35,6 +35,11 @@ DataFilter.Filtering.ExcelLike
     ├── DataFilter.PlatformShared  (Core + ExcelLike + CommunityToolkit.Mvvm)
     └── also referenced by Wpf and Blazor without going through PlatformShared for some stacks
 
+DataFilter.Localization
+    ↑
+    ├── used by all UI stacks for popup texts + runtime language switching
+    └── hosts shared RESX (FilterResources.*.resx) and LocalizationManager
+
 DataFilter.PlatformShared
     ↑
     ├── DataFilter.Wpf            (adds WPF behaviors, XAML)
@@ -55,6 +60,7 @@ DataFilter.Blazor                 → Core + ExcelLike (not PlatformShared)
 | **DataFilter.Core** | Abstractions (`IFilterEngine`, `IFilterContext`, `IFilterDescriptor`, `IAsyncDataProvider`), models (`FilterSnapshot`, `FilterDescriptor`, logical groups), **filter pipeline** (`FilterPipeline`, `FilterPipelineSnapshot`, `FilterPipelineCompiler`, `FilterPipelineInterop`), engine (`FilterExpressionBuilder`, `ReflectionFilterEngine`), services (`FilterSnapshotBuilder`, `AsyncDataProviderAdapter`, `FilterPipelineSnapshotMapper`). No UI dependencies. | `net8.0`, `net9.0`, `netstandard2.0`, `netstandard2.1` |
 | **DataFilter.Filtering.ExcelLike** | Excel-style engine and models (`ExcelFilterEngine`, `ExcelFilterDescriptor`, distinct-value extractors, etc.). | `net8.0`, `net9.0` |
 | **DataFilter.PlatformShared** | Reusable ViewModels (`FilterableDataGridViewModel`, `ColumnFilterViewModel`) built on CommunityToolkit.Mvvm. | `net8.0`, `net9.0` |
+| **DataFilter.Localization** | Shared RESX + runtime culture switching (`LocalizationManager`) for popup internationalization across UI stacks. | `netstandard2.0`, `net8.0`, `net9.0` |
 | **DataFilter.Wpf** | WPF controls and behaviors. References Core, ExcelLike, and PlatformShared. | `net8.0-windows`, `net9.0-windows` |
 | **DataFilter.Blazor** | Razor components (`DataFilterGrid`, `FilterPopup`, etc.) and Blazor-specific ViewModels. | `net8.0` (Razor SDK) |
 | **DataFilter.Maui** | MAUI integration; depends on PlatformShared. | Multi-target (`net9.0-android`, iOS, Windows, etc.) |
@@ -110,6 +116,11 @@ Wildcards (`*`, `?`) are supported in **Core** text operators (expression builde
 4. **MAUI / WinUI / UWP**: Heavier, sometimes OS-specific builds; CI uses **windows-latest** with .NET 8 and 9.
 5. **Snapshot consistency**: Changes to `FilterGroup`, snapshot entries, **`FilterPipelineSnapshot` / `FilterPipelineNodeDto`**, or enums (`FilterOperator`, `LogicalOperator`) must stay aligned with **Expressions.Server**, **FilterSnapshotBuilder**, **pipeline mappers**, and related tests.
 6. **Documentation**: Avoid duplicating this file at length; prefer existing per-project `README.md` files for usage details.
+7. **Localization**:
+   - Popup UI strings are shared in **`DataFilter.Localization`** (RESX + `LocalizationManager`).
+   - Do not introduce hardcoded English strings in UI popups; use `LocalizationManager.Instance["Key"]`.
+   - Runtime language switching is supported via `LocalizationManager.Instance.SetCulture(...)` and `CultureChanged`.
+   - UI hosts can force a popup culture per grid via `IFilterableDataGridViewModel.CultureOverride`.
 
 ## Good starting reads
 

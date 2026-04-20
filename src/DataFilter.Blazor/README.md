@@ -34,6 +34,19 @@ The core UI for selection and advanced filtering. Supports:
    <script src="_content/DataFilter.Blazor/DataFilterInterops.js"></script>
    ```
 
+## Localization
+
+Popup UI texts are provided by `DataFilter.Localization`.
+
+To switch language at runtime:
+
+```csharp
+using System.Globalization;
+using DataFilter.Localization;
+
+LocalizationManager.Instance.SetCulture(new CultureInfo("fr"));
+```
+
 ## Customization
 
 All components use CSS classes prefixed with `df-`. You can easily override these in your application CSS:
