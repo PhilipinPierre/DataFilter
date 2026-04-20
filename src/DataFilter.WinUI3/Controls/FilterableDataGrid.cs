@@ -51,6 +51,11 @@ public sealed partial class FilterableDataGrid : ListView
             {
                 var popup = DataFilter.WinUI3.Behaviors.FilterHeaderBehavior.CreatePopup(ViewModel, text);
                 var flyout = new Flyout { Content = popup };
+                if (popup.ViewModel != null)
+                {
+                    popup.ViewModel.OnApply += (_, __) => flyout.Hide();
+                    popup.ViewModel.OnClear += (_, __) => flyout.Hide();
+                }
                 flyout.ShowAt(btn);
             }
         };

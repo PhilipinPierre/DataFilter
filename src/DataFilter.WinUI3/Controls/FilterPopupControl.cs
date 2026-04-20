@@ -11,6 +11,7 @@ namespace DataFilter.WinUI3.Controls;
 public sealed class FilterPopupControl : UserControl
 {
     public ColumnFilterViewModel? ViewModel { get; private set; }
+    private bool _isInitialized;
 
     public FilterPopupControl()
     {
@@ -134,6 +135,24 @@ public sealed class FilterPopupControl : UserControl
     {
         ViewModel = vm;
         DataContext = vm;
+
+        Loaded -= FilterPopupControl_Loaded;
+        Loaded += FilterPopupControl_Loaded;
+    }
+
+    private async void FilterPopupControl_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (_isInitialized) return;
+        _isInitialized = true;
+
+        var vm = ViewModel;
+        if (vm == null) return;
+
+        // Ensure distinct values are loaded on first open (empty search).
+        if (vm.SearchCommand.CanExecute(vm.SearchText))
+        {
+            await vm.SearchCommand.ExecuteAsync(vm.SearchText ?? string.Empty);
+        }
     }
 }
 
