@@ -1,4 +1,4 @@
-@using DataFilter.Blazor.ViewModels
+@using DataFilter.PlatformShared.ViewModels
 @using Microsoft.JSInterop
 @inject IJSRuntime JSRuntime
 @implements IDisposable
@@ -21,7 +21,7 @@
 </div>
 
 @code {
-    [Parameter] public IBlazorColumnFilterViewModel ViewModel { get; set; } = default!;
+    [Parameter] public IColumnFilterViewModel ViewModel { get; set; } = default!;
     
     private string ButtonId = "df-btn-" + Guid.NewGuid().ToString("N");
     private string PopupId = "df-pop-" + Guid.NewGuid().ToString("N");

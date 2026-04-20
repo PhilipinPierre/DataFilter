@@ -1,8 +1,6 @@
-using DataFilter.Blazor.ViewModels;
+using DataFilter.PlatformShared.ViewModels;
 using DataFilter.Core.Enums;
 using DataFilter.Filtering.ExcelLike.Models;
-using Moq;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -17,12 +15,12 @@ public class BlazorColumnFilterViewModelTests
     {
         // Arrange
         var distinctValues = new List<object> { "A", "B", "C" };
-        var vm = new BlazorColumnFilterViewModel(
+        var vm = new ColumnFilterViewModel(
             s => Task.FromResult<IEnumerable<object>>(distinctValues),
-            s => { },
+            _ => { },
             () => { },
-            null,
-            null,
+            _ => { },
+            _ => { },
             typeof(string)
         );
 
@@ -43,12 +41,12 @@ public class BlazorColumnFilterViewModelTests
         // Arrange
         var distinctValues = new List<object> { "A", "B", "C" };
         ExcelFilterState appliedState = null!;
-        var vm = new BlazorColumnFilterViewModel(
+        var vm = new ColumnFilterViewModel(
             s => Task.FromResult<IEnumerable<object>>(distinctValues),
             s => appliedState = s,
             () => { },
-            null,
-            null,
+            _ => { },
+            _ => { },
             typeof(string)
         );
         await vm.InitializeAsync(distinctValues);
@@ -70,12 +68,12 @@ public class BlazorColumnFilterViewModelTests
         // Arrange
         var distinctValues = new List<object> { "A", "B", "C" };
         bool cleared = false;
-        var vm = new BlazorColumnFilterViewModel(
+        var vm = new ColumnFilterViewModel(
             s => Task.FromResult<IEnumerable<object>>(distinctValues),
-            s => { },
+            _ => { },
             () => cleared = true,
-            null,
-            null,
+            _ => { },
+            _ => { },
             typeof(string)
         );
         await vm.InitializeAsync(distinctValues);
@@ -88,5 +86,69 @@ public class BlazorColumnFilterViewModelTests
         Assert.True(cleared);
         Assert.All(vm.FilterValues, x => Assert.True(x.IsSelected));
         Assert.True(vm.SelectAll);
+    }
+
+    [Fact]
+    public async Task ApplyCommand_WithSearchAndSelectAll_PersistsAsStartsWith()
+    {
+        // Arrange
+        var distinctValues = new List<object> { "Alice 1", "Alice 2", "Henry 1" };
+        ExcelFilterState appliedState = null!;
+        var vm = new ColumnFilterViewModel(
+            _ => Task.FromResult<IEnumerable<object>>(distinctValues),
+            s => appliedState = s,
+            () => { },
+            _ => { },
+            _ => { },
+            typeof(string)
+        );
+        await vm.InitializeAsync(distinctValues);
+
+        // Act
+        vm.SearchText = "Alice";
+        await vm.SearchCommand.ExecuteAsync("Alice");
+        vm.SelectAll = true;
+        vm.ApplyCommand.Execute(null);
+
+        // Assert
+        Assert.NotNull(appliedState);
+        Assert.Equal(FilterOperator.StartsWith, appliedState.CustomOperator);
+        Assert.Equal("Alice", appliedState.CustomValue1);
+    }
+
+    [Fact]
+    public async Task ApplyCommand_UnionOfSearches_PersistsAsOrSearchPatterns()
+    {
+        // Arrange
+        var distinctValues = new List<object> { "Alice 1", "Henry 1", "Henry 2" };
+        ExcelFilterState appliedState = null!;
+        var vm = new ColumnFilterViewModel(
+            _ => Task.FromResult<IEnumerable<object>>(distinctValues),
+            s => appliedState = s,
+            () => { },
+            _ => { },
+            _ => { },
+            typeof(string)
+        );
+        await vm.InitializeAsync(distinctValues);
+
+        // First search
+        vm.SearchText = "Alice";
+        await vm.SearchCommand.ExecuteAsync("Alice");
+        vm.SelectAll = true;
+        vm.ApplyCommand.Execute(null);
+
+        // Second search as UNION
+        vm.AddToExistingFilter = true;
+        vm.AccumulationMode = AccumulationMode.Union;
+        vm.SearchText = "Henry";
+        await vm.SearchCommand.ExecuteAsync("Henry");
+        vm.SelectAll = true;
+        vm.ApplyCommand.Execute(null);
+
+        // Assert
+        Assert.NotNull(appliedState);
+        Assert.Contains("Alice", appliedState.OrSearchPatterns);
+        Assert.Contains("Henry", appliedState.OrSearchPatterns);
     }
 }

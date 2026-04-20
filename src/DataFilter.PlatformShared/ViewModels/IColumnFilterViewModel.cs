@@ -51,6 +51,56 @@ public interface IColumnFilterViewModel : INotifyPropertyChanged
     ICommand SortDescendingCommand { get; }
 
     /// <summary>
+    /// Gets the command to add a sub-sort in ascending order.
+    /// </summary>
+    ICommand AddSubSortAscendingCommand { get; }
+
+    /// <summary>
+    /// Gets the command to add a sub-sort in descending order.
+    /// </summary>
+    ICommand AddSubSortDescendingCommand { get; }
+
+    /// <summary>
+    /// Indicates whether the filter is actively filtering data.
+    /// </summary>
+    bool IsFilterActive { get; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to add the current selection to the existing filter.
+    /// </summary>
+    bool AddToExistingFilter { get; set; }
+
+    /// <summary>
+    /// Gets or sets the mode used to merge new criteria.
+    /// </summary>
+    DataFilter.Core.Enums.AccumulationMode AccumulationMode { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the custom filter section is expanded.
+    /// </summary>
+    bool IsCustomFilterExpanded { get; set; }
+
+    /// <summary>
+    /// Gets or sets the currently selected custom operator.
+    /// </summary>
+    DataFilter.Core.Enums.FilterOperator? SelectedCustomOperator { get; set; }
+
+    /// <summary>
+    /// Gets the list of available custom operators.
+    /// </summary>
+    ObservableCollection<DataFilter.Core.Enums.FilterOperator> AvailableOperators { get; }
+
+    /// <summary>
+    /// Gets or sets the first value for custom filtering.
+    /// </summary>
+    string CustomValue1 { get; set; }
+
+    /// <summary>
+    /// Gets or sets the second value for custom filtering.
+    /// </summary>
+    string CustomValue2 { get; set; }
+
+    /// <summary>
     /// Initializes the view model with distinct values asynchronously.
     /// </summary>
     System.Threading.Tasks.Task InitializeAsync(System.Collections.Generic.IEnumerable<object> distinctValues);
@@ -64,4 +114,9 @@ public interface IColumnFilterViewModel : INotifyPropertyChanged
     /// Indicates if data is currently loading asynchronously.
     /// </summary>
     bool IsLoading { get; }
+
+    /// <summary>
+    /// Clears the filter and resets the UI state.
+    /// </summary>
+    void ClearFilter();
 }

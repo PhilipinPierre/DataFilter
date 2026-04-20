@@ -18,7 +18,7 @@ The core UI for selection and advanced filtering. Supports:
 - Multi-select value list with hierarchical grouping (Dates).
 - Advanced operators (Equals, Contains, Greater Than, etc.).
 - Accumulation modes (Union / Intersection).
-- **`BlazorColumnFilterViewModel`** mirrors the shared Excel behavior (from `DataFilter.PlatformShared`): reconciliation of **`SelectedValues`** when distincts change, `LoadStateAsync` vs custom-filter preview, **AND**-combined stacked custom criteria, and persistence of search intent in Union mode via `OrSearchPatterns` / `OrSelectedValues` (so presets don’t materialize huge `In(list)` snapshots).
+- Blazor uses **`DataFilter.PlatformShared.ViewModels.ColumnFilterViewModel`** as the single source of truth for Excel-like behavior: reconciliation of **`SelectedValues`** when distincts change, `LoadStateAsync` vs custom-filter preview, **AND**-combined stacked custom criteria, and persistence of search intent in Union mode via `OrSearchPatterns` / `OrSelectedValues` (so presets don’t materialize huge `In(list)` snapshots).
 
 ## Usage
 
@@ -26,7 +26,7 @@ The core UI for selection and advanced filtering. Supports:
 2. Add the following to your `_Imports.razor`:
    ```razor
    @using DataFilter.Blazor.Components
-   @using DataFilter.Blazor.ViewModels
+   @using DataFilter.PlatformShared.ViewModels
    ```
 3. Register the required JS and CSS in your `App.razor` or `index.html`:
    ```html

@@ -1,9 +1,12 @@
 ﻿@typeparam TItem
-@using DataFilter.Blazor.ViewModels
+@using DataFilter.PlatformShared.ViewModels
 @using DataFilter.Filtering.ExcelLike.Models
+@using DataFilter.Filtering.ExcelLike.Services
 @using DataFilter.Core.Enums
 @using DataFilter.Core.Abstractions
 @using DataFilter.Core.Models
+@using DataFilter.Core.Pipeline
+@using DataFilter.Core.Services
 @using System.Linq
 
 <div class="df-grid-container">
@@ -54,11 +57,12 @@
     [Parameter] public List<ColumnDefinition<TItem>> Columns { get; set; } = new();
     [Parameter] public int PageSize { get; set; } = 20;
 
-    private Dictionary<string, IBlazorColumnFilterViewModel> _viewModels = new();
+    private Dictionary<string, IColumnFilterViewModel> _viewModels = new();
     private List<TItem> _filteredItems = new();
     private readonly List<(string PropertyName, bool IsDescending)> _sortDescriptors = new();
     private bool _isLoading;
     private int _currentPage = 1;
+    private readonly FilterContext _context = new();
 
     protected override async Task OnParametersSetAsync()
     {
@@ -81,43 +85,21 @@
 
                 if (vm.IsFilterActive)
                 {
-                    var group = new FilterGroup(LogicalOperator.And);
-                    
-                    // Selections
-                    if (!vm.FilterState.SelectAll && vm.FilterState.SelectedValues.Count > 0)
-                    {
-                        group.Add(new FilterDescriptor(column.PropertyName, FilterOperator.In, vm.FilterState.SelectedValues.ToList()));
-                    }
-                    
-                    // Custom Filter
-                    if (vm.FilterState.CustomOperator.HasValue)
-                    {
-                        object? val = vm.FilterState.CustomValue1;
-                        if (vm.FilterState.CustomOperator == FilterOperator.Between)
-                        {
-                            val = new RangeValue(vm.FilterState.CustomValue1, vm.FilterState.CustomValue2);
-                        }
-                        group.Add(new FilterDescriptor(column.PropertyName, vm.FilterState.CustomOperator.Value, val));
-                    }
-
-                    if (group.Descriptors.Count > 0)
-                    {
-                        descriptors.Add(group);
-                    }
+                    descriptors.Add(new ExcelFilterDescriptor(column.PropertyName, vm.FilterState));
                 }
             }
 
+            // Keep a coherent context for JSON snapshots/presets.
+            _context.ReplaceDescriptors(descriptors);
+            _context.ClearSort();
+            foreach (var s in _sortDescriptors)
+                _context.AddSort(s.PropertyName, s.IsDescending);
+            _context.Page = _currentPage;
+            _context.PageSize = PageSize;
+
             if (DataProvider != null)
             {
-                var context = new FilterContext
-                {
-                    // Descriptors = descriptors,
-                    // SortDescriptors = _sortDescriptors.Select(s => new DataFilter.Core.Models.SortDescriptor(s.PropertyName, s.IsDescending)).Cast<ISortDescriptor>().ToList(),
-                    Page = _currentPage,
-                    PageSize = PageSize
-                };
-
-                var result = await DataProvider.FetchDataAsync(context);
+                var result = await DataProvider.FetchDataAsync(_context);
                 _filteredItems = result.Items.ToList();
             }
             else
@@ -173,11 +155,11 @@
         }
     }
 
-    private IBlazorColumnFilterViewModel GetViewModel(ColumnDefinition<TItem> column)
+    private IColumnFilterViewModel GetViewModel(ColumnDefinition<TItem> column)
     {
         if (!_viewModels.TryGetValue(column.Id, out var vm))
         {
-            vm = new BlazorColumnFilterViewModel(
+            vm = new ColumnFilterViewModel(
                 async (search) => {
                     if (DataProvider != null)
                     {
@@ -190,21 +172,17 @@
                     }
                     return distinctValues.ToList();
                 },
-                async (state) => { 
-                    await ApplyFiltersAsync();
-                },
-                async () => { 
-                    await ApplyFiltersAsync();
-                },
-                async (isDescending) =>
+                _state => { _ = ApplyFiltersAsync(); },
+                () => { _ = ApplyFiltersAsync(); },
+                isDescending =>
                 {
                     SetSortInternal(column.PropertyName, isDescending);
-                    await ApplyFiltersAsync();
+                    _ = ApplyFiltersAsync();
                 },
-                async (isDescending) =>
+                isDescending =>
                 {
                     AddSubSortInternal(column.PropertyName, isDescending);
-                    await ApplyFiltersAsync();
+                    _ = ApplyFiltersAsync();
                 },
                 column.PropertyType
             );
@@ -231,6 +209,51 @@
         {
             vm.ClearFilter();
         }
+        await ApplyFiltersAsync();
+    }
+
+    public FilterPipelineSnapshot CreatePipelineSnapshotFromCurrentGrid()
+    {
+        var legacySnapshot = new FilterSnapshotBuilder().CreateSnapshot(_context);
+        var pipeline = FilterPipelineInterop.FromLegacySnapshot(legacySnapshot);
+        return FilterPipelineSnapshotMapper.ToSnapshot(pipeline);
+    }
+
+    public async Task ApplyPipelineSnapshotAsync(FilterPipelineSnapshot snapshot)
+    {
+        var pipeline = FilterPipelineSnapshotMapper.ToPipeline(snapshot);
+        await ApplyFilterPipelineAsync(pipeline);
+    }
+
+    public async Task ApplyFilterPipelineAsync(FilterPipeline pipeline)
+    {
+        if (pipeline == null) throw new ArgumentNullException(nameof(pipeline));
+
+        var compiled = FilterPipelineCompiler.Compile(pipeline);
+        var converted = FilterDescriptorToExcelConverter.ConvertCompiledPipeline(compiled);
+
+        // Replace context so DataProvider / local engine run against the preset.
+        _context.ReplaceDescriptors(converted);
+        _context.Page = 1;
+
+        // Best-effort sync back to per-column popups (works for descriptors that can be represented as ExcelFilterState).
+        var byProperty = converted
+            .OfType<ExcelFilterDescriptor>()
+            .ToDictionary(d => d.PropertyName, d => d.State, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var col in Columns.Where(c => !string.IsNullOrWhiteSpace(c.PropertyName)))
+        {
+            var vm = GetViewModel(col);
+            if (byProperty.TryGetValue(col.PropertyName, out var state))
+            {
+                await vm.LoadStateAsync(state);
+            }
+            else
+            {
+                vm.ClearFilter();
+            }
+        }
+
         await ApplyFiltersAsync();
     }
 

@@ -18,6 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\DataFilter.Core\DataFilter.Core.csproj" />
     <ProjectReference Include="..\DataFilter.Filtering.ExcelLike\DataFilter.Filtering.ExcelLike.csproj" />
+    <ProjectReference Include="..\DataFilter.PlatformShared\DataFilter.PlatformShared.csproj" />
   </ItemGroup>
 
 </Project>

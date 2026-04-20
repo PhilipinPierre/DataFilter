@@ -1161,7 +1161,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
         OnPropertyChanged(nameof(IsFilterActive));
     }
 
-    private void ClearFilter()
+    public void ClearFilter()
     {
         FilterState.Clear();
         SearchText = string.Empty;
