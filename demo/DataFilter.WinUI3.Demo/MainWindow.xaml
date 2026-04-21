@@ -25,6 +25,8 @@
             <NumberBox Value="{x:Bind ViewModel.RowCount, Mode=TwoWay}" Minimum="1" Maximum="100000" SpinButtonPlacementMode="Inline" Width="120" VerticalAlignment="Center"/>
             <Button Content="Regenerate Data" Command="{x:Bind ViewModel.RegenerateCommand}" VerticalAlignment="Center"/>
             <Button Content="Clear filters" Command="{x:Bind ViewModel.ClearFiltersCommand}" VerticalAlignment="Center"/>
+            <TextBlock Text="Direction:" VerticalAlignment="Center" Margin="10,0,0,0"/>
+            <ComboBox x:Name="DirectionCombo" Width="110" VerticalAlignment="Center"/>
             <TextBlock Text="Language:" VerticalAlignment="Center" Margin="10,0,0,0"/>
             <ComboBox x:Name="LanguageCombo" Width="220" VerticalAlignment="Center"/>
         </StackPanel>

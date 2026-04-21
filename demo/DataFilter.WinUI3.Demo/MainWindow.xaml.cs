@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using System.Globalization;
 using DataFilter.Localization;
 
@@ -21,6 +22,16 @@ namespace DataFilter.WinUI3
             var options = LocalizationManager.GetAvailableCultures()
                 .Select(c => new LanguageOption(c))
                 .ToList();
+
+            DirectionCombo.ItemsSource = new[] { "LTR", "RTL" };
+            DirectionCombo.SelectedIndex = Content is FrameworkElement fe && fe.FlowDirection == FlowDirection.RightToLeft ? 1 : 0;
+            DirectionCombo.SelectionChanged += (_, __) =>
+            {
+                bool rtl = DirectionCombo.SelectedIndex == 1;
+                var dir = rtl ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
+                if (Content is FrameworkElement root)
+                    root.FlowDirection = dir;
+            };
 
             LanguageCombo.ItemsSource = options;
             LanguageCombo.DisplayMemberPath = nameof(LanguageOption.Label);

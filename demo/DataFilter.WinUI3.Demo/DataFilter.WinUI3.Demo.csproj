@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\DataFilter.WinUI3\DataFilter.WinUI3.csproj" />
+    <ProjectReference Include="..\..\src\PopupHost\DataFilter.WinUI3.PopupHost\DataFilter.WinUI3.PopupHost.csproj" />
     <ProjectReference Include="..\DataFilter.Demo.Shared\DataFilter.Demo.Shared.csproj" />
   </ItemGroup>
 
