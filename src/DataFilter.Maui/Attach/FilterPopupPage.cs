@@ -1,5 +1,6 @@
 using DataFilter.Maui.Controls;
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.Controls.Shapes;
 
 namespace DataFilter.Maui.Attach;
 
