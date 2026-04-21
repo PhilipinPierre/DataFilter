@@ -35,6 +35,9 @@
             <TabItem Header="Local Filtering">
                 <views:LocalFilterView DataContext="{Binding LocalFilterScenario}" />
             </TabItem>
+            <TabItem Header="Attach (DataGrid)">
+                <views:AttachFilterView DataContext="{Binding LocalFilterScenario}" />
+            </TabItem>
             <TabItem Header="Async Filtering">
                 <views:AsyncFilterView DataContext="{Binding AsyncFilterScenario}" />
             </TabItem>
