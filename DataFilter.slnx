@@ -14,16 +14,16 @@
     </Project>
     <Project Path="demo/DataFilter.Wpf.Demo/DataFilter.Wpf.Demo.csproj" />
   </Folder>
+  <Folder Name="/PopupHost/">
+    <Project Path="src/PopupHost/DataFilter.Blazor.PopupHost/DataFilter.Blazor.PopupHost.csproj" />
+    <Project Path="src/PopupHost/DataFilter.Maui.PopupHost/DataFilter.Maui.PopupHost.csproj" />
+    <Project Path="src/PopupHost/DataFilter.WinForms.PopupHost/DataFilter.WinForms.PopupHost.csproj" />
+    <Project Path="src/PopupHost/DataFilter.WinUI3.PopupHost/DataFilter.WinUI3.PopupHost.csproj">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="src/PopupHost/DataFilter.Wpf.PopupHost/DataFilter.Wpf.PopupHost.csproj" />
+  </Folder>
   <Folder Name="/src/">
-    <Folder Name="/src/PopupHost/">
-      <Project Path="src/PopupHost/DataFilter.Blazor.PopupHost/DataFilter.Blazor.PopupHost.csproj" />
-      <Project Path="src/PopupHost/DataFilter.Maui.PopupHost/DataFilter.Maui.PopupHost.csproj" />
-      <Project Path="src/PopupHost/DataFilter.WinForms.PopupHost/DataFilter.WinForms.PopupHost.csproj" />
-      <Project Path="src/PopupHost/DataFilter.WinUI3.PopupHost/DataFilter.WinUI3.PopupHost.csproj">
-        <Platform Project="x64" />
-      </Project>
-      <Project Path="src/PopupHost/DataFilter.Wpf.PopupHost/DataFilter.Wpf.PopupHost.csproj" />
-    </Folder>
     <Project Path="src/DataFilter.Blazor/DataFilter.Blazor.csproj" />
     <Project Path="src/DataFilter.Core/DataFilter.Core.csproj" />
     <Project Path="src/DataFilter.Expressions.Server/DataFilter.Expressions.Server.csproj" />
@@ -36,6 +36,13 @@
     <Project Path="src/DataFilter.Wpf/DataFilter.Wpf.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Folder Name="/tests/PopupHost/">
+      <Project Path="tests/PopupHost/DataFilter.Blazor.PopupHost.Tests/DataFilter.Blazor.PopupHost.Tests.csproj" />
+      <Project Path="tests/PopupHost/DataFilter.Maui.PopupHost.Tests/DataFilter.Maui.PopupHost.Tests.csproj" />
+      <Project Path="tests/PopupHost/DataFilter.WinForms.PopupHost.Tests/DataFilter.WinForms.PopupHost.Tests.csproj" />
+      <Project Path="tests/PopupHost/DataFilter.WinUI3.PopupHost.Tests/DataFilter.WinUI3.PopupHost.Tests.csproj" />
+      <Project Path="tests/PopupHost/DataFilter.Wpf.PopupHost.Tests/DataFilter.Wpf.PopupHost.Tests.csproj" />
+    </Folder>
     <Project Path="tests/DataFilter.Blazor.Tests/DataFilter.Blazor.Tests.csproj" />
     <Project Path="tests/DataFilter.Core.Tests/DataFilter.Core.Tests.csproj" />
     <Project Path="tests/DataFilter.Expressions.Server.Tests/DataFilter.Expressions.Server.Tests.csproj" />
