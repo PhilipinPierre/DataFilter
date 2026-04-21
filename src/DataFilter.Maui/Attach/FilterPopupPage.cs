@@ -15,20 +15,28 @@ public sealed class FilterPopupPage : ContentPage
         Padding = 10;
         BackgroundColor = Colors.Transparent;
 
-        var frame = new Frame
+        var border = new Border
         {
             Padding = 0,
-            HasShadow = true,
-            CornerRadius = 8,
-            Content = popup,
-            HorizontalOptions = LayoutOptions.Center,
-            VerticalOptions = LayoutOptions.Center
+            StrokeThickness = 0,
+            StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(8) },
+            Content = popup
         };
+
+        border.Shadow = new Shadow
+        {
+            Opacity = 0.35f,
+            Radius = 16,
+            Offset = new Point(0, 4)
+        };
+
+        border.HorizontalOptions = LayoutOptions.Center;
+        border.VerticalOptions = LayoutOptions.Center;
 
         Content = new Grid
         {
             BackgroundColor = Color.FromArgb("#80000000"),
-            Children = { frame }
+            Children = { border }
         };
     }
 }
