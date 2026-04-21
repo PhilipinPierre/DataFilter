@@ -45,6 +45,7 @@ public sealed class DataGridViewFilterAdapter : IDisposable
     {
         if (_isDisposed) return;
         if (e.RowIndex != -1 || e.ColumnIndex < 0) return;
+        if (e.Graphics == null) return;
 
         e.Paint(e.CellBounds, DataGridViewPaintParts.All);
         var rect = new Rectangle(e.CellBounds.Right - 18, e.CellBounds.Top + 4, 14, 14);
