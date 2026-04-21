@@ -23,6 +23,7 @@ public sealed class MainForm : Form
 
     // Views
     private readonly LocalFilterView _localView;
+    private readonly AttachFilterView _attachView;
     private readonly AsyncFilterView _asyncView;
     private readonly HybridFilterView _hybridView;
     private readonly CustomizationView _customizationView;
@@ -37,6 +38,7 @@ public sealed class MainForm : Form
         ListViewScenarioViewModel listViewVm,
         CollectionViewScenarioViewModel collectionViewVm,
         LocalFilterView localView,
+        AttachFilterView attachView,
         AsyncFilterView asyncView,
         HybridFilterView hybridView,
         CustomizationView customizationView,
@@ -51,6 +53,7 @@ public sealed class MainForm : Form
         _collectionViewVm = collectionViewVm;
 
         _localView = localView;
+        _attachView = attachView;
         _asyncView = asyncView;
         _hybridView = hybridView;
         _customizationView = customizationView;
@@ -87,6 +90,7 @@ public sealed class MainForm : Form
         _tabControl = new TabControl { Dock = DockStyle.Fill };
 
         AddTab("Local Filtering", _localView);
+        AddTab("Attach (DataGridView)", _attachView);
         AddTab("Async Filtering", _asyncView);
         AddTab("Hybrid Filtering", _hybridView);
         AddTab("Customization", _customizationView);
@@ -98,6 +102,7 @@ public sealed class MainForm : Form
 
         // --- Bindings ---
         _localView.Bind(_localVm);
+        _attachView.Bind(_localVm);
         _asyncView.Bind(_asyncVm);
         _hybridView.Bind(_hybridVm);
         _customizationView.Bind(_customizationVm);
