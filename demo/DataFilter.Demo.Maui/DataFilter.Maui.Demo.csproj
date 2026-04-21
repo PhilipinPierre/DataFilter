@@ -70,6 +70,7 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\DataFilter.Demo.Shared\DataFilter.Demo.Shared.csproj" />
 	  <ProjectReference Include="..\..\src\DataFilter.Maui\DataFilter.Maui.csproj" />
+	  <ProjectReference Include="..\..\src\PopupHost\DataFilter.Maui.PopupHost\DataFilter.Maui.PopupHost.csproj" />
 	</ItemGroup>
 
 </Project>

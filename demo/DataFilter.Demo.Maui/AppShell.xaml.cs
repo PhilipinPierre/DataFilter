@@ -11,6 +11,13 @@ namespace DataFilter.Maui
             InitializeComponent();
             BindingContext = viewModel;
 
+        DirectionPicker.ItemsSource = new[] { "LTR", "RTL" };
+        DirectionPicker.SelectedIndex = FlowDirection == FlowDirection.RightToLeft ? 1 : 0;
+        DirectionPicker.SelectedIndexChanged += (_, __) =>
+        {
+            FlowDirection = DirectionPicker.SelectedIndex == 1 ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
+        };
+
             var options = LocalizationManager.GetAvailableCultures()
                 .Select(c => new LanguageOption(c))
                 .ToList();

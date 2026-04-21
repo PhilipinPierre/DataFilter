@@ -12,6 +12,8 @@
             <Entry Text="{Binding RowCountText, Mode=TwoWay}" Keyboard="Numeric" WidthRequest="100" />
             <Button Text="Regenerate" Command="{Binding RegenerateCommand}" />
             <Button Text="Clear Filters" Command="{Binding ClearFiltersCommand}" />
+            <Label Text="Direction:" VerticalOptions="Center" />
+            <Picker x:Name="DirectionPicker" WidthRequest="110" />
             <Label Text="Language:" VerticalOptions="Center" />
             <Picker x:Name="LanguagePicker" WidthRequest="220" />
         </HorizontalStackLayout>
