@@ -2,7 +2,9 @@ using DataFilter.PlatformShared.ViewModels;
 using DataFilter.WinUI3.Behaviors;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
+using Windows.Foundation;
 
 namespace DataFilter.WinUI3.Attach;
 
@@ -68,7 +70,14 @@ public sealed class ListViewFilterHeaderAdapter : IDisposable
                     popup.ViewModel.OnApply += (_, __) => flyout.Hide();
                     popup.ViewModel.OnClear += (_, __) => flyout.Hide();
                 }
-                flyout.ShowAt(btn);
+
+                bool isRtl = btn.FlowDirection == FlowDirection.RightToLeft;
+                var desired = new Point(isRtl ? -popup.Width : btn.ActualWidth, btn.ActualHeight);
+                flyout.ShowAt(btn, new FlyoutShowOptions
+                {
+                    Placement = FlyoutPlacementMode.Bottom,
+                    Position = desired
+                });
             };
 
             grid.Children.Add(btn);

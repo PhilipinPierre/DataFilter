@@ -41,7 +41,7 @@
             // Wait a tiny bit for the UI to be ready
             await System.Threading.Tasks.Task.Delay(1);
 
-            var position = await JSRuntime.InvokeAsync<Position>("DataFilterInterops.getPosition", ButtonId);
+            var position = await JSRuntime.InvokeAsync<Position>("DataFilterInterops.getAnchoredPopupPosition", ButtonId, PopupId, 8);
             if (position != null)
             {
                 _popupTop = position.Top;

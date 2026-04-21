@@ -429,7 +429,8 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
             StaysOpen = true,
             AllowsTransparency = true,
             PlacementTarget = _filterButton,
-            Placement = PlacementMode.Bottom,
+            Placement = PlacementMode.Custom,
+            CustomPopupPlacementCallback = PlaceFilterPopup,
             PopupAnimation = PopupAnimation.Fade
         };
 
@@ -443,6 +444,42 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         // while Apply/Clear never removed them, breaking subsequent filter button clicks.
         _filterPopup.Opened += OnFilterPopupOpened;
         _filterPopup.Closed += OnFilterPopupClosed;
+    }
+
+    private CustomPopupPlacement[] PlaceFilterPopup(Size popupSize, Size targetSize, Point offset)
+    {
+        if (_filterButton == null)
+            return new[] { new CustomPopupPlacement(new Point(0, targetSize.Height), PopupPrimaryAxis.Horizontal) };
+
+        bool isRtl = _filterButton.FlowDirection == FlowDirection.RightToLeft;
+        // Default anchor rule:
+        // - LTR: popup top-left at button bottom-right
+        // - RTL: popup top-right at button bottom-left (=> top-left at -popupWidth, bottom)
+        var desiredRelative = new Point(isRtl ? -popupSize.Width : targetSize.Width, targetSize.Height);
+
+        // Clamp to keep as visible as possible within the window (goal: stay visible in the app window).
+        // Callback expects offsets in DIPs relative to target.
+        var window = Window.GetWindow(_filterButton);
+        if (window == null || window.ActualWidth <= 0 || window.ActualHeight <= 0)
+            return new[] { new CustomPopupPlacement(desiredRelative, PopupPrimaryAxis.Horizontal) };
+
+        const double margin = 8;
+        var targetScreen = _filterButton.PointToScreen(new Point(0, 0));
+        var desiredScreen = new Point(targetScreen.X + desiredRelative.X, targetScreen.Y + desiredRelative.Y);
+
+        var windowTopLeft = new Point(window.Left, window.Top);
+        var windowBottomRight = new Point(window.Left + window.ActualWidth, window.Top + window.ActualHeight);
+
+        var minX = windowTopLeft.X + margin;
+        var maxX = Math.Max(minX, windowBottomRight.X - popupSize.Width - margin);
+        var minY = windowTopLeft.Y + margin;
+        var maxY = Math.Max(minY, windowBottomRight.Y - popupSize.Height - margin);
+
+        var clampedX = desiredScreen.X < minX ? minX : (desiredScreen.X > maxX ? maxX : desiredScreen.X);
+        var clampedY = desiredScreen.Y < minY ? minY : (desiredScreen.Y > maxY ? maxY : desiredScreen.Y);
+
+        var adjustedRelative = new Point(clampedX - targetScreen.X, clampedY - targetScreen.Y);
+        return new[] { new CustomPopupPlacement(adjustedRelative, PopupPrimaryAxis.Horizontal) };
     }
 
     private void OnFilterPopupOpened(object? sender, EventArgs e)

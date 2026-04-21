@@ -1,14 +1,27 @@
 window.DataFilterInterops = {
-    getPosition: function (elementId) {
-        var el = document.getElementById(elementId);
-        if (el) {
-            var rect = el.getBoundingClientRect();
-            return {
-                top: rect.bottom,
-                left: rect.left
-            };
-        }
-        return null;
+    getAnchoredPopupPosition: function (buttonId, popupId, margin) {
+        const btn = document.getElementById(buttonId);
+        const pop = document.getElementById(popupId);
+        if (!btn || !pop) return null;
+
+        const btnRect = btn.getBoundingClientRect();
+        const popRect = pop.getBoundingClientRect();
+        const m = (typeof margin === 'number') ? margin : 8;
+        const dir = (getComputedStyle(btn).direction || 'ltr').toLowerCase();
+
+        // Default anchor rule:
+        // - LTR: popup top-left at button bottom-right
+        // - RTL: popup top-right at button bottom-left
+        let left = (dir === 'rtl') ? (btnRect.left - popRect.width) : btnRect.right;
+        let top = btnRect.bottom;
+
+        const maxLeft = Math.max(m, window.innerWidth - popRect.width - m);
+        const maxTop = Math.max(m, window.innerHeight - popRect.height - m);
+
+        left = Math.min(Math.max(left, m), maxLeft);
+        top = Math.min(Math.max(top, m), maxTop);
+
+        return { top: top, left: left };
     },
     addOutsideClickListener: function (dotnetHelper, elementId, toggleButtonId) {
         const listener = function (e) {

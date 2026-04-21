@@ -97,7 +97,25 @@ public sealed class DataGridViewFilterAdapter : IDisposable
         _popupHost.Items.Clear();
         var host = new ToolStripControlHost(popup) { AutoSize = false, Width = popup.Width, Height = popup.Height };
         _popupHost.Items.Add(host);
-        _popupHost.Show(_grid, new Point(headerRect.Right - popup.Width, headerRect.Bottom));
+
+        bool isRtl = _grid.RightToLeft == RightToLeft.Yes;
+        var desiredScreen = _grid.PointToScreen(new Point(isRtl ? headerRect.Left : headerRect.Right, headerRect.Bottom));
+        var work = Screen.FromControl(_grid).WorkingArea;
+        const int margin = 8;
+
+        int left = isRtl ? desiredScreen.X - popup.Width : desiredScreen.X;
+        int top = desiredScreen.Y;
+
+        int minX = work.Left + margin;
+        int maxX = Math.Max(minX, work.Right - popup.Width - margin);
+        int minY = work.Top + margin;
+        int maxY = Math.Max(minY, work.Bottom - popup.Height - margin);
+
+        left = Math.Min(Math.Max(left, minX), maxX);
+        top = Math.Min(Math.Max(top, minY), maxY);
+
+        var showPointClient = _grid.PointToClient(new Point(left, top));
+        _popupHost.Show(_grid, showPointClient);
     }
 
     public void Dispose()
