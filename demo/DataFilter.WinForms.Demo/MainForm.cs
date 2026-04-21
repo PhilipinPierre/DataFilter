@@ -11,6 +11,7 @@ public sealed class MainForm : Form
     private readonly NumericUpDown _rowCountInput;
     private readonly Button _regenerateBtn;
     private readonly Button _clearFiltersBtn;
+    private readonly ComboBox _directionCombo;
     private readonly ComboBox _languageCombo;
     private readonly TabControl _tabControl;
 
@@ -73,6 +74,11 @@ public sealed class MainForm : Form
         _regenerateBtn = new Button { Text = "Regenerate Data", AutoSize = true, Margin = new Padding(0, 0, 10, 0) };
         _clearFiltersBtn = new Button { Text = "Clear filters", AutoSize = true };
 
+        var lblDirection = new Label { Text = "Direction:", AutoSize = true, Margin = new Padding(15, 7, 5, 0) };
+        _directionCombo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 90, Margin = new Padding(0, 3, 10, 0) };
+        _directionCombo.Items.AddRange(new object[] { "LTR", "RTL" });
+        _directionCombo.SelectedIndex = RightToLeft == RightToLeft.Yes ? 1 : 0;
+
         var lblLanguage = new Label { Text = "Language:", AutoSize = true, Margin = new Padding(15, 7, 5, 0) };
         _languageCombo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 220, Margin = new Padding(0, 3, 10, 0) };
 
@@ -84,7 +90,7 @@ public sealed class MainForm : Form
         _languageCombo.ValueMember = nameof(LanguageOption.Culture);
         _languageCombo.SelectedValue = LocalizationManager.Instance.Culture;
 
-        flowLayout.Controls.AddRange(new Control[] { lblRowCount, _rowCountInput, _regenerateBtn, _clearFiltersBtn, lblLanguage, _languageCombo });
+        flowLayout.Controls.AddRange(new Control[] { lblRowCount, _rowCountInput, _regenerateBtn, _clearFiltersBtn, lblDirection, _directionCombo, lblLanguage, _languageCombo });
 
         // --- Tabs ---
         _tabControl = new TabControl { Dock = DockStyle.Fill };
@@ -112,6 +118,14 @@ public sealed class MainForm : Form
         // --- Events ---
         _regenerateBtn.Click += (s, e) => Regenerate();
         _clearFiltersBtn.Click += async (s, e) => await ClearFiltersAsync();
+        _directionCombo.SelectedValueChanged += (_, __) =>
+        {
+            bool rtl = _directionCombo.SelectedIndex == 1;
+            RightToLeft = rtl ? RightToLeft.Yes : RightToLeft.No;
+            RightToLeftLayout = rtl;
+            PerformLayout();
+            Invalidate(true);
+        };
         _languageCombo.SelectedValueChanged += (_, __) =>
         {
             if (_languageCombo.SelectedValue is CultureInfo culture)
