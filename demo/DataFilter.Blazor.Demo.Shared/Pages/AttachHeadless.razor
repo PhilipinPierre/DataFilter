@@ -1,0 +1,84 @@
+@page "/demo/attach"
+@using DataFilter.Blazor.Demo.Shared.State
+@using DataFilter.Demo.Shared.Services
+@inject DemoState State
+
+<DemoShell OnClearFilters="HandleClearFilters" />
+
+<div class="scenario-header">
+    <h3>Attach demo — custom table markup (headless)</h3>
+    <p class="text-muted">Uses <code>DataFilterGrid</code> in headless mode so you can keep your own table HTML while reusing the filtering popups.</p>
+</div>
+
+<div class="grid-container">
+    <DataFilterGrid @ref="_grid"
+                    Headless="true"
+                    Items="@_data"
+                    Columns="@_columns">
+        <ChildContent Context="ctx">
+            <table class="table table-striped table-hover align-middle">
+                <thead>
+                    <tr>
+                        @foreach (var col in _columns)
+                        {
+                            <th>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span>@col.Title</span>
+                                    <ColumnFilterButton ViewModel="@ctx.GetColumnFilterViewModel(col.Id)" />
+                                </div>
+                            </th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (ctx.IsLoading)
+                    {
+                        <tr>
+                            <td colspan="@_columns.Count" class="text-center p-4">Loading…</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in ctx.FilteredItems)
+                        {
+                            <tr>
+                                @foreach (var col in _columns)
+                                {
+                                    <td>@col.Selector(item)</td>
+                                }
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </ChildContent>
+    </DataFilterGrid>
+</div>
+
+@code {
+    private DataFilterGrid<Employee>? _grid;
+    private IEnumerable<Employee> _data => EmployeeDataGenerator.Employees;
+    private List<DataFilterGrid<Employee>.ColumnDefinition<Employee>> _columns = DataFilter.Blazor.Demo.Shared.Helpers.ColumnHelper.GetDefaultColumns();
+
+    protected override void OnInitialized()
+    {
+        State.OnChange += StateChanged;
+        if (!EmployeeDataGenerator.Employees.Any())
+        {
+            State.Regenerate();
+        }
+    }
+
+    private void StateChanged() => StateHasChanged();
+
+    private void HandleClearFilters()
+    {
+        _grid?.ClearFilters();
+    }
+
+    public void Dispose()
+    {
+        State.OnChange -= StateChanged;
+    }
+}
+
