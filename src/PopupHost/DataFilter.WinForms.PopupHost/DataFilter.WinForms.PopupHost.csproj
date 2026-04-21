@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0-windows;net9.0-windows</TargetFrameworks>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\DataFilter.Localization\DataFilter.Localization.csproj" />
+    <ProjectReference Include="..\..\DataFilter.PlatformShared\DataFilter.PlatformShared.csproj" />
+    <ProjectReference Include="..\..\DataFilter.WinForms\DataFilter.WinForms.csproj" />
+  </ItemGroup>
+
+</Project>

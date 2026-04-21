@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0-windows;net9.0-windows</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Title>$(AssemblyName)</Title>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\DataFilter.Localization\DataFilter.Localization.csproj" />
+    <ProjectReference Include="..\..\DataFilter.PlatformShared\DataFilter.PlatformShared.csproj" />
+    <ProjectReference Include="..\..\DataFilter.Wpf\DataFilter.Wpf.csproj" />
+  </ItemGroup>
+
+</Project>

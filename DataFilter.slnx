@@ -15,6 +15,15 @@
     <Project Path="demo/DataFilter.Wpf.Demo/DataFilter.Wpf.Demo.csproj" />
   </Folder>
   <Folder Name="/src/">
+    <Folder Name="/src/PopupHost/">
+      <Project Path="src/PopupHost/DataFilter.Blazor.PopupHost/DataFilter.Blazor.PopupHost.csproj" />
+      <Project Path="src/PopupHost/DataFilter.Maui.PopupHost/DataFilter.Maui.PopupHost.csproj" />
+      <Project Path="src/PopupHost/DataFilter.WinForms.PopupHost/DataFilter.WinForms.PopupHost.csproj" />
+      <Project Path="src/PopupHost/DataFilter.WinUI3.PopupHost/DataFilter.WinUI3.PopupHost.csproj">
+        <Platform Project="x64" />
+      </Project>
+      <Project Path="src/PopupHost/DataFilter.Wpf.PopupHost/DataFilter.Wpf.PopupHost.csproj" />
+    </Folder>
     <Project Path="src/DataFilter.Blazor/DataFilter.Blazor.csproj" />
     <Project Path="src/DataFilter.Core/DataFilter.Core.csproj" />
     <Project Path="src/DataFilter.Expressions.Server/DataFilter.Expressions.Server.csproj" />
