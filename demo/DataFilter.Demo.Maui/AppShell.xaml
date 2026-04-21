@@ -21,6 +21,9 @@
         <Tab Title="Local">
             <ShellContent Route="LocalFilterPage" ContentTemplate="{DataTemplate pages:LocalFilterPage}" />
         </Tab>
+        <Tab Title="Attach">
+            <ShellContent Route="AttachFilterPage" ContentTemplate="{DataTemplate pages:AttachFilterPage}" />
+        </Tab>
         <Tab Title="Async">
             <ShellContent Route="AsyncFilterPage" ContentTemplate="{DataTemplate pages:AsyncFilterPage}" />
         </Tab>

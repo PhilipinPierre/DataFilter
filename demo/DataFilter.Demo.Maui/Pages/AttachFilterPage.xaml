@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="DataFilter.Maui.Demo.Pages.AttachFilterPage"
+             Title="Attach">
+
+    <Grid RowDefinitions="Auto,*">
+        <VerticalStackLayout Grid.Row="0" Padding="16,12" Spacing="2">
+            <Label Text="Attach demo — ListView header adapter (no custom control)"
+                   FontSize="16" FontAttributes="Bold" />
+            <Label Text="This uses ListViewFilterHeaderAdapter to inject filter buttons into a standard MAUI ListView header."
+                   FontSize="13" TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
+        </VerticalStackLayout>
+
+        <ListView x:Name="EmployeesList"
+                  Grid.Row="1"
+                  Margin="8"
+                  ItemsSource="{Binding GridViewModel.FilteredItems}"
+                  SeparatorVisibility="Default"
+                  SelectionMode="None">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <ViewCell>
+                        <HorizontalStackLayout Spacing="20" Padding="10">
+                            <Label Text="{Binding Id}" WidthRequest="60" VerticalOptions="Center" />
+                            <Label Text="{Binding Name}" WidthRequest="130" VerticalOptions="Center" FontAttributes="Bold" />
+                            <Label Text="{Binding Department}" WidthRequest="120" VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                    </ViewCell>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </Grid>
+</ContentPage>
+
