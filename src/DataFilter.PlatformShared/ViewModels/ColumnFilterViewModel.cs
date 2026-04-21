@@ -435,6 +435,20 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
                 FilterState.SelectAll = true;
             }
 
+            // Guard: when accumulating a search result into an existing list-based filter (union),
+            // we must materialize the result as an In(list) selection (SelectAll=false), not as a rule.
+            // Some UI paths keep SelectAll==true while SearchText is non-empty, which would otherwise
+            // look like a "select all distincts" filter at apply-time.
+            if (effectiveAddToExisting
+                && AccumulationMode == AccumulationMode.Union
+                && !persistedSearchRule
+                && !canRepresentUnionAsSearchOr
+                && !canRepresentUnionAsSearchOrWithPartialSelection
+                && !string.IsNullOrEmpty(SearchText))
+            {
+                FilterState.SelectAll = false;
+            }
+
             FilterState.SearchText = string.Empty; // Clear search text on apply as visible items were merged
 
             if (!effectiveAddToExisting && !persistedSearchRule)
