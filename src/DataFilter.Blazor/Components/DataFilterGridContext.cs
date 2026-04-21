@@ -8,7 +8,7 @@ namespace DataFilter.Blazor.Components;
 public sealed class DataFilterGridContext<TItem>
 {
     internal DataFilterGridContext(
-        Func<ColumnDefinition<TItem>, IColumnFilterViewModel> getColumnFilterViewModel,
+        Func<string, IColumnFilterViewModel> getColumnFilterViewModel,
         Func<IReadOnlyList<TItem>> getFilteredItems,
         Func<bool> getIsLoading)
     {
@@ -20,7 +20,10 @@ public sealed class DataFilterGridContext<TItem>
     private readonly Func<IReadOnlyList<TItem>> _getFilteredItems;
     private readonly Func<bool> _getIsLoading;
 
-    public Func<ColumnDefinition<TItem>, IColumnFilterViewModel> GetColumnFilterViewModel { get; }
+    /// <summary>
+    /// Gets (or creates) the filter popup view model for a column by its <c>ColumnDefinition.Id</c>.
+    /// </summary>
+    public Func<string, IColumnFilterViewModel> GetColumnFilterViewModel { get; }
 
     public IReadOnlyList<TItem> FilteredItems => _getFilteredItems();
 

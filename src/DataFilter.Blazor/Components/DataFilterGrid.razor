@@ -74,7 +74,12 @@ else
     private readonly FilterContext _context = new();
 
     private DataFilterGridContext<TItem> GridContext => new(
-        getColumnFilterViewModel: GetViewModel,
+        getColumnFilterViewModel: id =>
+        {
+            var col = Columns.FirstOrDefault(c => string.Equals(c.Id, id, StringComparison.Ordinal));
+            if (col == null) throw new InvalidOperationException($"Unknown column id '{id}'.");
+            return GetViewModel(col);
+        },
         getFilteredItems: () => _filteredItems,
         getIsLoading: () => _isLoading);
 
