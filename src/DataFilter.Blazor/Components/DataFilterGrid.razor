@@ -9,53 +9,62 @@
 @using DataFilter.Core.Services
 @using System.Linq
 
-<div class="df-grid-container">
-    <table class="df-grid">
-        <thead>
-            <tr>
-                @foreach (var col in Columns)
-                {
-                    <th class="df-grid-header">
-                        <div class="df-header-content">
-                            <span>@col.Title</span>
-                            <ColumnFilterButton ViewModel="@GetViewModel(col)" />
-                        </div>
-                    </th>
-                }
-            </tr>
-        </thead>
-        <tbody>
-            @if (_isLoading)
-            {
+@if (Headless && ChildContent != null)
+{
+    @ChildContent(GridContext)
+}
+else
+{
+    <div class="df-grid-container">
+        <table class="df-grid">
+            <thead>
                 <tr>
-                    <td colspan="@Columns.Count" class="text-center p-4">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </td>
+                    @foreach (var col in Columns)
+                    {
+                        <th class="df-grid-header">
+                            <div class="df-header-content">
+                                <span>@col.Title</span>
+                                <ColumnFilterButton ViewModel="@GetViewModel(col)" />
+                            </div>
+                        </th>
+                    }
                 </tr>
-            }
-            else
-            {
-                @foreach (var item in _filteredItems)
+            </thead>
+            <tbody>
+                @if (_isLoading)
                 {
                     <tr>
-                        @foreach (var col in Columns)
-                        {
-                            <td>@col.Selector(item)</td>
-                        }
+                        <td colspan="@Columns.Count" class="text-center p-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </td>
                     </tr>
                 }
-            }
-        </tbody>
-    </table>
-</div>
+                else
+                {
+                    @foreach (var item in _filteredItems)
+                    {
+                        <tr>
+                            @foreach (var col in Columns)
+                            {
+                                <td>@col.Selector(item)</td>
+                            }
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+}
 
 @code {
     [Parameter] public IEnumerable<TItem> Items { get; set; } = Enumerable.Empty<TItem>();
     [Parameter] public IAsyncDataProvider<TItem>? DataProvider { get; set; }
     [Parameter] public List<ColumnDefinition<TItem>> Columns { get; set; } = new();
     [Parameter] public int PageSize { get; set; } = 20;
+    [Parameter] public bool Headless { get; set; }
+    [Parameter] public RenderFragment<DataFilterGridContext<TItem>>? ChildContent { get; set; }
 
     private Dictionary<string, IColumnFilterViewModel> _viewModels = new();
     private List<TItem> _filteredItems = new();
@@ -63,6 +72,11 @@
     private bool _isLoading;
     private int _currentPage = 1;
     private readonly FilterContext _context = new();
+
+    private DataFilterGridContext<TItem> GridContext => new(
+        getColumnFilterViewModel: GetViewModel,
+        getFilteredItems: () => _filteredItems,
+        getIsLoading: () => _isLoading);
 
     protected override async Task OnParametersSetAsync()
     {
