@@ -56,8 +56,14 @@ public sealed class ListViewFilterHeaderAdapter : IDisposable
             btn.Clicked += async (_, _) =>
             {
                 var popupView = FilterHeaderBehavior.CreatePopup(_viewModel, col.PropertyName);
-                var page = new FilterPopupPage(popupView);
+                var anchorPos = GetAbsolutePosition(btn);
+                var page = new FilterPopupPage(popupView, anchorPos, btn.Height);
                 popupView.CloseRequested += async (_, __) =>
+                {
+                    if (page.Navigation.ModalStack.Contains(page))
+                        await page.Navigation.PopModalAsync();
+                };
+                page.DismissRequested += async (_, __) =>
                 {
                     if (page.Navigation.ModalStack.Contains(page))
                         await page.Navigation.PopModalAsync();
@@ -70,6 +76,22 @@ public sealed class ListViewFilterHeaderAdapter : IDisposable
         }
 
         return grid;
+    }
+
+    private static Point GetAbsolutePosition(VisualElement element)
+    {
+        double x = element.X;
+        double y = element.Y;
+
+        var parent = element.Parent as VisualElement;
+        while (parent != null)
+        {
+            x += parent.X;
+            y += parent.Y;
+            parent = parent.Parent as VisualElement;
+        }
+
+        return new Point(x, y);
     }
 
     public void Dispose()
