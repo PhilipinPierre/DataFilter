@@ -204,6 +204,15 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         var parent = VisualTreeHelper.GetParent(AssociatedObject);
         while (parent != null)
         {
+            // First-class attach point: allow binding the VM directly on an existing DataGrid/GridView.
+            // This avoids visual-tree fragility and enables a one-line opt-in on the grid.
+            var attachedVm = FilterableGridAttach.GetViewModel(parent);
+            if (attachedVm is GridFilterVm attachedGridVm)
+            {
+                ParentViewModel = attachedGridVm;
+                return;
+            }
+
             if (parent is DataFilter.Wpf.Controls.FilterableDataGrid fg)
             {
                 ParentViewModel = fg.ViewModel;
@@ -214,6 +223,17 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
             {
                 ParentViewModel = fv.ViewModel;
                 if (ParentViewModel != null) return;
+            }
+
+            // If the client uses a plain ListView+GridView, allow attaching the VM on the GridView itself.
+            if (parent is ListView lv2 && lv2.View is GridView gv)
+            {
+                var gvVm = FilterableGridAttach.GetViewModel(gv);
+                if (gvVm is GridFilterVm vm2)
+                {
+                    ParentViewModel = vm2;
+                    return;
+                }
             }
 
             if (parent is FrameworkElement fe && fe.DataContext is GridFilterVm vm)
