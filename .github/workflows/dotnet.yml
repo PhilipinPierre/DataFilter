@@ -29,6 +29,9 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore DataFilter.slnx --ignore-failed-sources
 
+    - name: Restore workloads (MAUI/Blazor)
+      run: dotnet workload restore DataFilter.slnx
+
     - name: Get Version from Tag
       shell: pwsh
       id: get_version
