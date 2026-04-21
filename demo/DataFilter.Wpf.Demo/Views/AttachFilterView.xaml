@@ -4,7 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:viewmodels="clr-namespace:DataFilter.Wpf.Demo.ViewModels"
-             xmlns:behaviors="clr-namespace:DataFilter.Wpf.Behaviors;assembly=DataFilter.Wpf"
+             xmlns:behaviors="clr-namespace:DataFilter.Wpf.Behaviors;assembly=DataFilter.Wpf.PopupHost"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type={x:Type viewmodels:LocalFilterScenarioViewModel}, IsDesignTimeCreatable=True}">
     <Grid>

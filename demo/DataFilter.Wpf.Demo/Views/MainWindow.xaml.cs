@@ -10,6 +10,13 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
+        DirectionCombo.ItemsSource = new[] { "LTR", "RTL" };
+        DirectionCombo.SelectedIndex = FlowDirection == FlowDirection.RightToLeft ? 1 : 0;
+        DirectionCombo.SelectionChanged += (_, __) =>
+        {
+            FlowDirection = DirectionCombo.SelectedIndex == 1 ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
+        };
+
         var options = LocalizationManager.GetAvailableCultures()
             .Select(c => new LanguageOption(c))
             .ToList();

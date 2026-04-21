@@ -24,6 +24,11 @@
                     Command="{Binding ClearFiltersCommand}"
                     Padding="10,2" />
             <Separator Width="15" Opacity="0"/>
+            <TextBlock Text="Direction:" VerticalAlignment="Center" Margin="10,0,5,0"/>
+            <ComboBox x:Name="DirectionCombo"
+                      Width="120"
+                      VerticalAlignment="Center"
+                      Margin="0,0,10,0"/>
             <TextBlock Text="Language:" VerticalAlignment="Center" Margin="10,0,5,0"/>
             <ComboBox x:Name="LanguageCombo"
                       Width="220"
