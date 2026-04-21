@@ -57,6 +57,7 @@ namespace DataFilter.WinUI3
                 switch (item.Tag?.ToString())
                 {
                     case "Local": ContentFrame.Navigate(typeof(DataFilter.WinUI3.Demo.Pages.LocalFilterPage), ViewModel.LocalFilterScenario); break;
+                    case "Attach": ContentFrame.Navigate(typeof(DataFilter.WinUI3.Demo.Pages.AttachFilterPage)); break;
                     case "Async": ContentFrame.Navigate(typeof(DataFilter.WinUI3.Demo.Pages.AsyncFilterPage), ViewModel.AsyncFilterScenario); break;
                     case "Hybrid": ContentFrame.Navigate(typeof(DataFilter.WinUI3.Demo.Pages.HybridFilterPage), ViewModel.HybridFilterScenario); break;
                     case "Customization": ContentFrame.Navigate(typeof(DataFilter.WinUI3.Demo.Pages.CustomizationPage), ViewModel.CustomizationScenario); break;
