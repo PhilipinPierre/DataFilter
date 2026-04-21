@@ -1,12 +1,19 @@
 @using DataFilter.Blazor.Demo.Shared.State
 @inject DemoState State
 
-<div class="demo-shell">
+<div class="demo-shell" style="direction: @(State.IsRtl ? "rtl" : "ltr");">
     <div class="shell-controls">
         <label>Rows:</label>
         <input type="number" @bind="State.RowCount" min="1" max="100000" />
         <button class="btn btn-primary" @onclick="State.Regenerate">Regenerate Data</button>
         <button class="btn btn-secondary" @onclick="OnClearFilters">Clear Filters</button>
+        <label style="margin-left: 1rem;">Direction:</label>
+        <select class="form-select form-select-sm d-inline-block" style="width: 110px"
+                value="@(State.IsRtl ? "RTL" : "LTR")"
+                @onchange="OnDirectionChanged">
+            <option value="LTR">LTR</option>
+            <option value="RTL">RTL</option>
+        </select>
     </div>
 </div>
 
@@ -51,4 +58,10 @@
 
 @code {
     [Parameter] public EventCallback OnClearFilters { get; set; }
+
+    private void OnDirectionChanged(ChangeEventArgs e)
+    {
+        var v = e.Value?.ToString() ?? "LTR";
+        State.SetDirection(string.Equals(v, "RTL", StringComparison.OrdinalIgnoreCase));
+    }
 }

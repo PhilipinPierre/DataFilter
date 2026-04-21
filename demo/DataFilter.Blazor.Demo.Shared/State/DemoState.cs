@@ -9,6 +9,15 @@ public class DemoState
 {
     public int RowCount { get; set; } = 1000;
 
+    public bool IsRtl { get; set; }
+
+    public void SetDirection(bool isRtl)
+    {
+        if (IsRtl == isRtl) return;
+        IsRtl = isRtl;
+        NotifyStateChanged();
+    }
+
     public void Regenerate()
     {
         EmployeeDataGenerator.Regenerate(RowCount);

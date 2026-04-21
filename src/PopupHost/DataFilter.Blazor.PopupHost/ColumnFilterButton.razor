@@ -13,15 +13,14 @@
     @if (_showPopup)
     {
         <div id="@PopupId" style="position: fixed; z-index: 2000; top: @(_popupTop)px; left: @(_popupLeft)px;">
-            <FilterPopup ViewModel="ViewModel" 
-                         Visible="_showPopup" 
-                         VisibleChanged="OnVisibilityChanged" />
+            @PopupContent?.Invoke(new PopupContext(_showPopup, EventCallback.Factory.Create<bool>(this, OnVisibilityChanged)))
         </div>
     }
 </div>
 
 @code {
     [Parameter] public IColumnFilterViewModel ViewModel { get; set; } = default!;
+    [Parameter] public RenderFragment<PopupContext>? PopupContent { get; set; }
     
     private string ButtonId = "df-btn-" + Guid.NewGuid().ToString("N");
     private string PopupId = "df-pop-" + Guid.NewGuid().ToString("N");
@@ -81,4 +80,6 @@
         public double Top { get; set; }
         public double Left { get; set; }
     }
+
+    public sealed record PopupContext(bool Visible, EventCallback<bool> VisibleChanged);
 }

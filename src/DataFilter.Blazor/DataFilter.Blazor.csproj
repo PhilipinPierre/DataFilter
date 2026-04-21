@@ -20,6 +20,7 @@
     <ProjectReference Include="..\DataFilter.Filtering.ExcelLike\DataFilter.Filtering.ExcelLike.csproj" />
     <ProjectReference Include="..\DataFilter.Localization\DataFilter.Localization.csproj" />
     <ProjectReference Include="..\DataFilter.PlatformShared\DataFilter.PlatformShared.csproj" />
+    <ProjectReference Include="..\PopupHost\DataFilter.Blazor.PopupHost\DataFilter.Blazor.PopupHost.csproj" />
   </ItemGroup>
 
 </Project>

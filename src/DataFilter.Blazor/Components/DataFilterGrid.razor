@@ -24,7 +24,13 @@ else
                         <th class="df-grid-header">
                             <div class="df-header-content">
                                 <span>@col.Title</span>
-                                <ColumnFilterButton ViewModel="@GetViewModel(col)" />
+                                <ColumnFilterButton ViewModel="@GetViewModel(col)">
+                                    <PopupContent Context="popup">
+                                        <FilterPopup ViewModel="@GetViewModel(col)"
+                                                     Visible="popup.Visible"
+                                                     VisibleChanged="popup.VisibleChanged" />
+                                    </PopupContent>
+                                </ColumnFilterButton>
                             </div>
                         </th>
                     }
