@@ -43,11 +43,14 @@
       <Project Path="tests/PopupHost/DataFilter.WinUI3.PopupHost.Tests/DataFilter.WinUI3.PopupHost.Tests.csproj" />
       <Project Path="tests/PopupHost/DataFilter.Wpf.PopupHost.Tests/DataFilter.Wpf.PopupHost.Tests.csproj" />
     </Folder>
+    <Project Path="demo/DataFilter.Blazor.Demo.PlaywrightTests/DataFilter.Blazor.Demo.PlaywrightTests.csproj" />
     <Project Path="tests/DataFilter.Blazor.Tests/DataFilter.Blazor.Tests.csproj" />
     <Project Path="tests/DataFilter.Core.Tests/DataFilter.Core.Tests.csproj" />
     <Project Path="tests/DataFilter.Expressions.Server.Tests/DataFilter.Expressions.Server.Tests.csproj" />
     <Project Path="tests/DataFilter.Filtering.ExcelLike.Tests/DataFilter.Filtering.ExcelLike.Tests.csproj" />
     <Project Path="tests/DataFilter.Maui.Tests/DataFilter.Maui.Tests.csproj" />
+    <Project Path="tests/UIContracts.Appium.Tests/UIContracts.Appium.Tests.csproj" />
+    <Project Path="tests/UIContracts.FlaUI.Tests/UIContracts.FlaUI.Tests.csproj" />
     <Project Path="tests/DataFilter.WinForms.Tests/DataFilter.WinForms.Tests.csproj" />
     <Project Path="tests/DataFilter.WinUI3.Tests/DataFilter.WinUI3.Tests.csproj" />
     <Project Path="tests/DataFilter.Wpf.Tests/DataFilter.Wpf.Tests.csproj" />

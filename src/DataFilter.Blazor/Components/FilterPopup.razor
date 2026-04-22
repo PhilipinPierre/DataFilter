@@ -150,7 +150,14 @@
     {
         if (Visible)
         {
-            await JSRuntime.InvokeVoidAsync("DataFilterInterops.initResizable", ElementId, _resizeHandleId);
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("DataFilterInterops.initResizable", ElementId, _resizeHandleId);
+            }
+            catch (JSException)
+            {
+                // ignored: interops script may be missing/stale in some host scenarios
+            }
         }
     }
 

@@ -6,6 +6,7 @@
 <div class="df-column-header-container" style="display: inline-block; position: relative;">
     <button type="button"
             id="@_toggleButtonId"
+            data-testid="@_toggleButtonTestId"
             class="df-column-header-button @(ViewModel.IsFilterActive ? "active" : "")"
             @onclick="TogglePopup">
         <span class="df-icon">@((ViewModel.IsFilterActive ? "▼" : "▽"))</span>
@@ -15,7 +16,9 @@
     {
         <div style="position: fixed; inset: 0; z-index: 1999;" @onclick="ClosePopup"></div>
 
-        <div style="position: absolute; z-index: 2000; top: calc(100% + 6px); left: 0;" @onclick:stopPropagation="true">
+        <div style="position: absolute; z-index: 2000; top: calc(100% + 6px); left: 0;"
+             data-testid="@_popupContainerTestId"
+             @onclick:stopPropagation="true">
             @PopupContent?.Invoke(new PopupContext(
                 Visible: _showPopup,
                 VisibleChanged: EventCallback.Factory.Create<bool>(this, OnVisibilityChanged),
@@ -29,13 +32,33 @@
 @code {
     [Parameter] public IColumnFilterViewModel ViewModel { get; set; } = default!;
     [Parameter] public RenderFragment<PopupContext>? PopupContent { get; set; }
+    [Parameter] public string? ColumnKey { get; set; }
     
     private bool _showPopup;
-    private readonly string _toggleButtonId = "df-filter-btn-" + Guid.NewGuid().ToString("N");
-    private readonly string _popupElementId = "df-filter-popup-" + Guid.NewGuid().ToString("N");
+    private string _toggleButtonId = "df-filter-btn-" + Guid.NewGuid().ToString("N");
+    private string _popupElementId = "df-filter-popup-" + Guid.NewGuid().ToString("N");
+    private string _toggleButtonTestId = "df-filter-btn";
+    private string _popupContainerTestId = "df-filter-popup";
     private string _popupStyle = "";
     private DotNetObjectReference<ColumnFilterButton>? _dotNetRef;
     private bool _autoUpdateStarted;
+
+    protected override void OnInitialized()
+    {
+        var key = SanitizeForId(ColumnKey);
+        if (!string.IsNullOrWhiteSpace(key))
+        {
+            _toggleButtonId = $"df-filter-btn-{key}";
+            _popupElementId = $"df-filter-popup-{key}";
+            _toggleButtonTestId = _toggleButtonId;
+            _popupContainerTestId = _popupElementId;
+        }
+        else
+        {
+            _toggleButtonTestId = _toggleButtonId;
+            _popupContainerTestId = _popupElementId;
+        }
+    }
 
     private void TogglePopup()
     {
@@ -89,12 +112,19 @@
         }
 
         // Also keep a CSS style string in case the consumer binds PopupStyle (first paint / SSR-like scenarios).
-        var pos = await JSRuntime.InvokeAsync<AnchoredPosition?>("DataFilterInterops.getAnchoredPopupPosition", _toggleButtonId, _popupElementId, 8);
-        if (pos != null)
+        try
         {
-            _popupStyle = $"top: {pos.Top}px; left: {pos.Left}px;";
-            // no StateHasChanged here: the JS already positioned the popup for this render;
-            // the next normal render (VM changes) will carry the updated style.
+            var pos = await JSRuntime.InvokeAsync<AnchoredPosition?>("DataFilterInterops.getAnchoredPopupPosition", _toggleButtonId, _popupElementId, 8);
+            if (pos != null)
+            {
+                _popupStyle = $"top: {pos.Top}px; left: {pos.Left}px;";
+                // no StateHasChanged here: the JS already positioned the popup for this render;
+                // the next normal render (VM changes) will carry the updated style.
+            }
+        }
+        catch (JSException)
+        {
+            // ignored: can happen with stale/cached scripts or during startup
         }
     }
 
@@ -132,4 +162,18 @@
         string PopupStyle);
 
     private sealed record AnchoredPosition(double Top, double Left);
+
+    private static string? SanitizeForId(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return null;
+
+        // Keep it deterministic and HTML-id safe.
+        var cleaned = new string(raw
+            .Trim()
+            .Select(ch => char.IsLetterOrDigit(ch) ? ch : '_')
+            .ToArray());
+
+        return string.IsNullOrWhiteSpace(cleaned) ? null : cleaned;
+    }
 }

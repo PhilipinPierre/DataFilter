@@ -108,6 +108,24 @@ Wildcards (`*`, `?`) are supported in **Core** text operators (expression builde
 - Framework: **xUnit**, **Moq** in some projects.
 - After changes to Core, ExcelLike, Expressions.Server, or shared ViewModels, run **`dotnet test DataFilter.slnx`** on the branch.
 
+### Visual / UI contract tests (cross-framework behavior alignment)
+
+This repository intentionally invests in **contract-style UI automation** to keep key behaviors aligned across target UI frameworks (Blazor, WPF, WinForms, WinUI 3, MAUI).
+
+These tests focus on **user-visible behavior contracts** rather than pixel-perfect screenshots:
+- popup open/close
+- anchored positioning & scroll tracking
+- filtering affects visible rows / items
+
+Projects:
+- **Blazor (Playwright E2E)**: `demo/DataFilter.Blazor.Demo.PlaywrightTests`
+- **Desktop (UIA via FlaUI)**: `tests/UIContracts.FlaUI.Tests` (WPF / WinForms; WinUI3 requires Windows App Runtime)
+- **MAUI (Appium)**: `tests/UIContracts.Appium.Tests` (environment-driven; requires Appium + device/emulator)
+
+Important for automation stability:
+- Prefer deterministic selectors/IDs (`data-testid`, deterministic element IDs, `AutomationId`) over brittle UI tree traversal.
+- **Always close UI demo apps in `finally`** (best-effort `Close()` then `Kill()`) so test runs never leave windows behind.
+
 ## Notes for agents
 
 1. **Multi-targeting**: Core may compile for `netstandard2.0` — avoid very new .NET APIs without compile-time guards, and keep signatures consistent across packages.

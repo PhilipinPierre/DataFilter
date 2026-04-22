@@ -9,6 +9,8 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 
+builder.Services.AddSignalR(o => o.EnableDetailedErrors = true);
+
 // Shared Services
 builder.Services.AddDataFilterDemoServices();
 
@@ -25,7 +27,10 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 app.UseStatusCodePagesWithReExecute("/not-found");
-app.UseHttpsRedirection();
+if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("DF_E2E")))
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAntiforgery();
 

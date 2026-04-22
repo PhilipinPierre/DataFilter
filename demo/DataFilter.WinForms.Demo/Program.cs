@@ -35,6 +35,7 @@ static class Program
 
         // Views
         services.AddTransient<LocalFilterView>();
+        services.AddTransient<AttachFilterView>();
         services.AddTransient<AsyncFilterView>();
         services.AddTransient<HybridFilterView>();
         services.AddTransient<CustomizationView>();

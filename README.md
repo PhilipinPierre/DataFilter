@@ -1,6 +1,13 @@
 # DataFilter WPF
 
-A visual data filtering system for WPF, inspired by Excel filtering, with support for asynchronous data loading from external APIs.
+A visual data filtering system inspired by Excel filtering, with multiple UI integrations (WPF, WinForms, Blazor, WinUI 3, MAUI) and support for asynchronous data loading from external APIs.
+
+This repo’s guiding principle is **behavior alignment across UI frameworks**:
+- **Filtering semantics** (operators, “search + select all” persistence, stacked criteria)
+- **Popup behavior** (open/close, anchored positioning, scroll/resize tracking)
+- **Interaction contracts** (stable selectors / IDs where applicable)
+
+To enforce alignment, the repository includes a growing **UI contract suite** that runs the *same* high-level scenarios across different target frameworks.
 
 The solution is divided into several main projects:
 
@@ -144,3 +151,74 @@ To run all tests:
 ```bash
 dotnet test
 ```
+
+## Visual / UI contract testing (cross-framework alignment)
+
+The goal of the UI contract suite is not pixel-perfect screenshots; it’s to validate that **end-user behaviors** remain consistent across the supported UI stacks.
+
+### Blazor demos (Playwright E2E)
+
+Project:
+- `demo/DataFilter.Blazor.Demo.PlaywrightTests`
+
+What it validates (against `/demo/attach`):
+- **PopupOpenClose**
+- **AnchoredPositioning** (position computed by the same interop used at runtime)
+- **ScrollKeepsPopupAnchored**
+- **FilteringAffectsRows**
+
+Run against Blazor **Server** (default):
+
+```bash
+dotnet test "demo/DataFilter.Blazor.Demo.PlaywrightTests/DataFilter.Blazor.Demo.PlaywrightTests.csproj" -c Release
+```
+
+Run against Blazor **WASM hosted**:
+
+```powershell
+$env:DF_DEMO_HOST = "wasm"
+dotnet test "demo/DataFilter.Blazor.Demo.PlaywrightTests/DataFilter.Blazor.Demo.PlaywrightTests.csproj" -c Release
+```
+
+Notes:
+- CI installs Playwright **Chromium** and runs these tests for **Server** and **WASM hosted**.
+- The Blazor popup host exposes stable selectors via deterministic IDs / `data-testid` (e.g. `df-filter-btn-Department`, `df-filter-popup-Department`).
+
+### Desktop demos (WPF / WinForms / WinUI 3) via UI Automation (FlaUI)
+
+Project:
+- `tests/UIContracts.FlaUI.Tests`
+
+What it validates today:
+- **WPF**: Attach scenario → popup can be opened (contract: popup opens, then app closes)
+- **WinForms**: Attach scenario → popup can be opened (header button is owner-drawn, clicked by coordinates)
+- **WinUI 3**: same scenario is present, but requires **Windows App Runtime**. If the runtime is missing, the test is a no-op to avoid breaking environments that can’t run WinUI 3 unpackaged.
+
+Run:
+
+```bash
+dotnet test "tests/UIContracts.FlaUI.Tests/UIContracts.FlaUI.Tests.csproj" -c Release
+```
+
+Important:
+- **The UI tests always close the application process** (best-effort `Close()` then `Kill()` in `finally`) so no windows are left open after the run.
+
+### MAUI (Appium) – environment-driven contract suite
+
+Project:
+- `tests/UIContracts.Appium.Tests`
+
+This suite is intentionally **environment-driven** (Appium server + device/emulator required). Until those are configured, tests are no-op.
+
+Run:
+
+```bash
+dotnet test "tests/UIContracts.Appium.Tests/UIContracts.Appium.Tests.csproj" -c Release
+```
+
+Environment variables (to enable execution):
+- `UICT_APP_PLATFORM`: `android` or `ios`
+- `UICT_APPIUM_SERVER`: e.g. `http://127.0.0.1:4723/`
+- `UICT_APP_PATH`: path to the built app package (`.apk`, `.app`, `.ipa`)
+
+As we add stable `AutomationId` / accessibility identifiers to the MAUI demo, this becomes a deterministic contract test (e.g. `df-filter-btn-Department` / `df-filter-popup-Department`).

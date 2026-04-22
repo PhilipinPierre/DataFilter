@@ -46,8 +46,21 @@ jobs:
     - name: Build
       run: dotnet build DataFilter.slnx --configuration Release --no-restore -p:Version=${{ env.VERSION }}
 
+    - name: Install Playwright browsers (Chromium)
+      shell: pwsh
+      run: |
+        dotnet build "demo/DataFilter.Blazor.Demo.PlaywrightTests/DataFilter.Blazor.Demo.PlaywrightTests.csproj" --configuration Release --no-restore
+        pwsh "demo/DataFilter.Blazor.Demo.PlaywrightTests/bin/Release/net8.0/playwright.ps1" install chromium
+
     - name: Test
+      env:
+        DF_DEMO_HOST: server
       run: dotnet test DataFilter.slnx --configuration Release --no-build --verbosity normal
+
+    - name: Playwright E2E (WASM hosted)
+      env:
+        DF_DEMO_HOST: wasm
+      run: dotnet test "demo/DataFilter.Blazor.Demo.PlaywrightTests/DataFilter.Blazor.Demo.PlaywrightTests.csproj" --configuration Release --no-build --verbosity normal
 
     - name: Pack
       if: startsWith(github.ref, 'refs/tags/v')
