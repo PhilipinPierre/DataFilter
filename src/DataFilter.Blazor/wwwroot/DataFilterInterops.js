@@ -11,9 +11,6 @@ window.DataFilterInterops = (function () {
         const m = (typeof margin === 'number') ? margin : 8;
         const dir = (getComputedStyle(btn).direction || 'ltr').toLowerCase();
 
-        // Default anchor rule:
-        // - LTR: popup top-left at button bottom-right
-        // - RTL: popup top-right at button bottom-left
         let left = (dir === 'rtl') ? (btnRect.left - popRect.width) : btnRect.right;
         let top = btnRect.bottom;
 
@@ -39,16 +36,18 @@ window.DataFilterInterops = (function () {
         if (!popupId || active.has(popupId)) return;
 
         const handler = function () {
+            // Single-shot update (used by scroll/resize triggers)
             setAnchoredPopupPosition(buttonId, popupId, margin);
         };
 
-        // Capture phase so we catch scroll events from any scrollable ancestor.
         window.addEventListener('scroll', handler, true);
         window.addEventListener('resize', handler, true);
 
         const entry = { handler: handler, rafId: 0, lastTop: null, lastLeft: null };
         active.set(popupId, entry);
 
+        // rAF loop is the most reliable way to stay anchored across all scrolling containers
+        // (scroll events can be missed depending on the element / platform).
         const loop = function () {
             const e = active.get(popupId);
             if (!e) return;
@@ -56,6 +55,7 @@ window.DataFilterInterops = (function () {
             const pos = getAnchoredPopupPosition(buttonId, popupId, margin);
             const pop = document.getElementById(popupId);
             if (pos && pop) {
+                // Only touch the DOM when coordinates actually changed.
                 if (e.lastTop !== pos.top || e.lastLeft !== pos.left) {
                     e.lastTop = pos.top;
                     e.lastLeft = pos.left;
@@ -67,7 +67,7 @@ window.DataFilterInterops = (function () {
             e.rafId = window.requestAnimationFrame(loop);
         };
 
-        handler();
+        handler(); // initial
         entry.rafId = window.requestAnimationFrame(loop);
     }
 

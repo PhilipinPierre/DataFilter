@@ -24,7 +24,15 @@
                             <th>
                                 <div class="d-flex align-items-center gap-2">
                                     <span>@col.Title</span>
-                                    <ColumnFilterButton ViewModel="@ctx.GetColumnFilterViewModel(col.Id)" />
+                                    <ColumnFilterButton ViewModel="@ctx.GetColumnFilterViewModel(col.Id)">
+                                        <PopupContent Context="popup">
+                                            <FilterPopup ViewModel="@ctx.GetColumnFilterViewModel(col.Id)"
+                                                         Visible="popup.Visible"
+                                                         VisibleChanged="popup.VisibleChanged"
+                                                         ElementId="popup.PopupElementId"
+                                                         PopupStyle="popup.PopupStyle" />
+                                        </PopupContent>
+                                    </ColumnFilterButton>
                                 </div>
                             </th>
                         }

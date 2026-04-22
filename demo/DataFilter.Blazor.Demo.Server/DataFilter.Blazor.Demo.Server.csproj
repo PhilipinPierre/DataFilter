@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\PopupHost\DataFilter.Blazor.PopupHost\DataFilter.Blazor.PopupHost.csproj" />
     <ProjectReference Include="..\DataFilter.Blazor.Demo.Shared\DataFilter.Blazor.Demo.Shared.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
   </ItemGroup>

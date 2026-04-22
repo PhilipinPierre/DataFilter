@@ -1,19 +1,27 @@
 @using DataFilter.PlatformShared.ViewModels
 @using Microsoft.JSInterop
+@implements IAsyncDisposable
 @inject IJSRuntime JSRuntime
-@implements IDisposable
 
 <div class="df-column-header-container" style="display: inline-block; position: relative;">
-    <button id="@ButtonId" 
-            class="df-column-header-button @(ViewModel.IsFilterActive ? "active" : "")" 
+    <button type="button"
+            id="@_toggleButtonId"
+            class="df-column-header-button @(ViewModel.IsFilterActive ? "active" : "")"
             @onclick="TogglePopup">
         <span class="df-icon">@((ViewModel.IsFilterActive ? "▼" : "▽"))</span>
     </button>
 
     @if (_showPopup)
     {
-        <div id="@PopupId" style="position: fixed; z-index: 2000; top: @(_popupTop)px; left: @(_popupLeft)px;">
-            @PopupContent?.Invoke(new PopupContext(_showPopup, EventCallback.Factory.Create<bool>(this, OnVisibilityChanged)))
+        <div style="position: fixed; inset: 0; z-index: 1999;" @onclick="ClosePopup"></div>
+
+        <div style="position: absolute; z-index: 2000; top: calc(100% + 6px); left: 0;" @onclick:stopPropagation="true">
+            @PopupContent?.Invoke(new PopupContext(
+                Visible: _showPopup,
+                VisibleChanged: EventCallback.Factory.Create<bool>(this, OnVisibilityChanged),
+                ToggleButtonId: _toggleButtonId,
+                PopupElementId: _popupElementId,
+                PopupStyle: _popupStyle))
         </div>
     }
 </div>
@@ -22,64 +30,106 @@
     [Parameter] public IColumnFilterViewModel ViewModel { get; set; } = default!;
     [Parameter] public RenderFragment<PopupContext>? PopupContent { get; set; }
     
-    private string ButtonId = "df-btn-" + Guid.NewGuid().ToString("N");
-    private string PopupId = "df-pop-" + Guid.NewGuid().ToString("N");
     private bool _showPopup;
-    private double _popupTop;
-    private double _popupLeft;
-    private DotNetObjectReference<ColumnFilterButton>? _objRef;
+    private readonly string _toggleButtonId = "df-filter-btn-" + Guid.NewGuid().ToString("N");
+    private readonly string _popupElementId = "df-filter-popup-" + Guid.NewGuid().ToString("N");
+    private string _popupStyle = "";
+    private DotNetObjectReference<ColumnFilterButton>? _dotNetRef;
+    private bool _autoUpdateStarted;
 
-    private async System.Threading.Tasks.Task TogglePopup()
+    private void TogglePopup()
     {
+        _showPopup = !_showPopup;
         if (!_showPopup)
         {
-            // Set flag immediately to ensure the div is rendered
-            _showPopup = true;
-            StateHasChanged();
-
-            // Wait a tiny bit for the UI to be ready
-            await System.Threading.Tasks.Task.Delay(1);
-
-            var position = await JSRuntime.InvokeAsync<Position>("DataFilterInterops.getAnchoredPopupPosition", ButtonId, PopupId, 8);
-            if (position != null)
-            {
-                _popupTop = position.Top;
-                _popupLeft = position.Left;
-                StateHasChanged();
-            }
-            
-            _objRef = DotNetObjectReference.Create(this);
-            await JSRuntime.InvokeVoidAsync("DataFilterInterops.addOutsideClickListener", _objRef, PopupId, ButtonId);
-        }
-        else
-        {
-            _showPopup = false;
+            _ = StopAutoUpdateAsync();
         }
     }
 
     private void OnVisibilityChanged(bool visible)
     {
         _showPopup = visible;
+        if (!_showPopup)
+        {
+            _ = StopAutoUpdateAsync();
+        }
+        StateHasChanged();
+    }
+
+    private void ClosePopup()
+    {
+        _showPopup = false;
+        _ = StopAutoUpdateAsync();
         StateHasChanged();
     }
 
     [JSInvokable]
-    public void ClosePopup()
+    public void ClosePopupFromJs() => ClosePopup();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        _showPopup = false;
-        StateHasChanged();
+        if (!_showPopup)
+            return;
+
+        _dotNetRef ??= DotNetObjectReference.Create(this);
+
+        try
+        {
+            // If a stale/cached interops script is loaded, these functions might be missing.
+            // In that case we fall back to a one-time .NET-computed style (below) without breaking rendering.
+            await JSRuntime.InvokeVoidAsync("DataFilterInterops.setAnchoredPopupPosition", _toggleButtonId, _popupElementId, 8);
+            await JSRuntime.InvokeVoidAsync("DataFilterInterops.startAnchoredPopupAutoUpdate", _toggleButtonId, _popupElementId, 8);
+            _autoUpdateStarted = true;
+
+            await JSRuntime.InvokeVoidAsync("DataFilterInterops.addOutsideClickListener", _dotNetRef, _popupElementId, _toggleButtonId, "ClosePopupFromJs");
+        }
+        catch (JSException)
+        {
+            // Ignore and rely on the fallback positioning below.
+        }
+
+        // Also keep a CSS style string in case the consumer binds PopupStyle (first paint / SSR-like scenarios).
+        var pos = await JSRuntime.InvokeAsync<AnchoredPosition?>("DataFilterInterops.getAnchoredPopupPosition", _toggleButtonId, _popupElementId, 8);
+        if (pos != null)
+        {
+            _popupStyle = $"top: {pos.Top}px; left: {pos.Left}px;";
+            // no StateHasChanged here: the JS already positioned the popup for this render;
+            // the next normal render (VM changes) will carry the updated style.
+        }
     }
 
-    public void Dispose()
+    private async Task StopAutoUpdateAsync()
     {
-        _objRef?.Dispose();
+        if (!_autoUpdateStarted)
+            return;
+
+        _autoUpdateStarted = false;
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("DataFilterInterops.stopAnchoredPopupAutoUpdate", _popupElementId);
+        }
+        catch (JSException)
+        {
+            // ignored: can happen with stale/cached scripts
+        }
+        catch
+        {
+            // ignored: can happen during disposal/navigation
+        }
     }
 
-    private class Position
+    public async ValueTask DisposeAsync()
     {
-        public double Top { get; set; }
-        public double Left { get; set; }
+        await StopAutoUpdateAsync();
+        _dotNetRef?.Dispose();
     }
 
-    public sealed record PopupContext(bool Visible, EventCallback<bool> VisibleChanged);
+    public sealed record PopupContext(
+        bool Visible,
+        EventCallback<bool> VisibleChanged,
+        string ToggleButtonId,
+        string PopupElementId,
+        string PopupStyle);
+
+    private sealed record AnchoredPosition(double Top, double Left);
 }

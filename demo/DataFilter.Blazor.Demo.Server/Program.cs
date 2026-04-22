@@ -33,6 +33,9 @@ app.UseStaticFiles();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(typeof(DataFilter.Blazor.Demo.Shared.Pages.DemoPage).Assembly);
+    .AddAdditionalAssemblies(
+        typeof(DataFilter.Blazor.Demo.Shared.Pages.DemoPage).Assembly,
+        typeof(DataFilter.Blazor.Components.FilterPopup).Assembly,
+        typeof(DataFilter.Blazor.PopupHost.ColumnFilterButton).Assembly);
 
 app.Run();
