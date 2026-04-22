@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using global::FlaUI.Core;
 using global::FlaUI.Core.AutomationElements;
 using global::FlaUI.Core.Definitions;
@@ -125,3 +125,4 @@ public sealed class DataFilterWpfDemo_AttachContractsTests
         catch { }
     }
 }
+

@@ -44,6 +44,7 @@ public sealed class ListViewFilterHeaderAdapter : IDisposable
         for (int i = 0; i < Columns.Count; i++)
         {
             var col = Columns[i];
+            var columnKey = SanitizeForId(col.PropertyName);
             var btn = new Button
             {
                 Text = $"{col.Title} \uD83D\uDD0D",
@@ -51,13 +52,17 @@ public sealed class ListViewFilterHeaderAdapter : IDisposable
                 Padding = new Thickness(6, 2),
                 HorizontalOptions = LayoutOptions.Start
             };
+            if (!string.IsNullOrWhiteSpace(columnKey))
+            {
+                btn.AutomationId = $"df-filter-btn-{columnKey}";
+            }
             Grid.SetColumn(btn, i);
 
             btn.Clicked += async (_, _) =>
             {
                 var popupView = FilterHeaderBehavior.CreatePopup(_viewModel, col.PropertyName);
                 var anchorRect = GetAbsoluteRect(btn);
-                var page = new FilterPopupPage(popupView, anchorRect, btn.FlowDirection);
+                var page = new FilterPopupPage(popupView, anchorRect, btn.FlowDirection, columnKey);
                 popupView.CloseRequested += async (_, __) =>
                 {
                     if (page.Navigation.ModalStack.Contains(page))
@@ -76,6 +81,28 @@ public sealed class ListViewFilterHeaderAdapter : IDisposable
         }
 
         return grid;
+    }
+
+    private static string? SanitizeForId(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return null;
+
+        raw = raw.Trim();
+        Span<char> buf = stackalloc char[raw.Length];
+        int n = 0;
+        foreach (var ch in raw)
+        {
+            if ((ch >= 'a' && ch <= 'z') ||
+                (ch >= 'A' && ch <= 'Z') ||
+                (ch >= '0' && ch <= '9') ||
+                ch == '_' || ch == '-')
+            {
+                buf[n++] = ch;
+            }
+        }
+
+        return n == 0 ? null : new string(buf[..n]);
     }
 
     private static Rect GetAbsoluteRect(VisualElement element)

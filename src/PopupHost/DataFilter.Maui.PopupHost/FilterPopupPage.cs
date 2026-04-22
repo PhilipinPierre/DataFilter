@@ -15,7 +15,9 @@ public sealed class FilterPopupPage : ContentPage
     private readonly Rect? _anchorRect;
     private readonly FlowDirection _anchorFlowDirection;
 
-    public FilterPopupPage(FilterPopupView popup, Rect? anchorRect = null, FlowDirection anchorFlowDirection = FlowDirection.LeftToRight)
+    private readonly string? _columnKey;
+
+    public FilterPopupPage(FilterPopupView popup, Rect? anchorRect = null, FlowDirection anchorFlowDirection = FlowDirection.LeftToRight, string? columnKey = null)
     {
         ArgumentNullException.ThrowIfNull(popup);
 
@@ -24,6 +26,7 @@ public sealed class FilterPopupPage : ContentPage
 
         _anchorRect = anchorRect;
         _anchorFlowDirection = anchorFlowDirection;
+        _columnKey = string.IsNullOrWhiteSpace(columnKey) ? null : columnKey.Trim();
 
         // Capture "click-away" / tap outside to dismiss.
         // Using a dedicated overlay element ensures taps on the popup content don't trigger dismissal.
@@ -44,6 +47,10 @@ public sealed class FilterPopupPage : ContentPage
             StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(8) },
             Content = popup
         };
+        if (_columnKey != null)
+        {
+            _border.AutomationId = $"df-filter-popup-{_columnKey}";
+        }
 
         _border.Shadow = new Shadow
         {
