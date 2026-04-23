@@ -44,7 +44,7 @@ public sealed class DemoHostFixture : IAsyncLifetime
         var psi = new ProcessStartInfo
         {
             FileName = "dotnet",
-            Arguments = $"run --project \"{projectPath}\" -c Release --no-build --no-launch-profile --urls \"{BaseUrl}\"",
+            Arguments = $"run --project \"{projectPath}\" -c Release --no-launch-profile --urls \"{BaseUrl}\"",
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,

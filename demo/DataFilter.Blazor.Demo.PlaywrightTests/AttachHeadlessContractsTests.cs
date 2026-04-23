@@ -40,13 +40,7 @@ public sealed class AttachHeadlessContractsTests
     {
         await RunWithTracingAsync(nameof(AnchoredPositioning_Department), new ViewportSize { Width = 1280, Height = 720 }, async (page, errors) =>
         {
-            await page.GotoAsync(_host.BaseUrl + "/demo/attach", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
-            await page.WaitForFunctionAsync("() => !!window.Blazor");
-            await page.WaitForFunctionAsync("() => !!window.DataFilterInterops");
-            await page.WaitForFunctionAsync("() => { const d = document.getElementById('components-reconnect-modal'); return !d || d.open !== true; }");
-            await page.GetByTestId("df-filter-btn-Department").WaitForAsync();
-            await AssertBlazorHealthyAsync(page, errors);
-            await page.WaitForTimeoutAsync(750);
+            await NavigateToAttachAsync(page, errors);
 
             await OpenPopupAsync(page, "Department", errors);
             var btn = page.GetByTestId("df-filter-btn-Department");
@@ -58,6 +52,27 @@ public sealed class AttachHeadlessContractsTests
             Assert.NotNull(popupBox);
 
             await AssertPopupMatchesInteropAsync(page, "df-filter-btn-Department", "df-filter-popup-Department", popupBox!.X, popupBox.Y, tolerancePx: 2);
+            await AssertWithinViewportAsync(page, popupBox!.X, popupBox.Y, popupBox.Width, popupBox.Height);
+        });
+    }
+
+    [Fact]
+    public async Task AnchoredPositioning_RTL_Department()
+    {
+        await RunWithTracingAsync(nameof(AnchoredPositioning_RTL_Department), new ViewportSize { Width = 1280, Height = 720 }, async (page, errors) =>
+        {
+            await NavigateToAttachAsync(page, errors);
+            await SetDirectionAsync(page, isRtl: true);
+            await page.WaitForTimeoutAsync(250);
+
+            await OpenPopupAsync(page, "Department", errors);
+
+            var popup = page.Locator("#df-filter-popup-Department");
+            var popupBox = await popup.BoundingBoxAsync();
+            Assert.NotNull(popupBox);
+
+            await AssertPopupMatchesInteropAsync(page, "df-filter-btn-Department", "df-filter-popup-Department", popupBox!.X, popupBox.Y, tolerancePx: 2);
+            await AssertWithinViewportAsync(page, popupBox!.X, popupBox.Y, popupBox.Width, popupBox.Height);
         });
     }
 
@@ -66,13 +81,7 @@ public sealed class AttachHeadlessContractsTests
     {
         await RunWithTracingAsync(nameof(ScrollKeepsPopupAnchored_Department), new ViewportSize { Width = 1280, Height = 720 }, async (page, errors) =>
         {
-            await page.GotoAsync(_host.BaseUrl + "/demo/attach", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
-            await page.WaitForFunctionAsync("() => !!window.Blazor");
-            await page.WaitForFunctionAsync("() => !!window.DataFilterInterops");
-            await page.WaitForFunctionAsync("() => { const d = document.getElementById('components-reconnect-modal'); return !d || d.open !== true; }");
-            await page.GetByTestId("df-filter-btn-Department").WaitForAsync();
-            await AssertBlazorHealthyAsync(page, errors);
-            await page.WaitForTimeoutAsync(750);
+            await NavigateToAttachAsync(page, errors);
 
             await OpenPopupAsync(page, "Department", errors);
             var btn = page.GetByTestId("df-filter-btn-Department");
@@ -92,6 +101,31 @@ public sealed class AttachHeadlessContractsTests
             Assert.NotNull(afterPopup);
 
             await AssertPopupMatchesInteropAsync(page, "df-filter-btn-Department", "df-filter-popup-Department", afterPopup!.X, afterPopup.Y, tolerancePx: 2);
+            await AssertWithinViewportAsync(page, afterPopup!.X, afterPopup.Y, afterPopup.Width, afterPopup.Height);
+        });
+    }
+
+    [Fact]
+    public async Task ScrollClamp_WhenAnchorOffscreen_Department()
+    {
+        await RunWithTracingAsync(nameof(ScrollClamp_WhenAnchorOffscreen_Department), new ViewportSize { Width = 1280, Height = 720 }, async (page, errors) =>
+        {
+            await NavigateToAttachAsync(page, errors);
+
+            await OpenPopupAsync(page, "Department", errors);
+            var btn = page.GetByTestId("df-filter-btn-Department");
+            var popup = page.Locator("#df-filter-popup-Department");
+
+            await page.EvaluateAsync("window.scrollBy(0, 5000)");
+            await page.WaitForTimeoutAsync(250);
+
+            var btnBox = await btn.BoundingBoxAsync();
+            var popupBox = await popup.BoundingBoxAsync();
+            Assert.NotNull(btnBox);
+            Assert.NotNull(popupBox);
+
+            Assert.True(btnBox!.Y + btnBox.Height < 0, $"Expected anchor to be offscreen above viewport. y={btnBox.Y}, h={btnBox.Height}");
+            await AssertWithinViewportAsync(page, popupBox!.X, popupBox.Y, popupBox.Width, popupBox.Height);
         });
     }
 
@@ -100,13 +134,7 @@ public sealed class AttachHeadlessContractsTests
     {
         await RunWithTracingAsync(nameof(FilteringAffectsRows_DepartmentEqualsIT), new ViewportSize { Width = 1280, Height = 720 }, async (page, errors) =>
         {
-            await page.GotoAsync(_host.BaseUrl + "/demo/attach", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
-            await page.WaitForFunctionAsync("() => !!window.Blazor");
-            await page.WaitForFunctionAsync("() => !!window.DataFilterInterops");
-            await page.WaitForFunctionAsync("() => { const d = document.getElementById('components-reconnect-modal'); return !d || d.open !== true; }");
-            await page.GetByTestId("df-filter-btn-Department").WaitForAsync();
-            await AssertBlazorHealthyAsync(page, errors);
-            await page.WaitForTimeoutAsync(750);
+            await NavigateToAttachAsync(page, errors);
 
             var rows = page.Locator("tbody tr");
             var beforeCount = await rows.CountAsync();
@@ -125,6 +153,74 @@ public sealed class AttachHeadlessContractsTests
             var afterCount = await rows.CountAsync();
 
             Assert.True(afterCount < beforeCount, $"Expected fewer rows after applying filter. Before={beforeCount}, After={afterCount}");
+        });
+    }
+
+    [Fact]
+    public async Task ResizeBehavior_Department()
+    {
+        await RunWithTracingAsync(nameof(ResizeBehavior_Department), new ViewportSize { Width = 1280, Height = 720 }, async (page, errors) =>
+        {
+            await NavigateToAttachAsync(page, errors);
+            await OpenPopupAsync(page, "Department", errors);
+
+            var popup = page.Locator("#df-filter-popup-Department");
+            var handle = popup.Locator(".df-resize-handle");
+
+            var before = await popup.BoundingBoxAsync();
+            var handleBox = await handle.BoundingBoxAsync();
+            Assert.NotNull(before);
+            Assert.NotNull(handleBox);
+
+            await page.Mouse.MoveAsync(handleBox!.X + handleBox.Width / 2, handleBox.Y + handleBox.Height / 2);
+            await page.Mouse.DownAsync();
+            await page.Mouse.MoveAsync(handleBox.X + 120, handleBox.Y + 90);
+            await page.Mouse.UpAsync();
+            await page.WaitForTimeoutAsync(150);
+
+            var after = await popup.BoundingBoxAsync();
+            Assert.NotNull(after);
+            Assert.True(
+                after!.Width > before!.Width || after.Height > before.Height,
+                $"Expected popup size to change. Before={before.Width}x{before.Height}, After={after.Width}x{after.Height}");
+            await AssertWithinViewportAsync(page, after!.X, after.Y, after.Width, after.Height);
+        });
+    }
+
+    [Fact]
+    public async Task SortAscending_Department()
+    {
+        await RunWithTracingAsync(nameof(SortAscending_Department), new ViewportSize { Width = 1280, Height = 720 }, async (page, errors) =>
+        {
+            await NavigateToAttachAsync(page, errors);
+            await OpenPopupAsync(page, "Department", errors);
+
+            var popup = page.Locator("#df-filter-popup-Department");
+            await popup.Locator(".df-sort-section .df-sort-button").Nth(0).ClickAsync();
+            await page.WaitForTimeoutAsync(250);
+
+            var values = await GetColumnValuesAsync(page, "Department");
+            Assert.True(values.Count > 1);
+            AssertSorted(values, descending: false);
+        });
+    }
+
+    [Fact]
+    public async Task SortDescending_Salary()
+    {
+        await RunWithTracingAsync(nameof(SortDescending_Salary), new ViewportSize { Width = 1280, Height = 720 }, async (page, errors) =>
+        {
+            await NavigateToAttachAsync(page, errors);
+            await OpenPopupAsync(page, "Salary", errors);
+
+            var popup = page.Locator("#df-filter-popup-Salary");
+            await popup.Locator(".df-sort-section .df-sort-button").Nth(1).ClickAsync();
+            await page.WaitForTimeoutAsync(250);
+
+            var values = await GetColumnValuesAsync(page, "Salary");
+            var numbers = values.Select(ParseFloatInvariant).ToList();
+            Assert.True(numbers.Count > 1);
+            AssertSorted(numbers, descending: true);
         });
     }
 
@@ -182,6 +278,24 @@ public sealed class AttachHeadlessContractsTests
         }
     }
 
+    private async Task NavigateToAttachAsync(IPage page, List<string> errors)
+    {
+        await page.GotoAsync(_host.BaseUrl + "/demo/attach", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.WaitForFunctionAsync("() => !!window.Blazor");
+        await page.WaitForFunctionAsync("() => !!window.DataFilterInterops");
+        await page.WaitForFunctionAsync("() => { const d = document.getElementById('components-reconnect-modal'); return !d || d.open !== true; }");
+        await page.GetByTestId("df-filter-btn-Department").WaitForAsync();
+        await AssertBlazorHealthyAsync(page, errors);
+        await page.WaitForTimeoutAsync(750);
+    }
+
+    private static async Task SetDirectionAsync(IPage page, bool isRtl)
+    {
+        var direction = page.GetByTestId("df-direction");
+        await direction.WaitForAsync();
+        await direction.SelectOptionAsync(new[] { isRtl ? "RTL" : "LTR" });
+    }
+
     private async Task OpenPopupAsync(IPage page, string columnKey, List<string> errors)
     {
         var btnId = $"df-filter-btn-{columnKey}";
@@ -230,6 +344,18 @@ public sealed class AttachHeadlessContractsTests
             $"CapturedBrowserErrors:{Environment.NewLine}{string.Join(Environment.NewLine, errors)}");
     }
 
+    private static Task AssertWithinViewportAsync(IPage page, double x, double y, double width, double height)
+    {
+        var viewport = page.ViewportSize;
+        Assert.NotNull(viewport);
+
+        Assert.True(x >= 0, $"Expected popup to be within viewport (x>=0). x={x}");
+        Assert.True(y >= 0, $"Expected popup to be within viewport (y>=0). y={y}");
+        Assert.True(x + width <= viewport!.Width + 0.5, $"Expected popup to be within viewport (right<=width). right={x + width}, width={viewport.Width}");
+        Assert.True(y + height <= viewport.Height + 0.5, $"Expected popup to be within viewport (bottom<=height). bottom={y + height}, height={viewport.Height}");
+        return Task.CompletedTask;
+    }
+
     private static async Task AssertBlazorHealthyAsync(IPage page, List<string> errors)
     {
         var isErrorUiVisible = await page.EvaluateAsync<bool>(
@@ -259,6 +385,64 @@ public sealed class AttachHeadlessContractsTests
 
         Assert.True(Math.Abs(popupX - expected!.Left) <= tolerancePx, $"Expected left≈{expected.Left}, actual={popupX}");
         Assert.True(Math.Abs(popupY - expected.Top) <= tolerancePx, $"Expected top≈{expected.Top}, actual={popupY}");
+    }
+
+    private static async Task<List<string>> GetColumnValuesAsync(IPage page, string headerText)
+    {
+        var index = await page.EvaluateAsync<int>(
+            @"(headerText) => {
+                const ths = Array.from(document.querySelectorAll('thead th'));
+                const norm = (s) => (s || '').replace(/\s+/g,' ').trim().toLowerCase();
+                const target = norm(headerText);
+                const i = ths.findIndex(th => norm(th.innerText).includes(target));
+                return i < 0 ? -1 : i + 1;
+            }",
+            headerText);
+
+        if (index < 1)
+            throw new InvalidOperationException($"Could not find column header '{headerText}'.");
+
+        var cells = page.Locator($"tbody tr td:nth-child({index})");
+        var count = await cells.CountAsync();
+        var values = new List<string>(capacity: count);
+        for (var i = 0; i < count; i++)
+        {
+            values.Add((await cells.Nth(i).InnerTextAsync()).Trim());
+        }
+        return values;
+    }
+
+    private static void AssertSorted(IReadOnlyList<string> values, bool descending)
+    {
+        for (var i = 1; i < values.Count; i++)
+        {
+            var cmp = string.Compare(values[i - 1], values[i], StringComparison.OrdinalIgnoreCase);
+            if (descending)
+                Assert.True(cmp >= 0, $"Expected descending sort at i={i}. Prev='{values[i - 1]}', Curr='{values[i]}'");
+            else
+                Assert.True(cmp <= 0, $"Expected ascending sort at i={i}. Prev='{values[i - 1]}', Curr='{values[i]}'");
+        }
+    }
+
+    private static void AssertSorted(IReadOnlyList<float> values, bool descending)
+    {
+        for (var i = 1; i < values.Count; i++)
+        {
+            if (descending)
+                Assert.True(values[i - 1] >= values[i], $"Expected descending sort at i={i}. Prev={values[i - 1]}, Curr={values[i]}");
+            else
+                Assert.True(values[i - 1] <= values[i], $"Expected ascending sort at i={i}. Prev={values[i - 1]}, Curr={values[i]}");
+        }
+    }
+
+    private static float ParseFloatInvariant(string raw)
+    {
+        raw = raw.Trim();
+        if (float.TryParse(raw, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v))
+            return v;
+
+        raw = raw.Replace(',', '.');
+        return float.Parse(raw, System.Globalization.CultureInfo.InvariantCulture);
     }
 
     private sealed class AnchoredPos

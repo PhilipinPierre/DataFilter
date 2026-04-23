@@ -9,6 +9,7 @@
         <button class="btn btn-secondary" @onclick="OnClearFilters">Clear Filters</button>
         <label style="margin-left: 1rem;">Direction:</label>
         <select class="form-select form-select-sm d-inline-block" style="width: 110px"
+                data-testid="df-direction"
                 value="@(State.IsRtl ? "RTL" : "LTR")"
                 @onchange="OnDirectionChanged">
             <option value="LTR">LTR</option>
