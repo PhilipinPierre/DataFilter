@@ -133,12 +133,12 @@ public sealed class DataFilterWpfDemo_AttachContractsTests
             ApplySingleValueListFilter(window, automation, propertyName: "Department", value: "IT");
 
             // Open popup again and click Clear.
-            ClickByAutomationId(window, "df-filter-btn-Department", TimeSpan.FromSeconds(10));
-
             var beforeHandles = automation.GetDesktop()
                 .FindAllChildren(cf => cf.ByControlType(ControlType.Window))
                 .Select(x => x.Properties.NativeWindowHandle.ValueOrDefault)
                 .ToHashSet();
+
+            ClickByAutomationId(window, "df-filter-btn-Department", TimeSpan.FromSeconds(10));
 
             var popup = WaitForPopupRootByAutomationId(automation, window, beforeHandles, "df-filter-popup-Department", TimeSpan.FromSeconds(5));
             var clearBtn = popup.FindFirstDescendant(cf => cf.ByAutomationId("df-clear"))?.AsButton();
@@ -166,12 +166,12 @@ public sealed class DataFilterWpfDemo_AttachContractsTests
 
             NavigateToAttachTab(window);
 
-            ClickByAutomationId(window, "df-filter-btn-Salary", TimeSpan.FromSeconds(10));
-
             var beforeHandles = automation.GetDesktop()
                 .FindAllChildren(cf => cf.ByControlType(ControlType.Window))
                 .Select(x => x.Properties.NativeWindowHandle.ValueOrDefault)
                 .ToHashSet();
+
+            ClickByAutomationId(window, "df-filter-btn-Salary", TimeSpan.FromSeconds(10));
 
             var popup = WaitForPopupRootByAutomationId(automation, window, beforeHandles, "df-filter-popup-Salary", TimeSpan.FromSeconds(5));
             var sortDesc = popup.FindFirstDescendant(cf => cf.ByAutomationId("df-sort-desc"))?.AsButton();
