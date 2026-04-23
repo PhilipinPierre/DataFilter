@@ -60,23 +60,100 @@ public sealed class DataFilterWpfDemo_AttachContractsTests
                 throw new InvalidOperationException("Could not find a filter toggle button. Button names: " + string.Join(", ", names));
             }
 
+            var beforeHandles = automation.GetDesktop()
+                .FindAllChildren(cf => cf.ByControlType(ControlType.Window))
+                .Select(x => x.Properties.NativeWindowHandle.ValueOrDefault)
+                .ToHashSet();
+
             toggle.Invoke();
 
             // Assert a popup-like window appears (WPF Popup/Window surface).
-            // Many popup hosts show as a separate top-level window. We look for any non-main window.
+            // Many popup hosts show as a separate top-level window.
+            var popup = WaitForPopupWindow(automation, window, beforeHandles, TimeSpan.FromSeconds(5));
+
+            // AnchoredPositioning (work-area safe): popup should be within the working area.
+            AssertWithinWorkingArea(popup);
+
+            // Close via Esc (preferred close mechanism where supported).
+            try { window.Focus(); } catch { }
+            global::FlaUI.Core.Input.Keyboard.Press(global::FlaUI.Core.WindowsAPI.VirtualKeyShort.ESCAPE);
+
+            // Ensure popup is gone.
             WaitUntil(() =>
             {
-                var windows = automation.GetDesktop()
-                    .FindAllChildren(cf => cf.ByControlType(ControlType.Window))
-                    .Select(x => x.AsWindow())
-                    .ToList();
-                return windows.Any(w => !string.Equals(w.Title, window.Title, StringComparison.OrdinalIgnoreCase));
+                var w = TryGetPopupWindow(automation, window, beforeHandles);
+                return w == null;
             }, TimeSpan.FromSeconds(5));
         }
         finally
         {
             TryCloseApp(app);
         }
+    }
+
+    private static Window WaitForPopupWindow(UIA3Automation automation, Window main, HashSet<nint> beforeHandles, TimeSpan timeout)
+    {
+        var popup = default(Window);
+        WaitUntil(() =>
+        {
+            popup = TryGetPopupWindow(automation, main, beforeHandles) ?? TryGetAnyPopupWindow(automation, main);
+            return popup != null;
+        }, timeout);
+
+        return popup!;
+    }
+
+    private static Window? TryGetPopupWindow(UIA3Automation automation, Window main, HashSet<nint> beforeHandles)
+    {
+        var windows = automation.GetDesktop()
+            .FindAllChildren(cf => cf.ByControlType(ControlType.Window))
+            .Select(x => x.AsWindow())
+            .ToList();
+
+        // Popup window usually has no title or a different title than the main window.
+        return windows.FirstOrDefault(w =>
+        {
+            var handle = w.Properties.NativeWindowHandle.ValueOrDefault;
+            if (beforeHandles.Contains(handle))
+                return false;
+
+            if (string.Equals(w.Title ?? "", main.Title ?? "", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            var r = w.BoundingRectangle;
+            // Heuristic: filter popups are not full-screen windows.
+            return r.Width > 0 && r.Width < 1200 && r.Height > 0 && r.Height < 1200;
+        });
+    }
+
+    private static Window? TryGetAnyPopupWindow(UIA3Automation automation, Window main)
+    {
+        var windows = automation.GetDesktop()
+            .FindAllChildren(cf => cf.ByControlType(ControlType.Window))
+            .Select(x => x.AsWindow())
+            .ToList();
+
+        return windows.FirstOrDefault(w =>
+        {
+            if (string.Equals(w.Title ?? "", main.Title ?? "", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            var r = w.BoundingRectangle;
+            return r.Width > 0 && r.Width < 1200 && r.Height > 0 && r.Height < 1200;
+        });
+    }
+
+    private static void AssertWithinWorkingArea(Window popup)
+    {
+        // Best-effort: clamp to primary working area. Multi-monitor refinement can be added when demos support it.
+        var wa = System.Windows.Forms.Screen.PrimaryScreen!.WorkingArea;
+        var r = popup.BoundingRectangle;
+        const int tolerancePx = 16; // allow for shadows / window borders
+
+        Assert.True(r.Left >= wa.Left - tolerancePx, $"Expected popup within working area (left). popup={r}, workArea={wa}");
+        Assert.True(r.Top >= wa.Top - tolerancePx, $"Expected popup within working area (top). popup={r}, workArea={wa}");
+        Assert.True(r.Right <= wa.Right + tolerancePx, $"Expected popup within working area (right). popup={r}, workArea={wa}");
+        Assert.True(r.Bottom <= wa.Bottom + tolerancePx, $"Expected popup within working area (bottom). popup={r}, workArea={wa}");
     }
 
     private static string BuildAndGetWpfDemoExePath()
