@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:automation="using:Microsoft.UI.Xaml.Automation"
     mc:Ignorable="d">
 
     <Grid>
@@ -25,10 +26,11 @@
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <TextBlock Text="{Binding Id}" Width="50" />
-                        <TextBlock Text="{Binding Name}" Width="150" />
-                        <TextBlock Text="{Binding Department}" Width="150" />
+                        <TextBlock Text="{Binding Name}" Width="150" automation:AutomationProperties.AutomationId="df-row-name" />
+                        <TextBlock Text="{Binding Department}" Width="150" automation:AutomationProperties.AutomationId="df-row-dept" />
                         <TextBlock Text="{Binding Country}" Width="150" />
-                        <TextBlock Text="{Binding Time}" Width="100" />
+                        <TextBlock Text="{Binding Salary}" Width="110" automation:AutomationProperties.AutomationId="df-row-salary" />
+                        <TextBlock Text="{Binding HireDate}" Width="160" automation:AutomationProperties.AutomationId="df-row-hiredate" />
                     </StackPanel>
                 </DataTemplate>
             </ListView.ItemTemplate>

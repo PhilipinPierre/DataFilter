@@ -94,6 +94,91 @@ public sealed class DataFilterWinUI3Demo_AttachContractsTests
         }
     }
 
+    [Fact]
+    public void FilteringAffectsItems_DepartmentEqualsIT()
+    {
+        var exe = GetWinUI3DemoExePath();
+
+        if (!IsWinAppRuntimeAvailable(exe))
+            return;
+
+        using var app = Application.Launch(exe);
+        try
+        {
+            using var automation = new UIA3Automation();
+            var window = app.GetMainWindow(automation, TimeSpan.FromSeconds(10));
+            Assert.NotNull(window);
+
+            // Navigate to Attach via the NavigationView item.
+            var attachNavItem = WaitFor(() =>
+                window.FindFirstDescendant(cf => cf.ByControlType(ControlType.ListItem).And(cf.ByName("Attach (ListView)"))),
+                TimeSpan.FromSeconds(10));
+            Assert.NotNull(attachNavItem);
+            attachNavItem!.AsListBoxItem().Select();
+
+            var list = WaitFor(() =>
+                window.FindFirstDescendant(cf => cf.ByControlType(ControlType.List)),
+                TimeSpan.FromSeconds(10));
+            Assert.NotNull(list);
+
+            // Open popup for Department via AutomationId.
+            var deptBtn = WaitFor(() =>
+                window.FindFirstDescendant(cf => cf.ByControlType(ControlType.Button).And(cf.ByAutomationId("df-filter-btn-Department"))),
+                TimeSpan.FromSeconds(10));
+            Assert.NotNull(deptBtn);
+            deptBtn!.AsButton().Invoke();
+
+            // Popup root is a UserControl with AutomationId.
+            var popup = WaitFor(() =>
+                automation.GetDesktop().FindFirstDescendant(cf => cf.ByAutomationId("df-filter-popup-Department")),
+                TimeSpan.FromSeconds(10));
+            Assert.NotNull(popup);
+
+            // Expand advanced filter if needed and set Equals IT.
+            var adv = popup!.FindFirstDescendant(cf => cf.ByControlType(ControlType.Group).Or(cf.ByControlType(ControlType.Pane)).Or(cf.ByControlType(ControlType.Custom)));
+            _ = adv; // best-effort; keep resilient
+
+            // Find operator combo and value textbox (heuristic: first ComboBox + first Edit within popup).
+            var opCombo = popup.FindFirstDescendant(cf => cf.ByControlType(ControlType.ComboBox))?.AsComboBox();
+            Assert.NotNull(opCombo);
+            opCombo!.Expand();
+            var equals = opCombo.Items.FirstOrDefault(i => (i.Properties.Name.ValueOrDefault ?? "").Contains("Equals", StringComparison.OrdinalIgnoreCase));
+            equals?.Select();
+
+            var edits = popup.FindAllDescendants(cf => cf.ByControlType(ControlType.Edit)).Select(e => e.AsTextBox()).ToList();
+            Assert.True(edits.Count > 0);
+            edits[0].Text = "IT";
+
+            var ok = popup.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
+                .Select(b => b.AsButton())
+                .FirstOrDefault(b => string.Equals(b.Properties.Name.ValueOrDefault, "OK", StringComparison.OrdinalIgnoreCase));
+            Assert.NotNull(ok);
+            ok!.Invoke();
+
+            // Verify every visible department label is IT.
+            WaitUntil(() =>
+            {
+                var deptLabels = window.FindAllDescendants(cf => cf.ByAutomationId("df-row-dept")).ToList();
+                return deptLabels.Count > 0;
+            }, TimeSpan.FromSeconds(5));
+
+            var labels = window.FindAllDescendants(cf => cf.ByAutomationId("df-row-dept"))
+                .Select(x => x.AsLabel())
+                .Where(x => x.Properties.IsOffscreen.ValueOrDefault == false)
+                .ToList();
+
+            Assert.NotEmpty(labels);
+            foreach (var el in labels)
+            {
+                Assert.Equal("IT", (el.Text ?? "").Trim());
+            }
+        }
+        finally
+        {
+            TryCloseApp(app);
+        }
+    }
+
     private static AutomationElement WaitForNewPopup(AutomationElement desktop, Window main, HashSet<nint> beforeHandles, TimeSpan timeout)
     {
         AutomationElement? popup = null;

@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Automation;
 using Windows.Foundation;
 
 namespace DataFilter.WinUI3.Attach;
@@ -52,6 +53,7 @@ public sealed class ListViewFilterHeaderAdapter : IDisposable
         for (int i = 0; i < Columns.Count; i++)
         {
             var col = Columns[i];
+            var columnKey = SanitizeForId(col.PropertyName);
             var btn = new Button
             {
                 Content = $"{col.Title} \uD83D\uDD0D",
@@ -59,11 +61,19 @@ public sealed class ListViewFilterHeaderAdapter : IDisposable
                 Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
                 Padding = new Thickness(5)
             };
+            if (!string.IsNullOrWhiteSpace(columnKey))
+            {
+                AutomationProperties.SetAutomationId(btn, $"df-filter-btn-{columnKey}");
+            }
             Grid.SetColumn(btn, i);
 
             btn.Click += (_, _) =>
             {
                 var popup = FilterHeaderBehavior.CreatePopup(_viewModel, col.PropertyName);
+                if (!string.IsNullOrWhiteSpace(columnKey))
+                {
+                    AutomationProperties.SetAutomationId(popup, $"df-filter-popup-{columnKey}");
+                }
                 var flyout = new Flyout { Content = popup };
                 if (popup.ViewModel != null)
                 {
@@ -85,6 +95,28 @@ public sealed class ListViewFilterHeaderAdapter : IDisposable
 
         headerScroll.Content = grid;
         return headerScroll;
+    }
+
+    private static string? SanitizeForId(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return null;
+
+        raw = raw.Trim();
+        Span<char> buf = stackalloc char[raw.Length];
+        int n = 0;
+        foreach (var ch in raw)
+        {
+            if ((ch >= 'a' && ch <= 'z') ||
+                (ch >= 'A' && ch <= 'Z') ||
+                (ch >= '0' && ch <= '9') ||
+                ch == '_' || ch == '-')
+            {
+                buf[n++] = ch;
+            }
+        }
+
+        return n == 0 ? null : new string(buf[..n]);
     }
 
     public void Dispose()

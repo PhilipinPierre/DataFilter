@@ -11,6 +11,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Automation;
 
 namespace DataFilter.Wpf.Behaviors;
 
@@ -353,6 +354,10 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
             VerticalAlignment = VerticalAlignment.Center,
             Cursor = Cursors.Hand
         };
+        if (!string.IsNullOrWhiteSpace(PropertyName))
+        {
+            AutomationProperties.SetAutomationId(_filterButton, $"df-filter-btn-{PropertyName}");
+        }
         _filterButton.Click += OnFilterButtonClick;
 
         // Bind IsActive
@@ -435,6 +440,10 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         };
 
         var filterControl = new FilterPopup { DataContext = _viewModel };
+        if (!string.IsNullOrWhiteSpace(PropertyName))
+        {
+            AutomationProperties.SetAutomationId(filterControl, $"df-filter-popup-{PropertyName}");
+        }
         _filterPopup.Child = filterControl;
 
         _viewModel!.OnApply += (_, _) => _filterPopup.IsOpen = false;
