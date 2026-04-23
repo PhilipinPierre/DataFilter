@@ -473,21 +473,20 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
             return new[] { new CustomPopupPlacement(desiredRelative, PopupPrimaryAxis.Horizontal) };
 
         const double margin = 8;
-        var targetScreen = _filterButton.PointToScreen(new Point(0, 0));
-        var desiredScreen = new Point(targetScreen.X + desiredRelative.X, targetScreen.Y + desiredRelative.Y);
+        // Work purely in DIPs. The callback expects offsets in DIPs relative to target, so mixing
+        // screen pixels (PointToScreen) with Window.Left/Top (DIPs) can push the popup offscreen.
+        var targetInWindow = _filterButton.TranslatePoint(new Point(0, 0), window);
+        var desiredInWindow = new Point(targetInWindow.X + desiredRelative.X, targetInWindow.Y + desiredRelative.Y);
 
-        var windowTopLeft = new Point(window.Left, window.Top);
-        var windowBottomRight = new Point(window.Left + window.ActualWidth, window.Top + window.ActualHeight);
+        var minX = margin;
+        var maxX = Math.Max(minX, window.ActualWidth - popupSize.Width - margin);
+        var minY = margin;
+        var maxY = Math.Max(minY, window.ActualHeight - popupSize.Height - margin);
 
-        var minX = windowTopLeft.X + margin;
-        var maxX = Math.Max(minX, windowBottomRight.X - popupSize.Width - margin);
-        var minY = windowTopLeft.Y + margin;
-        var maxY = Math.Max(minY, windowBottomRight.Y - popupSize.Height - margin);
+        var clampedX = desiredInWindow.X < minX ? minX : (desiredInWindow.X > maxX ? maxX : desiredInWindow.X);
+        var clampedY = desiredInWindow.Y < minY ? minY : (desiredInWindow.Y > maxY ? maxY : desiredInWindow.Y);
 
-        var clampedX = desiredScreen.X < minX ? minX : (desiredScreen.X > maxX ? maxX : desiredScreen.X);
-        var clampedY = desiredScreen.Y < minY ? minY : (desiredScreen.Y > maxY ? maxY : desiredScreen.Y);
-
-        var adjustedRelative = new Point(clampedX - targetScreen.X, clampedY - targetScreen.Y);
+        var adjustedRelative = new Point(clampedX - targetInWindow.X, clampedY - targetInWindow.Y);
         return new[] { new CustomPopupPlacement(adjustedRelative, PopupPrimaryAxis.Horizontal) };
     }
 
@@ -500,11 +499,11 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         {
             try
             {
-                var anchor = _filterButton.PointToScreen(new Point(0, 0));
-                var screen = System.Windows.Forms.Screen.FromPoint(new System.Drawing.Point((int)anchor.X, (int)anchor.Y));
-                var wa = screen.WorkingArea;
                 const double margin = 8;
 
+                // Use WPF's WorkArea to avoid WinForms dependency in this project.
+                // Note: SystemParameters.WorkArea is in DIPs.
+                var wa = SystemParameters.WorkArea;
                 child.MaxWidth = Math.Max(200, wa.Width - (margin * 2));
                 child.MaxHeight = Math.Max(200, wa.Height - (margin * 2));
 
