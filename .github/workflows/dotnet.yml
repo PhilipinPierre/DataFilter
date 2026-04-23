@@ -57,6 +57,10 @@ jobs:
         DF_DEMO_HOST: server
       run: dotnet test DataFilter.slnx --configuration Release --no-build --verbosity normal
 
+    # NOTE: Desktop UI Automation (FlaUI) requires an interactive Windows session.
+    # GitHub-hosted runners often block UIA/SendInput interactions (timeouts / access denied).
+    # Run these on a self-hosted Windows runner (see `desktop-ui-contracts` job below).
+
     - name: Playwright E2E (WASM hosted)
       env:
         DF_DEMO_HOST: wasm
@@ -71,3 +75,25 @@ jobs:
       shell: pwsh
       run: |
         dotnet nuget push artifacts\*.nupkg --source https://api.nuget.org/v3/index.json --skip-duplicate --api-key ${{ secrets.DataFilter_NuGet_API_Key }}
+
+  desktop-ui-contracts:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: self-hosted
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        global-json-file: global.json
+
+    - name: Restore dependencies
+      run: dotnet restore DataFilter.slnx
+
+    - name: Build (Release)
+      run: dotnet build DataFilter.slnx --configuration Release --no-restore
+
+    - name: Desktop UI Contracts (FlaUI)
+      run: dotnet test "tests/UIContracts.FlaUI.Tests/UIContracts.FlaUI.Tests.csproj" --configuration Release --no-build --verbosity normal

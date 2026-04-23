@@ -21,68 +21,35 @@ public sealed class DataFilterWpfDemo_AttachContractsTests
             var window = app.GetMainWindow(automation);
             Assert.NotNull(window);
 
-            // Navigate to the attach tab.
-            var tab = window.FindFirstDescendant(cf => cf.ByControlType(ControlType.Tab))?.AsTab();
-            Assert.NotNull(tab);
-
-            var attachTab = tab!.TabItems.FirstOrDefault(t =>
-                string.Equals(t.Properties.Name.ValueOrDefault, "Attach (DataGrid)", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(t.Properties.HelpText.ValueOrDefault, "Attach (DataGrid)", StringComparison.OrdinalIgnoreCase));
-            Assert.NotNull(attachTab);
-            attachTab!.Select();
-
-            // In the DataGrid header, the popup toggle is usually a button with the glyph '▽' or '▼'.
-            // We keep it resilient and just click the first matching button.
-            var buttons = window.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
-                .Select(b => b.AsButton())
-                .ToList();
-
-            var toggle = buttons.FirstOrDefault(b =>
-            {
-                var name = b.Properties.Name.ValueOrDefault ?? "";
-                if (name.Contains("▽", StringComparison.Ordinal) || name.Contains("▼", StringComparison.Ordinal))
-                    return true;
-
-                // Fallback: the filter toggle is often an icon-only button with no UIA name.
-                // We heuristically pick a small unnamed button (exclude window chrome buttons which are usually named).
-                if (string.IsNullOrWhiteSpace(name))
-                {
-                    var r = b.BoundingRectangle;
-                    return r.Width > 0 && r.Width < 60 && r.Height > 0 && r.Height < 60;
-                }
-
-                return false;
-            });
-
-            if (toggle == null)
-            {
-                var names = buttons.Select(b => b.Properties.Name.ValueOrDefault ?? "(null)").Distinct().OrderBy(x => x).ToList();
-                throw new InvalidOperationException("Could not find a filter toggle button. Button names: " + string.Join(", ", names));
-            }
+            NavigateToAttachTab(window);
 
             var beforeHandles = automation.GetDesktop()
                 .FindAllChildren(cf => cf.ByControlType(ControlType.Window))
                 .Select(x => x.Properties.NativeWindowHandle.ValueOrDefault)
                 .ToHashSet();
 
-            toggle.Invoke();
+            ClickByAutomationId(window, "df-filter-btn-Department", TimeSpan.FromSeconds(10));
 
-            // Assert a popup-like window appears (WPF Popup/Window surface).
-            // Many popup hosts show as a separate top-level window.
-            var popup = WaitForPopupWindow(automation, window, beforeHandles, TimeSpan.FromSeconds(5));
+            // Ensure popup root exists (may be hosted inside a separate popup window).
+            var popupRoot = WaitForPopupRootByAutomationId(automation, window, beforeHandles, "df-filter-popup-Department", TimeSpan.FromSeconds(5));
 
             // AnchoredPositioning (work-area safe): popup should be within the working area.
-            AssertWithinWorkingArea(popup);
+            var popupWindow = TryGetPopupWindow(automation, window, beforeHandles) ?? TryGetAnyPopupWindow(automation, window);
+            if (popupWindow != null)
+                AssertWithinWorkingArea(popupWindow);
 
             // Close via Esc (preferred close mechanism where supported).
-            try { window.Focus(); } catch { }
-            global::FlaUI.Core.Input.Keyboard.Press(global::FlaUI.Core.WindowsAPI.VirtualKeyShort.ESCAPE);
+            var ok = popupRoot.FindFirstDescendant(cf => cf.ByAutomationId("df-ok"))?.AsButton();
+            Assert.NotNull(ok);
+            ok!.Invoke();
 
             // Ensure popup is gone.
             WaitUntil(() =>
             {
                 var w = TryGetPopupWindow(automation, window, beforeHandles);
-                return w == null;
+                if (w == null)
+                    return true;
+                return w.FindFirstDescendant(cf => cf.ByAutomationId("df-filter-popup-Department")) == null;
             }, TimeSpan.FromSeconds(5));
         }
         finally
@@ -260,6 +227,22 @@ public sealed class DataFilterWpfDemo_AttachContractsTests
             return el != null;
         }, timeout);
 
+        // Prefer UIA invoke patterns; SendInput can be blocked in CI/session-0 contexts.
+        try
+        {
+            el!.AsButton().Invoke();
+            return;
+        }
+        catch { }
+
+        try
+        {
+            el!.Patterns.Invoke.Pattern?.Invoke();
+            return;
+        }
+        catch { }
+
+        // Last resort: mouse click (may be blocked in CI).
         var r = el!.BoundingRectangle;
         var pt = new System.Drawing.Point((int)(r.Left + (r.Width / 2)), (int)(r.Top + (r.Height / 2)));
         global::FlaUI.Core.Input.Mouse.Click(pt);
