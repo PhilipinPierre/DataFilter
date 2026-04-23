@@ -5,6 +5,7 @@
 <div class="language-picker">
     <label class="me-2">Language</label>
     <select class="form-select form-select-sm d-inline-block" style="width: 220px"
+            data-testid="df-language"
             value="@_selectedName"
             @onchange="OnChange">
         @foreach (var c in _cultures)

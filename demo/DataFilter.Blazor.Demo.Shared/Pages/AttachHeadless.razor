@@ -53,7 +53,18 @@
                             <tr>
                                 @foreach (var col in _columns)
                                 {
-                                    <td>@col.Selector(item)</td>
+                                    @if (string.Equals(col.PropertyName, "HireDate", StringComparison.OrdinalIgnoreCase) && item is Employee e1)
+                                    {
+                                        <td data-value="@e1.HireDate.Ticks">@col.Selector(item)</td>
+                                    }
+                                    else if (string.Equals(col.PropertyName, "Salary", StringComparison.OrdinalIgnoreCase) && item is Employee e2)
+                                    {
+                                        <td data-value="@e2.Salary">@col.Selector(item)</td>
+                                    }
+                                    else
+                                    {
+                                        <td>@col.Selector(item)</td>
+                                    }
                                 }
                             </tr>
                         }
