@@ -44,12 +44,13 @@ jobs:
         }
 
     - name: Build
-      run: dotnet build DataFilter.slnx --configuration Release --no-restore -p:Version=${{ env.VERSION }}
+      # Don't use --no-restore: some projects require RID-specific runtime packs (eg browser-wasm, win-x64).
+      run: dotnet build DataFilter.slnx --configuration Release -p:Version=${{ env.VERSION }}
 
     - name: Install Playwright browsers (Chromium)
       shell: pwsh
       run: |
-        dotnet build "demo/DataFilter.Blazor.Demo.PlaywrightTests/DataFilter.Blazor.Demo.PlaywrightTests.csproj" --configuration Release --no-restore
+        dotnet build "demo/DataFilter.Blazor.Demo.PlaywrightTests/DataFilter.Blazor.Demo.PlaywrightTests.csproj" --configuration Release
         pwsh "demo/DataFilter.Blazor.Demo.PlaywrightTests/bin/Release/net8.0/playwright.ps1" install chromium
 
     - name: Test
@@ -93,7 +94,7 @@ jobs:
       run: dotnet restore DataFilter.slnx
 
     - name: Build (Release)
-      run: dotnet build DataFilter.slnx --configuration Release --no-restore
+      run: dotnet build DataFilter.slnx --configuration Release
 
     - name: Desktop UI Contracts (FlaUI)
       run: dotnet test "tests/UIContracts.FlaUI.Tests/UIContracts.FlaUI.Tests.csproj" --configuration Release --no-build --verbosity normal
