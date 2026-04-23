@@ -49,15 +49,19 @@
         <StackPanel Grid.Row="0"
                     Margin="0,0,0,5">
             <Button Content="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[SortAscending]}"
+                    AutomationProperties.AutomationId="df-sort-asc"
                     Command="{Binding SortAscendingCommand}"
                     Margin="0,2" />
             <Button Content="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[SortDescending]}"
+                    AutomationProperties.AutomationId="df-sort-desc"
                     Command="{Binding SortDescendingCommand}"
                     Margin="0,2" />
             <Button Content="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[AddSubSortAscending]}"
+                    AutomationProperties.AutomationId="df-add-subsort-asc"
                     Command="{Binding AddSubSortAscendingCommand}"
                     Margin="0,2" />
             <Button Content="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[AddSubSortDescending]}"
+                    AutomationProperties.AutomationId="df-add-subsort-desc"
                     Command="{Binding AddSubSortDescendingCommand}"
                     Margin="0,2" />
             <Separator Margin="0,5" />
@@ -66,6 +70,7 @@
         <!-- Search Box -->
         <StackPanel Grid.Row="1" Margin="0,0,0,5">
             <TextBox Padding="2"
+                     AutomationProperties.AutomationId="df-search"
                      Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}">
                 <i:Interaction.Behaviors>
                     <!-- Using attached behavior for async debounce (if wired to command) -->
@@ -74,10 +79,12 @@
             </TextBox>
             <StackPanel Margin="0,5,0,0">
                 <CheckBox Content="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[AddToFilter]}"
+                          AutomationProperties.AutomationId="df-add-to-existing"
                           IsChecked="{Binding AddToExistingFilter}"
                           VerticalAlignment="Center"
                           FontSize="11" />
                 <ComboBox ItemsSource="{Binding Source={StaticResource AccumulationModeValues}}"
+                          AutomationProperties.AutomationId="df-accumulation-mode"
                           SelectedItem="{Binding AccumulationMode}"
                           Visibility="{Binding AddToExistingFilter, Converter={StaticResource BoolToVis}}"
                           Margin="10,0,0,0"
@@ -102,6 +109,7 @@
 
         <!-- Custom Filter -->
         <Expander Grid.Row="2"
+                  AutomationProperties.AutomationId="df-advanced-expander"
                   Header="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[AdvancedFilter]}"
                   IsExpanded="{Binding IsCustomFilterExpanded}"
                   Margin="0,0,0,5"
@@ -109,6 +117,7 @@
             <StackPanel Margin="5">
                 <TextBlock Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[OperatorText]}" FontSize="10" Foreground="Gray"/>
                 <ComboBox ItemsSource="{Binding AvailableOperators}"
+                          AutomationProperties.AutomationId="df-operator"
                           SelectedItem="{Binding SelectedCustomOperator}"
                           Margin="0,2,0,5">
                     <ComboBox.ItemTemplate>
@@ -127,11 +136,13 @@
 
                 <TextBlock Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[ValueText]}" FontSize="10" Foreground="Gray"/>
                 <TextBox Text="{Binding CustomValue1, UpdateSourceTrigger=PropertyChanged}"
+                         AutomationProperties.AutomationId="df-custom-value-1"
                          Margin="0,2"/>
 
                 <StackPanel Visibility="{Binding SelectedCustomOperator, Converter={StaticResource BoolToVis}, ConverterParameter=Between}">
                     <TextBlock Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[ToText]}" FontSize="10" Foreground="Gray" Margin="0,5,0,0"/>
                     <TextBox Text="{Binding CustomValue2, UpdateSourceTrigger=PropertyChanged}"
+                             AutomationProperties.AutomationId="df-custom-value-2"
                              Margin="0,2"/>
                 </StackPanel>
             </StackPanel>
@@ -163,6 +174,7 @@
 
             <CheckBox Grid.Row="0"
                       Content="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[SelectAll]}"
+                      AutomationProperties.AutomationId="df-select-all"
                       Margin="2"
                       IsChecked="{Binding SelectAll}"
                       IsThreeState="True"
@@ -170,6 +182,7 @@
             <Separator Grid.Row="1" Margin="0,5" />
             
             <TreeView Grid.Row="2"
+                      AutomationProperties.AutomationId="df-values-tree"
                       ItemsSource="{Binding FilterValues}" 
                       BorderThickness="0" 
                       Background="Transparent"
@@ -210,16 +223,19 @@
             </Grid.ColumnDefinitions>
             <Button Grid.Column="0"
                     Content="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[Ok]}"
+                    AutomationProperties.AutomationId="df-ok"
                     Command="{Binding ApplyCommand}"
                     Style="{DynamicResource FilterButtonStyle}" />
             <Button Grid.Column="2"
                     Content="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[Clear]}"
+                    AutomationProperties.AutomationId="df-clear"
                     Command="{Binding ClearCommand}"
                     Style="{DynamicResource FilterButtonStyle}" />
         </Grid>
 
         <!-- Resize Handle -->
         <Thumb Grid.Row="4" 
+               AutomationProperties.AutomationId="df-resize-thumb"
                HorizontalAlignment="Right" 
                VerticalAlignment="Bottom" 
                Width="15" 
