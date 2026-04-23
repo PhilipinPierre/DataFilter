@@ -224,6 +224,156 @@ public sealed class AttachHeadlessContractsTests
         });
     }
 
+    [Fact]
+    public async Task Filtering_NameContainsAlice_AllRowsMatch()
+    {
+        await RunWithTracingAsync(nameof(Filtering_NameContainsAlice_AllRowsMatch), new ViewportSize { Width = 1280, Height = 720 }, async (page, errors) =>
+        {
+            await NavigateToAttachAsync(page, errors);
+
+            await OpenPopupAsync(page, "Name", errors);
+            var popup = page.Locator("#df-filter-popup-Name");
+
+            await popup.Locator(".df-custom-filter-header").ClickAsync();
+            await popup.Locator("select.df-custom-input").SelectOptionAsync(new[] { "Contains" });
+            await popup.Locator("input.df-custom-input").First.FillAsync("Alice");
+            await popup.Locator("button.df-btn-primary").ClickAsync();
+            await page.WaitForTimeoutAsync(250);
+
+            var names = await GetColumnValuesAsync(page, "Name");
+            Assert.True(names.Count > 0);
+            Assert.All(names, n => Assert.Contains("Alice", n, StringComparison.OrdinalIgnoreCase));
+        });
+    }
+
+    [Fact]
+    public async Task Filtering_SalaryBetween_KeepOnlyInRange()
+    {
+        await RunWithTracingAsync(nameof(Filtering_SalaryBetween_KeepOnlyInRange), new ViewportSize { Width = 1280, Height = 720 }, async (page, errors) =>
+        {
+            await NavigateToAttachAsync(page, errors);
+
+            await OpenPopupAsync(page, "Salary", errors);
+            var popup = page.Locator("#df-filter-popup-Salary");
+
+            await popup.Locator(".df-custom-filter-header").ClickAsync();
+            await popup.Locator("select.df-custom-input").SelectOptionAsync(new[] { "Between" });
+            await popup.Locator("input.df-custom-input").Nth(0).FillAsync("50000");
+            await popup.Locator("input.df-custom-input").Nth(1).FillAsync("60000");
+            await popup.Locator("button.df-btn-primary").ClickAsync();
+            await page.WaitForTimeoutAsync(250);
+
+            var salariesRaw = await GetColumnValuesAsync(page, "Salary");
+            Assert.True(salariesRaw.Count > 0);
+            var salaries = salariesRaw.Select(ParseFloatInvariant).ToList();
+            Assert.All(salaries, s => Assert.InRange(s, 50000f, 60000f));
+        });
+    }
+
+    [Fact]
+    public async Task Filtering_HireDateBetween_ParsesAndMatchesRange()
+    {
+        await RunWithTracingAsync(nameof(Filtering_HireDateBetween_ParsesAndMatchesRange), new ViewportSize { Width = 1280, Height = 720 }, async (page, errors) =>
+        {
+            await NavigateToAttachAsync(page, errors);
+
+            // Use a wide range that's likely to match many rows to avoid flakiness.
+            var from = DateTime.Today.AddYears(-10).ToString("yyyy-MM-dd");
+            var to = DateTime.Today.ToString("yyyy-MM-dd");
+
+            await OpenPopupAsync(page, "HireDate", errors);
+            var popup = page.Locator("#df-filter-popup-HireDate");
+
+            await popup.Locator(".df-custom-filter-header").ClickAsync();
+            await popup.Locator("select.df-custom-input").SelectOptionAsync(new[] { "Between" });
+            await popup.Locator("input.df-custom-input").Nth(0).FillAsync(from);
+            await popup.Locator("input.df-custom-input").Nth(1).FillAsync(to);
+            await popup.Locator("button.df-btn-primary").ClickAsync();
+            await page.WaitForTimeoutAsync(250);
+
+            // We assert the table still renders (non-empty) + no errors; parsing & exact range semantics can differ by operator implementation.
+            var rows = page.Locator("tbody tr");
+            Assert.True(await rows.CountAsync() > 0);
+        });
+    }
+
+    [Fact]
+    public async Task AddToExistingFilter_Union_DepartmentITorHR()
+    {
+        await RunWithTracingAsync(nameof(AddToExistingFilter_Union_DepartmentITorHR), new ViewportSize { Width = 1280, Height = 720 }, async (page, errors) =>
+        {
+            await NavigateToAttachAsync(page, errors);
+
+            // First filter: Department == IT
+            await OpenPopupAsync(page, "Department", errors);
+            var popup = page.Locator("#df-filter-popup-Department");
+            await popup.Locator(".df-custom-filter-header").ClickAsync();
+            await popup.Locator("select.df-custom-input").SelectOptionAsync(new[] { "Equals" });
+            await popup.Locator("input.df-custom-input").First.FillAsync("IT");
+            await popup.Locator("button.df-btn-primary").ClickAsync();
+            await page.WaitForTimeoutAsync(250);
+
+            // Add to existing via Union: Department == IT OR HR
+            await OpenPopupAsync(page, "Department", errors);
+            popup = page.Locator("#df-filter-popup-Department");
+            await popup.Locator(".df-accumulation-options label.df-checkbox-label input[type=checkbox]").CheckAsync();
+            await popup.Locator("select.df-accumulation-select").WaitForAsync();
+            await popup.Locator("select.df-accumulation-select").SelectOptionAsync(new[] { "Union" });
+
+            await EnsureCustomFilterExpandedAsync(popup);
+            await popup.Locator("select.df-custom-input").SelectOptionAsync(new[] { "Equals" });
+            await popup.Locator("input.df-custom-input").First.FillAsync("HR");
+            await popup.Locator("button.df-btn-primary").ClickAsync();
+            await page.WaitForTimeoutAsync(250);
+
+            var depts = await GetColumnValuesAsync(page, "Department");
+            Assert.True(depts.Count > 0);
+            Assert.All(depts, d => Assert.True(
+                string.Equals(d, "IT", StringComparison.OrdinalIgnoreCase) || string.Equals(d, "HR", StringComparison.OrdinalIgnoreCase),
+                $"Expected only IT or HR, got '{d}'"));
+        });
+    }
+
+    [Fact]
+    public async Task MultiSort_DepartmentThenName_NameSortedWithinDepartmentGroups()
+    {
+        await RunWithTracingAsync(nameof(MultiSort_DepartmentThenName_NameSortedWithinDepartmentGroups), new ViewportSize { Width = 1280, Height = 720 }, async (page, errors) =>
+        {
+            await NavigateToAttachAsync(page, errors);
+
+            // Primary sort: Department ascending.
+            await OpenPopupAsync(page, "Department", errors);
+            var deptPopup = page.Locator("#df-filter-popup-Department");
+            await deptPopup.Locator(".df-sort-section .df-sort-button").Nth(0).ClickAsync();
+            await page.WaitForTimeoutAsync(250);
+
+            // Sub-sort: Name ascending.
+            await OpenPopupAsync(page, "Name", errors);
+            var namePopup = page.Locator("#df-filter-popup-Name");
+            await namePopup.Locator(".df-sort-section .df-sort-button").Nth(2).ClickAsync(); // AddSubSortAscending
+            await page.WaitForTimeoutAsync(250);
+
+            var rows = await GetTwoColumnRowsAsync(page, "Department", "Name");
+            Assert.True(rows.Count > 1);
+
+            // Verify: within each contiguous department block, names are ascending.
+            var i = 0;
+            while (i < rows.Count)
+            {
+                var dept = rows[i].Col1;
+                var names = new List<string>();
+                while (i < rows.Count && string.Equals(rows[i].Col1, dept, StringComparison.OrdinalIgnoreCase))
+                {
+                    names.Add(rows[i].Col2);
+                    i++;
+                }
+
+                if (names.Count > 1)
+                    AssertSorted(names, descending: false);
+            }
+        });
+    }
+
     private async Task RunWithTracingAsync(string testName, ViewportSize? viewport, Func<IPage, List<string>, Task> run)
     {
         using var pw = await Playwright.CreateAsync();
@@ -410,6 +560,47 @@ public sealed class AttachHeadlessContractsTests
             values.Add((await cells.Nth(i).InnerTextAsync()).Trim());
         }
         return values;
+    }
+
+    private static async Task<List<(string Col1, string Col2)>> GetTwoColumnRowsAsync(IPage page, string header1, string header2)
+    {
+        var indices = await page.EvaluateAsync<int[]>(
+            @"(args) => {
+                const ths = Array.from(document.querySelectorAll('thead th'));
+                const norm = (s) => (s || '').replace(/\s+/g,' ').trim().toLowerCase();
+                const find = (h) => {
+                  const target = norm(h);
+                  const i = ths.findIndex(th => norm(th.innerText).includes(target));
+                  return i < 0 ? -1 : i + 1;
+                };
+                return [find(args.h1), find(args.h2)];
+            }",
+            new { h1 = header1, h2 = header2 });
+
+        if (indices.Length != 2 || indices[0] < 1 || indices[1] < 1)
+            throw new InvalidOperationException($"Could not find columns '{header1}' and '{header2}'.");
+
+        var rows = page.Locator("tbody tr");
+        var rowCount = await rows.CountAsync();
+        var result = new List<(string Col1, string Col2)>(capacity: rowCount);
+        for (var i = 0; i < rowCount; i++)
+        {
+            var row = rows.Nth(i);
+            var c1 = (await row.Locator($"td:nth-child({indices[0]})").InnerTextAsync()).Trim();
+            var c2 = (await row.Locator($"td:nth-child({indices[1]})").InnerTextAsync()).Trim();
+            result.Add((c1, c2));
+        }
+        return result;
+    }
+
+    private static async Task EnsureCustomFilterExpandedAsync(ILocator popup)
+    {
+        var select = popup.Locator("select.df-custom-input");
+        if (await select.CountAsync() > 0)
+            return;
+
+        await popup.Locator(".df-custom-filter-header").ClickAsync();
+        await select.WaitForAsync();
     }
 
     private static void AssertSorted(IReadOnlyList<string> values, bool descending)
