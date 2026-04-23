@@ -133,15 +133,15 @@ public sealed class DataFilterWpfDemo_AttachContractsTests
             ApplySingleValueListFilter(window, automation, propertyName: "Department", value: "IT");
 
             // Open popup again and click Clear.
-            var deptBtn = window.FindFirstDescendant(cf => cf.ByAutomationId("df-filter-btn-Department"))?.AsButton();
-            if (deptBtn == null)
-                return;
-            deptBtn.Invoke();
+            ClickByAutomationId(window, "df-filter-btn-Department", TimeSpan.FromSeconds(10));
 
-            var popup = WaitForPopupRootByAutomationId(automation, "df-filter-popup-Department", TimeSpan.FromSeconds(5));
-            var clearBtn = popup.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
-                .Select(x => x.AsButton())
-                .FirstOrDefault(b => string.Equals(b.Properties.Name.ValueOrDefault, "Clear", StringComparison.OrdinalIgnoreCase));
+            var beforeHandles = automation.GetDesktop()
+                .FindAllChildren(cf => cf.ByControlType(ControlType.Window))
+                .Select(x => x.Properties.NativeWindowHandle.ValueOrDefault)
+                .ToHashSet();
+
+            var popup = WaitForPopupRootByAutomationId(automation, window, beforeHandles, "df-filter-popup-Department", TimeSpan.FromSeconds(5));
+            var clearBtn = popup.FindFirstDescendant(cf => cf.ByAutomationId("df-clear"))?.AsButton();
             Assert.NotNull(clearBtn);
             clearBtn!.Invoke();
             Assert.NotNull(window);
@@ -166,30 +166,16 @@ public sealed class DataFilterWpfDemo_AttachContractsTests
 
             NavigateToAttachTab(window);
 
-            var salaryBtn = window.FindFirstDescendant(cf => cf.ByAutomationId("df-filter-btn-Salary"))?.AsButton();
-            if (salaryBtn == null)
-                return;
-            salaryBtn.Invoke();
+            ClickByAutomationId(window, "df-filter-btn-Salary", TimeSpan.FromSeconds(10));
 
-            AutomationElement popup;
-            try
-            {
-                popup = WaitForPopupRootByAutomationId(automation, "df-filter-popup-Salary", TimeSpan.FromSeconds(5));
-            }
-            catch
-            {
-                return;
-            }
-            var sortDesc = popup.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
-                .Select(x => x.AsButton())
-                .FirstOrDefault(b =>
-                {
-                    var n = b.Properties.Name.ValueOrDefault ?? "";
-                    return n.Contains("Sort", StringComparison.OrdinalIgnoreCase)
-                           && n.Contains("Desc", StringComparison.OrdinalIgnoreCase);
-                });
-            if (sortDesc == null)
-                return;
+            var beforeHandles = automation.GetDesktop()
+                .FindAllChildren(cf => cf.ByControlType(ControlType.Window))
+                .Select(x => x.Properties.NativeWindowHandle.ValueOrDefault)
+                .ToHashSet();
+
+            var popup = WaitForPopupRootByAutomationId(automation, window, beforeHandles, "df-filter-popup-Salary", TimeSpan.FromSeconds(5));
+            var sortDesc = popup.FindFirstDescendant(cf => cf.ByAutomationId("df-sort-desc"))?.AsButton();
+            Assert.NotNull(sortDesc);
             sortDesc!.Invoke();
 
             // Contract-level check: rows still render and app remains interactive.
@@ -214,12 +200,22 @@ public sealed class DataFilterWpfDemo_AttachContractsTests
         attachTab!.Select();
     }
 
-    private static AutomationElement WaitForPopupRootByAutomationId(UIA3Automation automation, string automationId, TimeSpan timeout)
+    private static AutomationElement WaitForPopupRootByAutomationId(UIA3Automation automation, Window main, HashSet<nint> beforeHandles, string automationId, TimeSpan timeout)
     {
         AutomationElement? popup = null;
         WaitUntil(() =>
         {
+            // First try: direct lookup on desktop.
             popup = automation.GetDesktop().FindFirstDescendant(cf => cf.ByAutomationId(automationId));
+            if (popup != null)
+                return true;
+
+            // Fallback: find the popup window, then search inside it.
+            var popupWindow = TryGetPopupWindow(automation, main, beforeHandles) ?? TryGetAnyPopupWindow(automation, main);
+            if (popupWindow == null)
+                return false;
+
+            popup = popupWindow.FindFirstDescendant(cf => cf.ByAutomationId(automationId));
             return popup != null;
         }, timeout);
         return popup!;
@@ -227,18 +223,21 @@ public sealed class DataFilterWpfDemo_AttachContractsTests
 
     private static void ApplySingleValueListFilter(Window window, UIA3Automation automation, string propertyName, string value)
     {
-        var btn = WaitForButtonByAutomationId(window, $"df-filter-btn-{propertyName}", TimeSpan.FromSeconds(10));
-        btn.Invoke();
+        var beforeHandles = automation.GetDesktop()
+            .FindAllChildren(cf => cf.ByControlType(ControlType.Window))
+            .Select(x => x.Properties.NativeWindowHandle.ValueOrDefault)
+            .ToHashSet();
 
-        var popup = WaitForPopupRootByAutomationId(automation, $"df-filter-popup-{propertyName}", TimeSpan.FromSeconds(5));
+        ClickByAutomationId(window, $"df-filter-btn-{propertyName}", TimeSpan.FromSeconds(10));
 
-        // Use the value list (tree) to avoid relying on advanced operator UI automation.
-        var selectAll = FindSelectAllCheckbox(popup);
+        var popup = WaitForPopupRootByAutomationId(automation, window, beforeHandles, $"df-filter-popup-{propertyName}", TimeSpan.FromSeconds(5));
+
+        var selectAll = popup.FindFirstDescendant(cf => cf.ByAutomationId("df-select-all"))?.AsCheckBox();
         Assert.NotNull(selectAll);
         if (selectAll!.IsChecked != false)
             selectAll.Click();
 
-        var tree = popup.FindFirstDescendant(cf => cf.ByControlType(ControlType.Tree));
+        var tree = popup.FindFirstDescendant(cf => cf.ByAutomationId("df-values-tree"));
         Assert.NotNull(tree);
 
         // Find the checkbox with the requested value.
@@ -247,41 +246,23 @@ public sealed class DataFilterWpfDemo_AttachContractsTests
         if (valueCheckbox!.IsChecked != true)
             valueCheckbox.Click();
 
-        var ok = popup.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
-            .Select(b => b.AsButton())
-            .FirstOrDefault(b =>
-            {
-                var n = (b.Properties.Name.ValueOrDefault ?? "").Trim();
-                return string.Equals(n, "OK", StringComparison.OrdinalIgnoreCase)
-                       || string.Equals(n, "Ok", StringComparison.OrdinalIgnoreCase)
-                       || n.Contains("OK", StringComparison.OrdinalIgnoreCase);
-            });
+        var ok = popup.FindFirstDescendant(cf => cf.ByAutomationId("df-ok"))?.AsButton();
         Assert.NotNull(ok);
         ok!.Invoke();
     }
 
-    private static CheckBox? FindSelectAllCheckbox(AutomationElement popup)
+    private static void ClickByAutomationId(Window window, string automationId, TimeSpan timeout)
     {
-        var boxes = popup.FindAllDescendants(cf => cf.ByControlType(ControlType.CheckBox))
-            .Select(x => x.AsCheckBox())
-            .ToList();
-
-        if (boxes.Count == 0)
-            return null;
-
-        // Best-effort across cultures.
-        var selectAll = boxes.FirstOrDefault(b =>
+        AutomationElement? el = null;
+        WaitUntil(() =>
         {
-            var n = (b.Properties.Name.ValueOrDefault ?? "").Trim();
-            if (string.IsNullOrWhiteSpace(n))
-                return false;
-            return n.Contains("select", StringComparison.OrdinalIgnoreCase)
-                   || n.Contains("tout", StringComparison.OrdinalIgnoreCase)
-                   || n.Contains("sélection", StringComparison.OrdinalIgnoreCase)
-                   || n.Contains("selection", StringComparison.OrdinalIgnoreCase);
-        });
+            el = window.FindFirstDescendant(cf => cf.ByAutomationId(automationId));
+            return el != null;
+        }, timeout);
 
-        return selectAll ?? boxes.First();
+        var r = el!.BoundingRectangle;
+        var pt = new System.Drawing.Point((int)(r.Left + (r.Width / 2)), (int)(r.Top + (r.Height / 2)));
+        global::FlaUI.Core.Input.Mouse.Click(pt);
     }
 
     private static List<string> GetVisibleRowNames(Window window)
@@ -397,50 +378,12 @@ public sealed class DataFilterWpfDemo_AttachContractsTests
     {
         var repoRoot = FindRepoRoot();
 
-        BuildWpfDemo(repoRoot);
         var exe = Path.Combine(repoRoot, "demo", "DataFilter.Wpf.Demo", "bin", "Release", "net8.0-windows", "DataFilter.Wpf.Demo.exe");
         Assert.True(File.Exists(exe), $"Expected demo exe at '{exe}'. Build it first: dotnet build \"demo/DataFilter.Wpf.Demo/DataFilter.Wpf.Demo.csproj\" -c Release");
         return exe;
     }
 
-    private static void BuildWpfDemo(string repoRoot)
-    {
-        var project = Path.Combine(repoRoot, "demo", "DataFilter.Wpf.Demo", "DataFilter.Wpf.Demo.csproj");
-        var psi = new ProcessStartInfo
-        {
-            FileName = "dotnet",
-            Arguments = $"build \"{project}\" -c Release",
-            UseShellExecute = false,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            CreateNoWindow = true
-        };
-
-        using var p = Process.Start(psi);
-        Assert.NotNull(p);
-        if (!p!.WaitForExit(180_000))
-        {
-            try { p.Kill(entireProcessTree: true); } catch { }
-            throw new TimeoutException("Timed out building WPF demo (dotnet build).");
-        }
-
-        if (p.ExitCode != 0)
-        {
-            var output = (p.StandardOutput.ReadToEnd() ?? "") + Environment.NewLine + (p.StandardError.ReadToEnd() ?? "");
-            throw new InvalidOperationException("Failed to build WPF demo. Output:" + Environment.NewLine + output);
-        }
-    }
-
-    private static Button WaitForButtonByAutomationId(Window window, string automationId, TimeSpan timeout)
-    {
-        Button? b = null;
-        WaitUntil(() =>
-        {
-            b = window.FindFirstDescendant(cf => cf.ByControlType(ControlType.Button).And(cf.ByAutomationId(automationId)))?.AsButton();
-            return b != null;
-        }, timeout);
-        return b!;
-    }
+    // NOTE: Avoid relying on ControlType==Button; some hosts surface custom elements.
 
     private static string FindRepoRoot()
     {
