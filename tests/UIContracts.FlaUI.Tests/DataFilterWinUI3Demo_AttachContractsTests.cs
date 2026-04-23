@@ -68,18 +68,74 @@ public sealed class DataFilterWinUI3Demo_AttachContractsTests
             toggle!.Invoke();
 
             // Popup host should appear as an additional window/menu on desktop.
+            var desktop = automation.GetDesktop();
+            var beforePopups = desktop.FindAllChildren(cf => cf.ByControlType(ControlType.Window).Or(cf.ByControlType(ControlType.Menu)))
+                .Select(x => x.Properties.NativeWindowHandle.ValueOrDefault)
+                .ToHashSet();
+
+            var popup = WaitForNewPopup(desktop, window, beforePopups, TimeSpan.FromSeconds(5));
+            AssertWithinWorkingArea(popup);
+
+            // Close via Esc (best-effort).
+            try { window.Focus(); } catch { }
+            global::FlaUI.Core.Input.Keyboard.Press(global::FlaUI.Core.WindowsAPI.VirtualKeyShort.ESCAPE);
+
             WaitUntil(() =>
             {
-                var desktop = automation.GetDesktop();
-                var popups = desktop.FindAllChildren(cf =>
-                    cf.ByControlType(ControlType.Window).Or(cf.ByControlType(ControlType.Menu)));
-                return popups.Length > 0;
+                var current = desktop.FindAllChildren(cf => cf.ByControlType(ControlType.Window).Or(cf.ByControlType(ControlType.Menu)))
+                    .Select(x => x.Properties.NativeWindowHandle.ValueOrDefault)
+                    .ToHashSet();
+                return !current.Except(beforePopups).Any();
             }, TimeSpan.FromSeconds(5));
         }
         finally
         {
             TryCloseApp(app);
         }
+    }
+
+    private static AutomationElement WaitForNewPopup(AutomationElement desktop, Window main, HashSet<nint> beforeHandles, TimeSpan timeout)
+    {
+        AutomationElement? popup = null;
+        WaitUntil(() =>
+        {
+            popup = TryGetNewPopup(desktop, main, beforeHandles);
+            return popup != null;
+        }, timeout);
+        return popup!;
+    }
+
+    private static AutomationElement? TryGetNewPopup(AutomationElement desktop, Window main, HashSet<nint> beforeHandles)
+    {
+        var mainHandle = main.Properties.NativeWindowHandle.ValueOrDefault;
+        var popups = desktop.FindAllChildren(cf => cf.ByControlType(ControlType.Window).Or(cf.ByControlType(ControlType.Menu)))
+            .ToList();
+
+        return popups.FirstOrDefault(p =>
+        {
+            var h = p.Properties.NativeWindowHandle.ValueOrDefault;
+            if (h == mainHandle)
+                return false;
+            if (beforeHandles.Contains(h))
+                return false;
+
+            var r = p.BoundingRectangle;
+            return r.Width > 0 && r.Width < 1600 && r.Height > 0 && r.Height < 1600;
+        });
+    }
+
+    private static void AssertWithinWorkingArea(AutomationElement popup)
+    {
+        var r = popup.BoundingRectangle;
+        const int tolerancePx = 16;
+        var screen = System.Windows.Forms.Screen.FromRectangle(System.Drawing.Rectangle.FromLTRB(
+            (int)r.Left, (int)r.Top, (int)r.Right, (int)r.Bottom));
+        var wa = screen.WorkingArea;
+
+        Assert.True(r.Left >= wa.Left - tolerancePx, $"Expected popup within working area (left). popup={r}, workArea={wa}");
+        Assert.True(r.Top >= wa.Top - tolerancePx, $"Expected popup within working area (top). popup={r}, workArea={wa}");
+        Assert.True(r.Right <= wa.Right + tolerancePx, $"Expected popup within working area (right). popup={r}, workArea={wa}");
+        Assert.True(r.Bottom <= wa.Bottom + tolerancePx, $"Expected popup within working area (bottom). popup={r}, workArea={wa}");
     }
 
     private static string GetWinUI3DemoExePath()

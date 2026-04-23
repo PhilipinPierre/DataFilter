@@ -113,7 +113,16 @@ public sealed class DataFilterWpfDemo_AttachContractsTests
         // Popup window usually has no title or a different title than the main window.
         return windows.FirstOrDefault(w =>
         {
-            var handle = w.Properties.NativeWindowHandle.ValueOrDefault;
+            nint handle;
+            try
+            {
+                handle = w.Properties.NativeWindowHandle.ValueOrDefault;
+            }
+            catch
+            {
+                return false;
+            }
+
             if (beforeHandles.Contains(handle))
                 return false;
 
