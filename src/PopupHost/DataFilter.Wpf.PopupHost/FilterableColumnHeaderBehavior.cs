@@ -493,6 +493,33 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
 
     private void OnFilterPopupOpened(object? sender, EventArgs e)
     {
+        // Ensure the popup cannot exceed the current monitor working area. Without this, the measured
+        // popup size can be larger than small CI desktops (e.g. 1024x720), and placement clamping
+        // alone cannot keep the window inside the working area.
+        if (_filterPopup is { Child: FrameworkElement child } && _filterButton != null)
+        {
+            try
+            {
+                var anchor = _filterButton.PointToScreen(new Point(0, 0));
+                var screen = System.Windows.Forms.Screen.FromPoint(new System.Drawing.Point((int)anchor.X, (int)anchor.Y));
+                var wa = screen.WorkingArea;
+                const double margin = 8;
+
+                child.MaxWidth = Math.Max(200, wa.Width - (margin * 2));
+                child.MaxHeight = Math.Max(200, wa.Height - (margin * 2));
+
+                // If the control is explicitly sized larger than allowed, shrink it.
+                if (!double.IsNaN(child.Width))
+                    child.Width = Math.Min(child.Width, child.MaxWidth);
+                if (!double.IsNaN(child.Height))
+                    child.Height = Math.Min(child.Height, child.MaxHeight);
+            }
+            catch
+            {
+                // Best-effort: never fail popup open due to environment / interop edge cases.
+            }
+        }
+
         var window = Window.GetWindow(AssociatedObject);
         if (window != null)
             window.PreviewMouseLeftButtonDown += OnWindowMouseDown;

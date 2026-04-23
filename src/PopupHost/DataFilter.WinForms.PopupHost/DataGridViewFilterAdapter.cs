@@ -103,6 +103,15 @@ public sealed class DataGridViewFilterAdapter : IDisposable
         var work = Screen.FromControl(_grid).WorkingArea;
         const int margin = 8;
 
+        // Cap popup size to the current working area (ToolStripDropDown adds its own non-client padding).
+        // This keeps UI-contract tests stable on small CI desktops (e.g. 1024x720).
+        int maxPopupWidth = Math.Max(200, work.Width - (margin * 2));
+        int maxPopupHeight = Math.Max(200, work.Height - (margin * 2));
+        popup.Width = Math.Min(popup.Width, maxPopupWidth);
+        popup.Height = Math.Min(popup.Height, maxPopupHeight);
+        host.Width = popup.Width;
+        host.Height = popup.Height;
+
         int left = isRtl ? desiredScreen.X - popup.Width : desiredScreen.X;
         int top = desiredScreen.Y;
 
