@@ -179,6 +179,343 @@ public sealed class DataFilterWinUI3Demo_AttachContractsTests
         }
     }
 
+    [Fact]
+    public void SortDescending_Salary()
+    {
+        var exe = GetWinUI3DemoExePath();
+        if (!IsWinAppRuntimeAvailable(exe))
+            return;
+
+        using var app = Application.Launch(exe);
+        try
+        {
+            using var automation = new UIA3Automation();
+            var window = app.GetMainWindow(automation, TimeSpan.FromSeconds(10));
+            Assert.NotNull(window);
+
+            NavigateToAttach(window);
+
+            // Open popup for Salary and click SortDescending.
+            var salaryBtn = WaitFor(() =>
+                    window.FindFirstDescendant(cf => cf.ByControlType(ControlType.Button).And(cf.ByAutomationId("df-filter-btn-Salary"))),
+                TimeSpan.FromSeconds(10));
+            Assert.NotNull(salaryBtn);
+            salaryBtn!.AsButton().Invoke();
+
+            var popup = WaitFor(() =>
+                    automation.GetDesktop().FindFirstDescendant(cf => cf.ByAutomationId("df-filter-popup-Salary")),
+                TimeSpan.FromSeconds(10));
+            Assert.NotNull(popup);
+
+            var sortDesc = popup!.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
+                .Select(x => x.AsButton())
+                .FirstOrDefault(b => (b.Properties.Name.ValueOrDefault ?? "").Contains("Sort", StringComparison.OrdinalIgnoreCase)
+                                     && (b.Properties.Name.ValueOrDefault ?? "").Contains("Desc", StringComparison.OrdinalIgnoreCase));
+            Assert.NotNull(sortDesc);
+            sortDesc!.Invoke();
+
+            // Verify salaries are sorted descending (visible rows only).
+            var salaries = window.FindAllDescendants(cf => cf.ByAutomationId("df-row-salary"))
+                .Select(x => x.Properties.Name.ValueOrDefault ?? x.AsLabel().Text ?? "")
+                .Select(ParseFloatLoose)
+                .ToList();
+
+            Assert.True(salaries.Count > 1);
+            AssertSorted(salaries, descending: true);
+        }
+        finally
+        {
+            TryCloseApp(app);
+        }
+    }
+
+    [Fact]
+    public void SortAscending_HireDate()
+    {
+        var exe = GetWinUI3DemoExePath();
+        if (!IsWinAppRuntimeAvailable(exe))
+            return;
+
+        using var app = Application.Launch(exe);
+        try
+        {
+            using var automation = new UIA3Automation();
+            var window = app.GetMainWindow(automation, TimeSpan.FromSeconds(10));
+            Assert.NotNull(window);
+
+            NavigateToAttach(window);
+
+            var btn = WaitFor(() =>
+                    window.FindFirstDescendant(cf => cf.ByControlType(ControlType.Button).And(cf.ByAutomationId("df-filter-btn-HireDate"))),
+                TimeSpan.FromSeconds(10));
+            Assert.NotNull(btn);
+            btn!.AsButton().Invoke();
+
+            var popup = WaitFor(() =>
+                    automation.GetDesktop().FindFirstDescendant(cf => cf.ByAutomationId("df-filter-popup-HireDate")),
+                TimeSpan.FromSeconds(10));
+            Assert.NotNull(popup);
+
+            var sortAsc = popup!.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
+                .Select(x => x.AsButton())
+                .FirstOrDefault(b => (b.Properties.Name.ValueOrDefault ?? "").Contains("Sort", StringComparison.OrdinalIgnoreCase)
+                                     && (b.Properties.Name.ValueOrDefault ?? "").Contains("Asc", StringComparison.OrdinalIgnoreCase));
+            Assert.NotNull(sortAsc);
+            sortAsc!.Invoke();
+
+            var dates = window.FindAllDescendants(cf => cf.ByAutomationId("df-row-hiredate"))
+                .Select(x => x.Properties.Name.ValueOrDefault ?? x.AsLabel().Text ?? "")
+                .Select(ParseDateTimeLoose)
+                .ToList();
+
+            Assert.True(dates.Count > 1);
+            AssertSorted(dates, descending: false);
+        }
+        finally
+        {
+            TryCloseApp(app);
+        }
+    }
+
+    [Fact]
+    public void MultiSort_DepartmentThenName_NameSortedWithinDepartmentGroups()
+    {
+        var exe = GetWinUI3DemoExePath();
+        if (!IsWinAppRuntimeAvailable(exe))
+            return;
+
+        using var app = Application.Launch(exe);
+        try
+        {
+            using var automation = new UIA3Automation();
+            var window = app.GetMainWindow(automation, TimeSpan.FromSeconds(10));
+            Assert.NotNull(window);
+
+            NavigateToAttach(window);
+
+            // Primary sort: Department ascending.
+            var deptBtn = WaitFor(() =>
+                    window.FindFirstDescendant(cf => cf.ByControlType(ControlType.Button).And(cf.ByAutomationId("df-filter-btn-Department"))),
+                TimeSpan.FromSeconds(10));
+            Assert.NotNull(deptBtn);
+            deptBtn!.AsButton().Invoke();
+
+            var deptPopup = WaitFor(() =>
+                    automation.GetDesktop().FindFirstDescendant(cf => cf.ByAutomationId("df-filter-popup-Department")),
+                TimeSpan.FromSeconds(10));
+            Assert.NotNull(deptPopup);
+
+            var sortAsc = deptPopup!.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
+                .Select(x => x.AsButton())
+                .FirstOrDefault(b => (b.Properties.Name.ValueOrDefault ?? "").Contains("Sort", StringComparison.OrdinalIgnoreCase)
+                                     && (b.Properties.Name.ValueOrDefault ?? "").Contains("Asc", StringComparison.OrdinalIgnoreCase));
+            Assert.NotNull(sortAsc);
+            sortAsc!.Invoke();
+
+            // Sub-sort: Name ascending.
+            var nameBtn = WaitFor(() =>
+                    window.FindFirstDescendant(cf => cf.ByControlType(ControlType.Button).And(cf.ByAutomationId("df-filter-btn-Name"))),
+                TimeSpan.FromSeconds(10));
+            Assert.NotNull(nameBtn);
+            nameBtn!.AsButton().Invoke();
+
+            var namePopup = WaitFor(() =>
+                    automation.GetDesktop().FindFirstDescendant(cf => cf.ByAutomationId("df-filter-popup-Name")),
+                TimeSpan.FromSeconds(10));
+            Assert.NotNull(namePopup);
+
+            var addSubSortAsc = namePopup!.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
+                .Select(x => x.AsButton())
+                .FirstOrDefault(b => (b.Properties.Name.ValueOrDefault ?? "").Contains("Sub", StringComparison.OrdinalIgnoreCase)
+                                     && (b.Properties.Name.ValueOrDefault ?? "").Contains("Asc", StringComparison.OrdinalIgnoreCase));
+            Assert.NotNull(addSubSortAsc);
+            addSubSortAsc!.Invoke();
+
+            var depts = window.FindAllDescendants(cf => cf.ByAutomationId("df-row-dept"))
+                .Select(x => (x.Properties.Name.ValueOrDefault ?? x.AsLabel().Text ?? "").Trim())
+                .ToList();
+            var names = window.FindAllDescendants(cf => cf.ByAutomationId("df-row-name"))
+                .Select(x => (x.Properties.Name.ValueOrDefault ?? x.AsLabel().Text ?? "").Trim())
+                .ToList();
+
+            var n = Math.Min(depts.Count, names.Count);
+            Assert.True(n > 1);
+
+            var i = 0;
+            while (i < n)
+            {
+                var dept = depts[i];
+                var group = new List<string>();
+                while (i < n && string.Equals(depts[i], dept, StringComparison.OrdinalIgnoreCase))
+                {
+                    group.Add(names[i]);
+                    i++;
+                }
+                if (group.Count > 1)
+                    AssertSorted(group, descending: false);
+            }
+        }
+        finally
+        {
+            TryCloseApp(app);
+        }
+    }
+
+    [Fact]
+    public void ClearFilter_Department_RestoresMixedDepartments()
+    {
+        var exe = GetWinUI3DemoExePath();
+        if (!IsWinAppRuntimeAvailable(exe))
+            return;
+
+        using var app = Application.Launch(exe);
+        try
+        {
+            using var automation = new UIA3Automation();
+            var window = app.GetMainWindow(automation, TimeSpan.FromSeconds(10));
+            Assert.NotNull(window);
+
+            NavigateToAttach(window);
+
+            // Apply Department == IT using the existing filtering contract approach.
+            ApplyEqualsFilter(window, automation, property: "Department", value: "IT");
+
+            var afterFilter = GetVisibleRowTexts(window, "df-row-dept");
+            Assert.NotEmpty(afterFilter);
+            Assert.All(afterFilter, d => Assert.Equal("IT", d));
+
+            // Clear via popup Clear button.
+            var btn = window.FindFirstDescendant(cf => cf.ByControlType(ControlType.Button).And(cf.ByAutomationId("df-filter-btn-Department")));
+            Assert.NotNull(btn);
+            btn!.AsButton().Invoke();
+
+            var popup = WaitFor(() =>
+                    automation.GetDesktop().FindFirstDescendant(cf => cf.ByAutomationId("df-filter-popup-Department")),
+                TimeSpan.FromSeconds(10));
+            Assert.NotNull(popup);
+
+            var clear = popup!.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
+                .Select(x => x.AsButton())
+                .FirstOrDefault(b => string.Equals(b.Properties.Name.ValueOrDefault, "Clear", StringComparison.OrdinalIgnoreCase));
+            Assert.NotNull(clear);
+            clear!.Invoke();
+
+            // Expect more than one department after clear (best-effort).
+            var afterClear = GetVisibleRowTexts(window, "df-row-dept");
+            Assert.NotEmpty(afterClear);
+            Assert.True(afterClear.Distinct(StringComparer.OrdinalIgnoreCase).Count() > 1);
+        }
+        finally
+        {
+            TryCloseApp(app);
+        }
+    }
+
+    private static void NavigateToAttach(Window window)
+    {
+        var attachNavItem = WaitFor(() =>
+                window.FindFirstDescendant(cf => cf.ByControlType(ControlType.ListItem).And(cf.ByName("Attach (ListView)"))),
+            TimeSpan.FromSeconds(10));
+        Assert.NotNull(attachNavItem);
+        attachNavItem!.AsListBoxItem().Select();
+
+        var list = WaitFor(() =>
+                window.FindFirstDescendant(cf => cf.ByControlType(ControlType.List)),
+            TimeSpan.FromSeconds(10));
+        Assert.NotNull(list);
+    }
+
+    private static void ApplyEqualsFilter(Window window, UIA3Automation automation, string property, string value)
+    {
+        var btn = WaitFor(() =>
+                window.FindFirstDescendant(cf => cf.ByControlType(ControlType.Button).And(cf.ByAutomationId($"df-filter-btn-{property}"))),
+            TimeSpan.FromSeconds(10));
+        Assert.NotNull(btn);
+        btn!.AsButton().Invoke();
+
+        var popup = WaitFor(() =>
+                automation.GetDesktop().FindFirstDescendant(cf => cf.ByAutomationId($"df-filter-popup-{property}")),
+            TimeSpan.FromSeconds(10));
+        Assert.NotNull(popup);
+
+        var opCombo = popup!.FindFirstDescendant(cf => cf.ByControlType(ControlType.ComboBox))?.AsComboBox();
+        Assert.NotNull(opCombo);
+        opCombo!.Expand();
+        var equals = opCombo.Items.FirstOrDefault(i => (i.Properties.Name.ValueOrDefault ?? "").Contains("Equals", StringComparison.OrdinalIgnoreCase));
+        equals?.Select();
+
+        var edits = popup.FindAllDescendants(cf => cf.ByControlType(ControlType.Edit)).Select(e => e.AsTextBox()).ToList();
+        Assert.True(edits.Count > 0);
+        edits[0].Text = value;
+
+        var ok = popup.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
+            .Select(b => b.AsButton())
+            .FirstOrDefault(b => string.Equals(b.Properties.Name.ValueOrDefault, "OK", StringComparison.OrdinalIgnoreCase));
+        Assert.NotNull(ok);
+        ok!.Invoke();
+    }
+
+    private static List<string> GetVisibleRowTexts(Window window, string automationId)
+    {
+        return window.FindAllDescendants(cf => cf.ByAutomationId(automationId))
+            .Select(x => x.AsLabel())
+            .Where(x => x.Properties.IsOffscreen.ValueOrDefault == false)
+            .Select(x => (x.Text ?? "").Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .ToList();
+    }
+
+    private static void AssertSorted(IReadOnlyList<string> values, bool descending)
+    {
+        for (var i = 1; i < values.Count; i++)
+        {
+            var cmp = string.Compare(values[i - 1], values[i], StringComparison.OrdinalIgnoreCase);
+            if (descending)
+                Assert.True(cmp >= 0, $"Expected descending sort at i={i}. Prev='{values[i - 1]}', Curr='{values[i]}'");
+            else
+                Assert.True(cmp <= 0, $"Expected ascending sort at i={i}. Prev='{values[i - 1]}', Curr='{values[i]}'");
+        }
+    }
+
+    private static void AssertSorted(IReadOnlyList<float> values, bool descending)
+    {
+        for (var i = 1; i < values.Count; i++)
+        {
+            if (descending)
+                Assert.True(values[i - 1] >= values[i], $"Expected descending sort at i={i}. Prev={values[i - 1]}, Curr={values[i]}");
+            else
+                Assert.True(values[i - 1] <= values[i], $"Expected ascending sort at i={i}. Prev={values[i - 1]}, Curr={values[i]}");
+        }
+    }
+
+    private static void AssertSorted(IReadOnlyList<DateTime> values, bool descending)
+    {
+        for (var i = 1; i < values.Count; i++)
+        {
+            if (descending)
+                Assert.True(values[i - 1] >= values[i], $"Expected descending sort at i={i}. Prev={values[i - 1]:O}, Curr={values[i]:O}");
+            else
+                Assert.True(values[i - 1] <= values[i], $"Expected ascending sort at i={i}. Prev={values[i - 1]:O}, Curr={values[i]:O}");
+        }
+    }
+
+    private static float ParseFloatLoose(string raw)
+    {
+        raw = (raw ?? "").Trim();
+        if (float.TryParse(raw, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v))
+            return v;
+        raw = raw.Replace(',', '.');
+        return float.Parse(raw, System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    private static DateTime ParseDateTimeLoose(string raw)
+    {
+        raw = (raw ?? "").Trim();
+        if (DateTime.TryParse(raw, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AllowWhiteSpaces, out var dt))
+            return dt;
+        return DateTime.Parse(raw, System.Globalization.CultureInfo.CurrentCulture, System.Globalization.DateTimeStyles.AllowWhiteSpaces);
+    }
+
     private static AutomationElement WaitForNewPopup(AutomationElement desktop, Window main, HashSet<nint> beforeHandles, TimeSpan timeout)
     {
         AutomationElement? popup = null;
