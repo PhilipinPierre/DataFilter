@@ -54,7 +54,9 @@
     <Project Path="tests/PopupHost/DataFilter.Blazor.PopupHost.Tests/DataFilter.Blazor.PopupHost.Tests.csproj" />
     <Project Path="tests/PopupHost/DataFilter.Maui.PopupHost.Tests/DataFilter.Maui.PopupHost.Tests.csproj" />
     <Project Path="tests/PopupHost/DataFilter.WinForms.PopupHost.Tests/DataFilter.WinForms.PopupHost.Tests.csproj" />
-    <Project Path="tests/PopupHost/DataFilter.WinUI3.PopupHost.Tests/DataFilter.WinUI3.PopupHost.Tests.csproj" />
+    <Project Path="tests/PopupHost/DataFilter.WinUI3.PopupHost.Tests/DataFilter.WinUI3.PopupHost.Tests.csproj">
+      <Platform Project="x64" />
+    </Project>
     <Project Path="tests/PopupHost/DataFilter.Wpf.PopupHost.Tests/DataFilter.Wpf.PopupHost.Tests.csproj" />
   </Folder>
   <Folder Name="/Éléments de solution/">
