@@ -764,13 +764,61 @@ public sealed class AttachHeadlessContractsTests
 
     private async Task NavigateToAttachAsync(IPage page, List<string> errors)
     {
-        await page.GotoAsync(_host.BaseUrl + "/demo/attach", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
-        await page.WaitForFunctionAsync("() => !!window.Blazor");
-        await page.WaitForFunctionAsync("() => !!window.DataFilterInterops");
-        await page.WaitForFunctionAsync("() => { const d = document.getElementById('components-reconnect-modal'); return !d || d.open !== true; }");
-        await page.GetByTestId("df-filter-btn-Department").WaitForAsync();
-        await AssertBlazorHealthyAsync(page, errors);
-        await page.WaitForTimeoutAsync(750);
+        // We occasionally see transient "net::ERR_NETWORK_CHANGED" while the WASM runtime downloads framework assets.
+        // Retrying navigation is much cheaper than failing the whole suite.
+        const int maxAttempts = 3;
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            var beforeErrorCount = errors.Count;
+            try
+            {
+                await page.GotoAsync(
+                    _host.BaseUrl + "/demo/attach",
+                    new PageGotoOptions
+                    {
+                        // "networkidle" is unreliable on Blazor (background fetches / websockets).
+                        WaitUntil = WaitUntilState.DOMContentLoaded,
+                        Timeout = 60_000
+                    });
+
+                await page.WaitForFunctionAsync("() => !!window.Blazor");
+                await page.WaitForFunctionAsync("() => !!window.DataFilterInterops");
+                await page.WaitForFunctionAsync("() => { const d = document.getElementById('components-reconnect-modal'); return !d || d.open !== true; }");
+                await page.GetByTestId("df-filter-btn-Department").WaitForAsync();
+                await AssertBlazorHealthyAsync(page, errors);
+                await page.WaitForTimeoutAsync(750);
+                return;
+            }
+            catch (Exception ex) when (attempt < maxAttempts && IsTransientWasmNetworkError(ex, errors, beforeErrorCount))
+            {
+                // Give the host a moment, then retry with a hard reload.
+                await page.WaitForTimeoutAsync(1000);
+                try { await page.ReloadAsync(new PageReloadOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 }); } catch { }
+            }
+        }
+
+        // Should be unreachable due to the return above, but keep a clear failure mode.
+        throw new InvalidOperationException("Failed to navigate to /demo/attach after multiple attempts.");
+    }
+
+    private static bool IsTransientWasmNetworkError(Exception ex, List<string> errors, int fromIndex)
+    {
+        static bool LooksLikeTransient(string s) =>
+            s.Contains("ERR_NETWORK_CHANGED", StringComparison.OrdinalIgnoreCase) ||
+            s.Contains("Failed to fetch", StringComparison.OrdinalIgnoreCase) ||
+            s.Contains("mono_download_assets", StringComparison.OrdinalIgnoreCase) ||
+            s.Contains("Timeout", StringComparison.OrdinalIgnoreCase);
+
+        if (LooksLikeTransient(ex.ToString()))
+            return true;
+
+        for (var i = Math.Max(0, fromIndex); i < errors.Count; i++)
+        {
+            if (LooksLikeTransient(errors[i]))
+                return true;
+        }
+
+        return false;
     }
 
     private static async Task SetDirectionAsync(IPage page, bool isRtl)

@@ -1,0 +1,2 @@
+-P windows-latest=-self-hosted
+-P ubuntu-latest=catthehacker/ubuntu:act-latest

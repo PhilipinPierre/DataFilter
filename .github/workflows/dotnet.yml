@@ -56,7 +56,9 @@ jobs:
     - name: Test
       env:
         DF_DEMO_HOST: server
-      run: dotnet test DataFilter.slnx --configuration Release --no-build --verbosity normal
+      # UIContracts.* suites require interactive sessions / external infrastructure.
+      # Keep them in their dedicated jobs, otherwise hosted runners (and act) can be flaky/fail.
+      run: dotnet test DataFilter.slnx --configuration Release --no-build --verbosity normal --filter "FullyQualifiedName!~UIContracts."
 
     # NOTE: Desktop UI Automation (FlaUI) requires an interactive Windows session.
     # GitHub-hosted runners often block UIA/SendInput interactions (timeouts / access denied).
