@@ -640,14 +640,19 @@ public sealed class AttachHeadlessContractsTests
             var lang = page.GetByTestId("df-language");
             await lang.WaitForAsync();
 
-            // Prefer French if available; otherwise pick any non-empty culture option.
+            // Prefer French if available; otherwise pick any non-empty *non-English* culture option.
+            // On some CI environments, only invariant + English resources may be available; in that case, skip this contract.
             var chosen = await page.EvaluateAsync<string?>(
                 @"() => {
                     const sel = document.querySelector('[data-testid=""df-language""]');
                     if (!sel) return null;
                     const opts = Array.from(sel.querySelectorAll('option'));
                     const fr = opts.find(o => (o.value||'').toLowerCase() === 'fr-fr' || (o.value||'').toLowerCase().startsWith('fr'));
-                    return (fr || opts.find(o => (o.value||'') !== '') || null)?.value ?? null;
+                    const nonEnglish = opts.find(o => {
+                        const v = (o.value || '').toLowerCase();
+                        return v !== '' && !v.startsWith('en');
+                    });
+                    return (fr || nonEnglish || null)?.value ?? null;
                 }");
 
             if (string.IsNullOrWhiteSpace(chosen))
