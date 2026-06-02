@@ -126,6 +126,67 @@ Important for automation stability:
 - Prefer deterministic selectors/IDs (`data-testid`, deterministic element IDs, `AutomationId`) over brittle UI tree traversal.
 - **Always close UI demo apps in `finally`** (best-effort `Close()` then `Kill()`) so test runs never leave windows behind.
 
+### Local CI with [act](https://github.com/nektos/act)
+
+Use **act** on **Windows** to run `.github/workflows/dotnet.yml` locally before pushing. The workflow targets **`windows-latest`**; this repo ships **`.actrc`** mapping it to **`-self-hosted`** so steps run on the host (not a Linux container).
+
+**Prerequisites**
+
+| Requirement | Notes |
+|-------------|--------|
+| **Docker Desktop** | Running (Linux engine). `act` still uses Docker for action containers even in self-hosted mode. |
+| **act** | e.g. `winget install nektos.act` |
+| **PowerShell 7** | Workflow steps use `shell: pwsh`. Ensure `pwsh` is on `PATH` (e.g. `C:\Program Files\PowerShell\7`). |
+| **Isolated .NET (recommended)** | `actions/setup-dotnet` cannot write to `C:\Program Files\dotnet` without admin. Pass a writable install dir (see below). |
+
+**Commands**
+
+```powershell
+# From repo root — full `build` job (restore, workloads, build, tests, Playwright WASM)
+$env:DOTNET_INSTALL_DIR = "$env:USERPROFILE\.dotnet-act"
+act pull_request -W .github/workflows/dotnet.yml -j build --env DOTNET_INSTALL_DIR=$env:DOTNET_INSTALL_DIR
+
+# Dry-run (validate workflow graph only)
+act pull_request -n -W .github/workflows/dotnet.yml -j build
+```
+
+**First-time setup for `%USERPROFILE%\.dotnet-act`**
+
+After the first `act` run installs the SDK via `setup-dotnet`, you may need once on the machine:
+
+1. **MAUI / wasm workloads** (restore step fails with `NETSDK1147` otherwise):
+   ```powershell
+   $env:DOTNET_ROOT = "$env:USERPROFILE\.dotnet-act"
+   $env:PATH = "$env:DOTNET_ROOT;$env:PATH"
+   dotnet workload restore DataFilter.slnx
+   ```
+2. **.NET 8 runtimes** (many test projects target `net8.0`; the isolated SDK may only have 9.x until you add 8.x):
+   ```powershell
+   $installDir = "$env:USERPROFILE\.dotnet-act"
+   $script = "$env:TEMP\dotnet-install.ps1"
+   Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile $script -UseBasicParsing
+   & $script -InstallDir $installDir -Runtime dotnet -Channel 8.0 -NoPath
+   & $script -InstallDir $installDir -Runtime aspnetcore -Channel 8.0 -NoPath
+   & $script -InstallDir $installDir -Runtime windowsdesktop -Channel 8.0 -NoPath
+   ```
+
+**What `build` covers vs GitHub**
+
+| Step | Local `act` | Notes |
+|------|-------------|--------|
+| Restore / workloads / build | Yes | Same as CI. |
+| **Test** (`DF_DEMO_HOST=server`) | Yes | Excludes `UIContracts.*` via `--filter "FullyQualifiedName!~UIContracts."` (FlaUI needs an interactive session; flaky under `act`/session-0). |
+| **Playwright E2E** (`DF_DEMO_HOST=wasm`) | Yes | Separate project run; navigation retries transient WASM fetch errors in `AttachHeadlessContractsTests`. |
+| **Pack / NuGet push** | Only on `v*` tags | Skipped on `pull_request`. |
+| **`desktop-ui-contracts`** | No | `if: workflow_dispatch` only; run FlaUI on a **self-hosted** Windows runner: `act workflow_dispatch -j desktop-ui-contracts`. |
+
+**Pitfalls**
+
+- **`-P windows-latest=-self`** (wrong) → `invalid reference format`; use **`-self-hosted`** (see `.actrc`).
+- **`Cannot find: pwsh`** → install PowerShell 7 and prepend it to `PATH` for the `act` invocation.
+- **`ERR_NETWORK_CHANGED` / `Failed to fetch` on WASM** → usually transient; tests retry navigation; re-run `act` if needed.
+- **Do not commit** local logs (`act-build*.log`) unless intentionally added.
+
 ## Notes for agents
 
 1. **Multi-targeting**: Core may compile for `netstandard2.0` — avoid very new .NET APIs without compile-time guards, and keep signatures consistent across packages.
