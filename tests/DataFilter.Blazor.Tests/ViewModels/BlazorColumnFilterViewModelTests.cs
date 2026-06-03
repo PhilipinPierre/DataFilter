@@ -3,6 +3,7 @@ using DataFilter.Core.Enums;
 using DataFilter.Filtering.ExcelLike.Models;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -150,5 +151,53 @@ public class BlazorColumnFilterViewModelTests
         Assert.NotNull(appliedState);
         Assert.Contains("Alice", appliedState.OrSearchPatterns);
         Assert.Contains("Henry", appliedState.OrSearchPatterns);
+    }
+
+    [Fact]
+    public async Task SearchCommand_OverlappingInvocations_DoNotThrowOrCorruptState()
+    {
+        // Arrange
+        var distinctValues = new List<object> { "Alice 1", "Alice 2", "Henry 1", "Henry 2" };
+        var gate = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        int started = 0;
+
+        var vm = new ColumnFilterViewModel(
+            async s =>
+            {
+                if (Interlocked.Increment(ref started) == 2)
+                    gate.TrySetResult(true);
+
+                await gate.Task;
+                await Task.Delay(5);
+
+                if (string.IsNullOrWhiteSpace(s))
+                    return distinctValues;
+
+                return distinctValues.Where(v => v.ToString()!.StartsWith(s, System.StringComparison.OrdinalIgnoreCase));
+            },
+            _ => { },
+            () => { },
+            _ => { },
+            _ => { },
+            typeof(string)
+        );
+        await vm.InitializeAsync(distinctValues);
+
+        // Act
+        vm.SearchText = "Alice";
+        var searchAlice = vm.SearchCommand.ExecuteAsync("Alice");
+
+        vm.SearchText = "Henry";
+        var searchHenry = vm.SearchCommand.ExecuteAsync("Henry");
+
+        var allSearches = Task.WhenAll(searchAlice, searchHenry);
+        var completed = await Task.WhenAny(allSearches, Task.Delay(2000));
+        Assert.Same(allSearches, completed);
+        await allSearches;
+        var ex = Record.Exception(() => vm.ApplyCommand.Execute(null));
+
+        // Assert
+        Assert.Null(ex);
+        Assert.NotEmpty(vm.FilterValues);
     }
 }
