@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using DataFilter.Core.Pipeline;
 
 namespace DataFilter.Core.Services;
@@ -36,7 +36,14 @@ public static class FilterPipelineIdMerger
         {
             case CriterionPipelineNode c:
                 string key = CriterionSignature(c);
+#if NETSTANDARD2_0
+                if (idBySignature.ContainsKey(key))
+                    idBySignature[key] = c.Id;
+                else
+                    idBySignature.Add(key, c.Id);
+#else
                 idBySignature.TryAdd(key, c.Id);
+#endif
                 break;
             case GroupPipelineNode g:
                 foreach (FilterPipelineNode child in g.Children)
