@@ -103,12 +103,108 @@ internal static class PlaywrightContractHelpers
         await popup.Locator("button.df-btn-primary").ClickAsync();
     }
 
+    public static string HeaderTextForProperty(string propertyName) => propertyName switch
+    {
+        "HireDate" => "Hire Date",
+        "Id" => "ID",
+        _ => propertyName
+    };
+
+    public static async Task ApplyColumnFilterCaseAsync(
+        IPage page,
+        DemoHostFixture host,
+        ColumnFilterCase filterCase,
+        List<string> errors)
+    {
+        await OpenPopupAsync(page, host, filterCase.PropertyName, errors);
+        var popup = page.Locator($"#df-filter-popup-{filterCase.PropertyName}");
+        await EnsureCustomFilterExpandedAsync(popup);
+        await popup.Locator("select.df-custom-input").First.SelectOptionAsync(new[] { filterCase.UiOperator });
+
+        if (string.Equals(filterCase.UiOperator, "Between", StringComparison.OrdinalIgnoreCase))
+        {
+            var parts = filterCase.FilterValue.Split('|');
+            await popup.Locator("input.df-custom-input").Nth(0).FillAsync(parts[0]);
+            await popup.Locator("input.df-custom-input").Nth(1).FillAsync(parts.Length > 1 ? parts[1] : parts[0]);
+        }
+        else
+        {
+            await popup.Locator("input.df-custom-input").First.FillAsync(filterCase.FilterValue);
+        }
+
+        await popup.Locator("button.df-btn-primary").ClickAsync();
+        await page.WaitForTimeoutAsync(300);
+    }
+
+    public static async Task AssertColumnFilterInvariantAsync(IPage page, ColumnFilterCase filterCase)
+    {
+        var header = HeaderTextForProperty(filterCase.PropertyName);
+        switch (filterCase.PropertyName)
+        {
+            case "Department":
+                var depts = await GetColumnValuesAsync(page, header);
+                Assert.NotEmpty(depts);
+                Assert.All(depts, d => Assert.True(RowInvariants.DepartmentEquals(d, filterCase.FilterValue)));
+                break;
+            case "Name":
+                var names = await GetColumnValuesAsync(page, header);
+                Assert.NotEmpty(names);
+                Assert.All(names, n => Assert.True(RowInvariants.NameContains(n, filterCase.FilterValue)));
+                break;
+            case "Country":
+                var countries = await GetColumnValuesAsync(page, header);
+                Assert.NotEmpty(countries);
+                Assert.All(countries, c => Assert.True(RowInvariants.CountryEquals(c, filterCase.FilterValue)));
+                break;
+            case "Salary" when filterCase.UiOperator == "GreaterThan":
+                var salaries = await GetColumnDataValuesAsync(page, header);
+                Assert.NotEmpty(salaries);
+                Assert.All(salaries, s => Assert.True(RowInvariants.SalaryGreaterThan(s, decimal.Parse(filterCase.FilterValue))));
+                break;
+            case "HireDate" when filterCase.UiOperator == "Between":
+                var parts = filterCase.FilterValue.Split('|');
+                var min = DateTime.Parse(parts[0]).Ticks;
+                var max = DateTime.Parse(parts[1]).Ticks;
+                var dates = await GetColumnDataValuesAsync(page, header);
+                Assert.NotEmpty(dates);
+                Assert.All(dates, d => Assert.True(RowInvariants.HireDateBetweenTicks(d, min, max)));
+                break;
+            default:
+                var values = await GetColumnValuesAsync(page, header);
+                Assert.NotEmpty(values);
+                break;
+        }
+    }
+
     public static async Task ApplyDepartmentEqualsItAsync(IPage page, DemoHostFixture host, List<string> errors)
     {
         await OpenPopupAsync(page, host, "Department", errors);
         var popup = page.Locator("#df-filter-popup-Department");
         await ApplyCustomEqualsAsync(popup, "IT");
         await page.WaitForTimeoutAsync(300);
+    }
+
+    public static async Task<List<string>> GetColumnDataValuesAsync(IPage page, string headerText)
+    {
+        var index = await page.EvaluateAsync<int>(
+            @"(headerText) => {
+                const ths = Array.from(document.querySelectorAll('thead th'));
+                const norm = (s) => (s || '').replace(/\s+/g,' ').trim().toLowerCase();
+                const target = norm(headerText);
+                const i = ths.findIndex(th => norm(th.innerText).includes(target));
+                return i < 0 ? -1 : i + 1;
+            }",
+            headerText);
+
+        if (index < 1)
+            throw new InvalidOperationException($"Could not find column header '{headerText}'.");
+
+        var cells = page.Locator($"tbody tr td:nth-child({index})");
+        var count = await cells.CountAsync();
+        var values = new List<string>(capacity: count);
+        for (var i = 0; i < count; i++)
+            values.Add(((await cells.Nth(i).GetAttributeAsync("data-value")) ?? string.Empty).Trim());
+        return values;
     }
 
     public static async Task<List<string>> GetColumnValuesAsync(IPage page, string headerText)
