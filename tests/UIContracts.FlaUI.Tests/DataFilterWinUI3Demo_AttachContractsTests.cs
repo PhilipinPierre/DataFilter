@@ -411,6 +411,40 @@ public sealed class DataFilterWinUI3Demo_AttachContractsTests
         }
     }
 
+    [Fact]
+    public void Filtering_MultiColumn_DeptItAndCountryUsa()
+    {
+        var exe = GetWinUI3DemoExePath();
+        if (!IsWinAppRuntimeAvailable(exe))
+            return;
+
+        using var app = Application.Launch(exe);
+        try
+        {
+            using var automation = new UIA3Automation();
+            var window = app.GetMainWindow(automation, TimeSpan.FromSeconds(10));
+            Assert.NotNull(window);
+
+            NavigateToAttach(window);
+
+            ApplyEqualsFilter(window, automation, property: "Department", value: "IT");
+            var depts = GetVisibleRowTexts(window, "df-row-dept");
+            if (depts.Count == 0)
+                return;
+
+            ApplyEqualsFilter(window, automation, property: "Country", value: "USA");
+
+            depts = GetVisibleRowTexts(window, "df-row-dept");
+            var countries = GetVisibleRowTexts(window, "df-row-country");
+            Assert.All(depts, d => Assert.Equal("IT", d));
+            Assert.All(countries, c => Assert.Equal("USA", c));
+        }
+        finally
+        {
+            TryCloseApp(app);
+        }
+    }
+
     private static void NavigateToAttach(Window window)
     {
         var attachNavItem = WaitFor(() =>

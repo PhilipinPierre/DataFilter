@@ -11,6 +11,9 @@ namespace DataFilter.Maui
             InitializeComponent();
             BindingContext = viewModel;
 
+            LanguagePicker.AutomationId = "df-language";
+            DirectionPicker.AutomationId = "df-direction";
+
         DirectionPicker.ItemsSource = new[] { "LTR", "RTL" };
         DirectionPicker.SelectedIndex = FlowDirection == FlowDirection.RightToLeft ? 1 : 0;
         DirectionPicker.SelectedIndexChanged += (_, __) =>
