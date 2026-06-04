@@ -20,7 +20,8 @@ public static class RowInvariants
     public static bool NameStartsWithAny(string value, params string[] prefixes)
     {
         var trimmed = value.Trim();
-        return prefixes.Any(p => trimmed.StartsWith(p, StringComparison.OrdinalIgnoreCase));
+        var firstToken = trimmed.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? trimmed;
+        return prefixes.Any(p => firstToken.StartsWith(p, StringComparison.OrdinalIgnoreCase));
     }
 
     public static bool SalaryBetween(string value, decimal min, decimal max)
