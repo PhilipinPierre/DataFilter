@@ -18,16 +18,16 @@
             <strong>Filter pipeline (JSON preset)</strong>
         </div>
 
-        <textarea class="form-control font-monospace" rows="8" @bind="_pipelineJson"></textarea>
+        <textarea class="form-control font-monospace" rows="8" data-testid="df-pipeline-json" @bind="_pipelineJson"></textarea>
 
         @if (!string.IsNullOrWhiteSpace(_jsonError))
         {
-            <div class="text-danger mt-2">@_jsonError</div>
+            <div class="text-danger mt-2" data-testid="df-pipeline-error">@_jsonError</div>
         }
 
         <div class="d-flex gap-2 mt-2">
-            <button class="btn btn-outline-secondary" @onclick="SyncPipelineFromGrid">Sync from grid</button>
-            <button class="btn btn-primary" @onclick="ApplyPipelineJson">Apply JSON</button>
+            <button class="btn btn-outline-secondary" data-testid="df-pipeline-sync" @onclick="SyncPipelineFromGrid">Sync from grid</button>
+            <button class="btn btn-primary" data-testid="df-pipeline-apply" @onclick="ApplyPipelineJson">Apply JSON</button>
         </div>
     </div>
 </div>
