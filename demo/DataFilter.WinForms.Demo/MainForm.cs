@@ -80,7 +80,13 @@ public sealed class MainForm : Form
         _directionCombo.SelectedIndex = RightToLeft == RightToLeft.Yes ? 1 : 0;
 
         var lblLanguage = new Label { Text = "Language:", AutoSize = true, Margin = new Padding(15, 7, 5, 0) };
-        _languageCombo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 220, Margin = new Padding(0, 3, 10, 0) };
+        _languageCombo = new ComboBox
+        {
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Width = 220,
+            Margin = new Padding(0, 3, 10, 0),
+            AccessibleName = "df-language"
+        };
 
         var languageOptions = LocalizationManager.GetAvailableCultures()
             .Select(c => new LanguageOption(c))
