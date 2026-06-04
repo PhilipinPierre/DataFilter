@@ -1,6 +1,8 @@
+using System.Globalization;
 using DataFilter.Core.Enums;
 using DataFilter.Core.Pipeline;
 using DataFilter.Filtering.ExcelLike.Models;
+using DataFilter.Localization;
 using DataFilter.PlatformShared.FilterBar;
 
 namespace DataFilter.PlatformShared.Tests;
@@ -38,5 +40,31 @@ public class FilterBarCriterionMapperTests
 
         Assert.False(resolved.SelectAll);
         Assert.Contains("Zoe", resolved.SelectedValues);
+    }
+
+    [Fact]
+    public void Format_Uses_Inline_Lowercase_Operator_After_Column()
+    {
+        var previous = LocalizationManager.Instance.Culture;
+        try
+        {
+            LocalizationManager.Instance.SetCulture(new CultureInfo("fr-FR"));
+            var criterion = new CriterionPipelineNode
+            {
+                PropertyName = "Name",
+                Operator = nameof(FilterOperator.Equals),
+                Value = "Alice"
+            };
+
+            string text = FilterCriterionFormatter.Format(criterion);
+
+            Assert.StartsWith("name ", text, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("égal à", text, StringComparison.Ordinal);
+            Assert.DoesNotContain("Égal à", text);
+        }
+        finally
+        {
+            LocalizationManager.Instance.SetCulture(previous);
+        }
     }
 }

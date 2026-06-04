@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Globalization;
+using System.Text.RegularExpressions;
 using DataFilter.Core.Enums;
 using DataFilter.Core.Models;
 using DataFilter.Core.Pipeline;
@@ -22,14 +23,12 @@ public static class FilterCriterionFormatter
     {
         if (criterion == null) throw new ArgumentNullException(nameof(criterion));
 
-        string column = resolveColumnTitle != null && !string.IsNullOrEmpty(criterion.PropertyName)
-            ? resolveColumnTitle(criterion.PropertyName)
-            : criterion.PropertyName;
+        string column = FormatColumnLabel(criterion.PropertyName, resolveColumnTitle);
 
         if (string.IsNullOrEmpty(column) && string.IsNullOrEmpty(criterion.Operator))
             return LocalizationManager.Instance["FilterBar_NewFilter"];
 
-        string opText = FormatOperator(criterion.Operator);
+        string opText = FormatOperatorForBar(criterion.Operator);
         string valueText = FormatValue(criterion.Operator, criterion.Value, formatProvider);
 
         if (string.IsNullOrEmpty(valueText)
@@ -41,15 +40,45 @@ public static class FilterCriterionFormatter
             : $"{column} {opText} {valueText}".Trim();
     }
 
-    private static string FormatOperator(string operatorName)
+    private static string FormatColumnLabel(string propertyName, Func<string, string>? resolveColumnTitle)
+    {
+        if (!string.IsNullOrEmpty(propertyName) && resolveColumnTitle != null)
+        {
+            string resolved = resolveColumnTitle(propertyName);
+            if (!string.IsNullOrEmpty(resolved))
+                return resolved;
+        }
+
+        return string.IsNullOrEmpty(propertyName)
+            ? string.Empty
+            : ToBarInlinePhrase(HumanizePascalCase(propertyName));
+    }
+
+    private static string FormatOperatorForBar(string operatorName)
     {
         if (string.IsNullOrEmpty(operatorName))
             return string.Empty;
 
         string key = $"FilterOperator_{operatorName}";
         string localized = LocalizationManager.Instance[key];
-        return localized == key ? operatorName : localized;
+        string text = localized == key ? HumanizePascalCase(operatorName) : localized;
+        return ToBarInlinePhrase(text);
     }
+
+    /// <summary>
+    /// Lowercases text for chip labels where the operator appears after the column name.
+    /// </summary>
+    internal static string ToBarInlinePhrase(string phrase)
+    {
+        if (string.IsNullOrWhiteSpace(phrase))
+            return phrase;
+
+        CultureInfo culture = LocalizationManager.Instance.Culture;
+        return phrase.ToLower(culture);
+    }
+
+    private static string HumanizePascalCase(string name) =>
+        Regex.Replace(name, "([a-z])([A-Z])", "$1 $2", RegexOptions.CultureInvariant);
 
     private static string FormatValue(string operatorName, object? value, IFormatProvider? formatProvider)
     {
