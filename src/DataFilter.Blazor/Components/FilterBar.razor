@@ -1,0 +1,62 @@
+@using DataFilter.Localization
+@using DataFilter.PlatformShared.FilterBar
+@using DataFilter.PlatformShared.ViewModels
+
+<div class="df-filter-bar" data-testid="df-filter-bar">
+    @foreach (var segment in ViewModel.Segments)
+    {
+        @if (segment is FilterBarOrSeparatorItem orSep)
+        {
+            <span class="df-filter-bar-or">@orSep.Text</span>
+        }
+        else if (segment is FilterBarAndClusterItem cluster)
+        {
+            <div class="df-filter-bar-cluster" data-testid="@($"df-filter-bar-group-{cluster.GroupNodeId ?? "root"}")">
+                @if (cluster.CanAddAnd && !string.IsNullOrEmpty(cluster.AddAndAnchorNodeId))
+                {
+                    <button type="button"
+                            class="df-filter-bar-add"
+                            title="@LocalizationManager.Instance["FilterBar_AddAnd"]"
+                            data-testid="@($"df-filter-bar-group-add-{cluster.AddAndAnchorNodeId}")"
+                            @onclick="() => ViewModel.AddAndCommand.Execute(cluster.AddAndAnchorNodeId)">+</button>
+                }
+                @foreach (var chip in cluster.Chips)
+                {
+                    <div class="df-filter-bar-chip @(chip.IsEnabled ? "" : "disabled")"
+                         data-testid="@($"df-filter-bar-chip-{chip.NodeId}")">
+                        <button type="button" class="df-filter-bar-chip-label"
+                                @onclick="() => OnEditChip(chip)"
+                                @oncontextmenu="e => OnToggleChip(e, chip.NodeId)"
+                                @oncontextmenu:preventDefault="true">@chip.DisplayText</button>
+                        @if (chip.CanAddAnd)
+                        {
+                            <button type="button" class="df-filter-bar-add"
+                                    data-testid="@($"df-filter-bar-add-{chip.NodeId}")"
+                                    title="@LocalizationManager.Instance["FilterBar_AddAnd"]"
+                                    @onclick="() => ViewModel.AddAndCommand.Execute(chip.NodeId)">+</button>
+                        }
+                        <button type="button" class="df-filter-bar-remove"
+                                @onclick="() => ViewModel.RemoveCommand.Execute(chip.NodeId)">×</button>
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public FilterBarViewModel ViewModel { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback<FilterBarEditRequest> OnEdit { get; set; }
+
+    private void OnEditChip(FilterBarChipItem chip) =>
+        OnEdit.InvokeAsync(new FilterBarEditRequest { NodeId = chip.NodeId, PropertyName = chip.PropertyName });
+
+    private void OnToggleChip(MouseEventArgs e, string nodeId)
+    {
+        if (ViewModel.ToggleEnabledCommand.CanExecute(nodeId))
+            ViewModel.ToggleEnabledCommand.Execute(nodeId);
+    }
+}

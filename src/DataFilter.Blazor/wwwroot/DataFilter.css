@@ -1,5 +1,69 @@
 /* DataFilter.Blazor Styles */
 
+.df-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 4px;
+    margin-bottom: 6px;
+}
+
+.df-filter-bar-or {
+    font-weight: 600;
+    margin: 0 8px;
+    color: var(--df-popup-fg);
+}
+
+.df-filter-bar-cluster {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border: 1px solid var(--df-popup-border);
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.df-filter-bar-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 4px;
+    border: 1px solid var(--df-popup-border);
+    border-radius: 4px;
+    background: var(--df-popup-bg);
+}
+
+.df-filter-bar-chip.disabled {
+    opacity: 0.45;
+}
+
+.df-filter-bar-chip-label,
+.df-filter-bar-add,
+.df-filter-bar-remove {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: var(--df-font-size);
+    color: var(--df-popup-fg);
+}
+
+.df-filter-bar-add,
+.df-filter-bar-remove {
+    min-width: 22px;
+}
+
+.df-bar-edit-popup {
+    margin-bottom: 8px;
+}
+
+.df-bar-edit-popup .df-popup-container {
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
 :root {
     --df-popup-bg: #ffffff;
     --df-popup-border: #ccc;

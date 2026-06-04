@@ -7,6 +7,8 @@
 @using DataFilter.Core.Models
 @using DataFilter.Core.Pipeline
 @using DataFilter.Core.Services
+@using DataFilter.PlatformShared.FilterBar
+@using DataFilter.PlatformShared.Pipeline
 @using System.Linq
 
 @if (Headless && ChildContent != null)
@@ -16,6 +18,19 @@
 else
 {
     <div class="df-grid-container">
+        @if (ShowFilterBar)
+        {
+            <FilterBar ViewModel="_filterBar" OnEdit="HandleBarEditAsync" />
+        }
+        @if (_barEditColumn is not null && _barPopupVisible)
+        {
+            <div class="df-bar-edit-popup">
+                <FilterPopup ViewModel="@GetViewModel(_barEditColumn)"
+                             Visible="true"
+                             VisibleChanged="OnBarPopupVisibleChanged"
+                             ElementId="@($"df-filter-popup-bar-{_barEditColumn.PropertyName}")" />
+            </div>
+        }
         <table class="df-grid">
             <thead>
                 <tr>
@@ -73,8 +88,13 @@ else
     [Parameter] public List<ColumnDefinition<TItem>> Columns { get; set; } = new();
     [Parameter] public int PageSize { get; set; } = 20;
     [Parameter] public bool Headless { get; set; }
+    [Parameter] public bool ShowFilterBar { get; set; }
     [Parameter] public RenderFragment<DataFilterGridContext<TItem>>? ChildContent { get; set; }
 
+    private readonly FilterPipelineSession _pipelineSession = new();
+    private FilterBarViewModel _filterBar = null!;
+    private ColumnDefinition<TItem>? _barEditColumn;
+    private bool _barPopupVisible;
     private Dictionary<string, IColumnFilterViewModel> _viewModels = new();
     private List<TItem> _filteredItems = new();
     private readonly List<(string PropertyName, bool IsDescending)> _sortDescriptors = new();
@@ -93,6 +113,12 @@ else
         getFilteredItems: () => _filteredItems,
         getIsLoading: () => _isLoading);
 
+    protected override void OnInitialized()
+    {
+        _filterBar = new FilterBarViewModel(_pipelineSession);
+        _filterBar.Configure(ResolveColumnTitle, ApplyFilterPipelineAsync);
+    }
+
     protected override async Task OnParametersSetAsync()
     {
         var itemsSourceChanged = !ReferenceEquals(_itemsSourceReference, Items);
@@ -103,9 +129,20 @@ else
             await ApplyFiltersAsync();
     }
 
+    private string ResolveColumnTitle(string propertyName) =>
+        Columns.FirstOrDefault(c => string.Equals(c.PropertyName, propertyName, StringComparison.OrdinalIgnoreCase))?.Title
+        ?? propertyName;
+
     private async Task ApplyFiltersAsync()
     {
         await ApplyFiltersCoreAsync(CollectActiveDescriptorsFromViewModels());
+        SyncFilterBarFromContext();
+    }
+
+    private void SyncFilterBarFromContext()
+    {
+        _pipelineSession.SyncFromContext(_context);
+        _filterBar.RebuildDisplay();
     }
 
     private List<IFilterDescriptor> CollectActiveDescriptorsFromViewModels()
@@ -270,6 +307,7 @@ else
     {
         if (pipeline == null) throw new ArgumentNullException(nameof(pipeline));
 
+        _pipelineSession.ReplacePipeline(pipeline);
         var compiled = FilterPipelineCompiler.Compile(pipeline);
         var converted = FilterDescriptorToExcelConverter.ConvertCompiledPipeline(compiled);
 
@@ -296,6 +334,62 @@ else
         }
 
         await ApplyFiltersCoreAsync(converted);
+        SyncFilterBarFromContext();
+    }
+
+    private async Task HandleBarEditAsync(FilterBarEditRequest request)
+    {
+        var col = Columns.FirstOrDefault(c =>
+            string.Equals(c.PropertyName, request.PropertyName, StringComparison.OrdinalIgnoreCase))
+            ?? Columns.FirstOrDefault(c => !string.IsNullOrWhiteSpace(c.PropertyName));
+        if (col == null)
+            return;
+
+        if (GetViewModel(col) is not ColumnFilterViewModel vm)
+            return;
+
+        vm.SetBarEditContext(new FilterBarEditContext
+        {
+            NodeId = request.NodeId,
+            IsNew = request.IsNew,
+            RemoveNodeOnClear = true,
+            ApplyToPipelineAsync = state => ApplyBarCriterionAsync(request.NodeId, col.PropertyName, state),
+            RemoveFromPipelineAsync = () => RemoveBarNodeAsync(request.NodeId)
+        });
+
+        if (_pipelineSession.TryGetNode(request.NodeId, out var node) && node is CriterionPipelineNode c)
+            await vm.LoadFromCriterionAsync(c);
+        else
+            await vm.SearchCommand.ExecuteAsync(string.Empty);
+
+        _barEditColumn = col;
+        _barPopupVisible = true;
+        StateHasChanged();
+    }
+
+    private void OnBarPopupVisibleChanged(bool visible)
+    {
+        _barPopupVisible = visible;
+        if (!visible)
+        {
+            if (GetViewModel(_barEditColumn!) is ColumnFilterViewModel barVm)
+                barVm.SetBarEditContext(null);
+            _barEditColumn = null;
+        }
+    }
+
+    private async Task ApplyBarCriterionAsync(string nodeId, string propertyName, ExcelFilterState state)
+    {
+        if (_pipelineSession.TryGetNode(nodeId, out var node) && node is CriterionPipelineNode c)
+            FilterBarCriterionMapper.ApplyStateToCriterion(c, propertyName, state);
+
+        await ApplyFilterPipelineAsync(_pipelineSession.Pipeline);
+    }
+
+    private async Task RemoveBarNodeAsync(string nodeId)
+    {
+        _pipelineSession.RemoveNode(nodeId);
+        await ApplyFilterPipelineAsync(_pipelineSession.Pipeline);
     }
 
     private void SetSortInternal(string propertyName, bool isDescending)
