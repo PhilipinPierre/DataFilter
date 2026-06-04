@@ -4,7 +4,10 @@ using DataFilter.Core.Engine;
 using DataFilter.Core.Enums;
 using DataFilter.Filtering.ExcelLike.Models;
 using DataFilter.Filtering.ExcelLike.Services;
+using DataFilter.Core.Models;
+using DataFilter.Core.Pipeline;
 using DataFilter.Localization;
+using DataFilter.PlatformShared.FilterBar;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
@@ -175,6 +178,11 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
     private readonly IFilterEvaluator _filterEvaluator;
     private readonly Func<string> _blanksDisplayTextProvider;
 
+    /// <summary>
+    /// When set, Apply/Clear target a single pipeline node (filter bar edit mode).
+    /// </summary>
+    public FilterBarEditContext? BarEditContext { get; private set; }
+
     public ColumnFilterViewModel(
         Func<string, System.Threading.Tasks.Task<IEnumerable<object>>> distinctValuesProvider,
         Action<ExcelFilterState> onApply,
@@ -231,7 +239,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
 
                     FilterState.SearchText = string.Empty;
                     OnPropertyChanged(nameof(IsFilterActive));
-                    _onApplyAction?.Invoke(FilterState);
+                    InvokeApplyAction();
                     OnApply?.Invoke(this, EventArgs.Empty);
                     return;
                 }
@@ -443,7 +451,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
                 }
 
                 OnPropertyChanged(nameof(IsFilterActive));
-                _onApplyAction?.Invoke(FilterState);
+                InvokeApplyAction();
                 OnApply?.Invoke(this, EventArgs.Empty);
             }
         });
@@ -1194,8 +1202,40 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
         OnPropertyChanged(nameof(IsFilterActive));
     }
 
+    /// <summary>
+    /// Enables filter-bar edit mode for a pipeline node.
+    /// </summary>
+    public void SetBarEditContext(FilterBarEditContext? context) => BarEditContext = context;
+
+    /// <summary>
+    /// Loads the popup from a pipeline criterion.
+    /// </summary>
+    public async System.Threading.Tasks.Task LoadFromCriterionAsync(CriterionPipelineNode node)
+    {
+        var state = FilterBarCriterionMapper.StateFromCriterion(node);
+        await LoadStateAsync(state);
+    }
+
+    private void InvokeApplyAction()
+    {
+        if (BarEditContext?.ApplyToPipelineAsync != null)
+        {
+            _ = BarEditContext.ApplyToPipelineAsync(FilterState);
+            return;
+        }
+
+        _onApplyAction?.Invoke(FilterState);
+    }
+
     public void ClearFilter()
     {
+        if (BarEditContext?.RemoveFromPipelineAsync != null)
+        {
+            _ = BarEditContext.RemoveFromPipelineAsync();
+            OnClear?.Invoke(this, EventArgs.Empty);
+            return;
+        }
+
         FilterState.Clear();
         SearchText = string.Empty;
         _internalUpdate = true;
