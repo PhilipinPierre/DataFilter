@@ -20,4 +20,8 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\tests\UIContracts.Common\UIContracts.Common.csproj" />
+  </ItemGroup>
+
 </Project>
