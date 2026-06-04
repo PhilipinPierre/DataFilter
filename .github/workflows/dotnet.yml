@@ -65,7 +65,7 @@ jobs:
     # Run these on a self-hosted Windows runner (see `desktop-ui-contracts` job below).
 
     - name: Pack
-      run: dotnet pack DataFilter.slnx --configuration Release --no-build --output ./artifacts -p:Version=${{ env.VERSION }} -p:PackageVersion=${{ env.VERSION }}
+      run: dotnet pack DataFilter.slnx --configuration Release --no-restore --output ./artifacts -p:Version=${{ env.VERSION }} -p:PackageVersion=${{ env.VERSION }}
 
     - name: Publish to NuGet.org
       if: startsWith(github.ref, 'refs/tags/v')
