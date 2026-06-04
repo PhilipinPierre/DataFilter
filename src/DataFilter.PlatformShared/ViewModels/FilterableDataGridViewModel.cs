@@ -9,6 +9,8 @@ using DataFilter.Core.Services;
 using DataFilter.Filtering.ExcelLike.Abstractions;
 using DataFilter.Filtering.ExcelLike.Models;
 using DataFilter.Filtering.ExcelLike.Services;
+using DataFilter.PlatformShared.FilterBar;
+using DataFilter.PlatformShared.Pipeline;
 
 namespace DataFilter.PlatformShared.ViewModels;
 
@@ -31,12 +33,37 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
     /// <inheritdoc />
     public event EventHandler<FilterDescriptorsChangedEventArgs>? FilterDescriptorsChanged;
 
+    /// <inheritdoc />
+    public FilterPipelineSession PipelineSession { get; }
+
+    /// <inheritdoc />
+    public FilterBarViewModel FilterBar { get; }
+
+    private Func<string, string>? _filterBarColumnTitleResolver;
+
     /// <summary>
     /// Raises <see cref="FilterDescriptorsChanged"/>.
     /// </summary>
     protected virtual void OnFilterDescriptorsChanged(FilterDescriptorsChangedEventArgs? args = null)
     {
+        SyncFilterBarPipeline();
         FilterDescriptorsChanged?.Invoke(this, args ?? new FilterDescriptorsChangedEventArgs());
+    }
+
+    /// <summary>
+    /// Sets how filter bar chips resolve column display names.
+    /// </summary>
+    public void SetFilterBarColumnTitleResolver(Func<string, string>? resolver)
+    {
+        _filterBarColumnTitleResolver = resolver;
+        FilterBar.Configure(_filterBarColumnTitleResolver, ApplyFilterPipelineAsync);
+        FilterBar.RebuildDisplay();
+    }
+
+    private void SyncFilterBarPipeline()
+    {
+        PipelineSession.SyncFromContext(Context);
+        FilterBar.RebuildDisplay();
     }
 
     /// <summary>
@@ -62,6 +89,9 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
     {
         FilterEngine = filterEngine ?? throw new ArgumentNullException(nameof(filterEngine));
         CultureOverride = cultureOverride;
+        PipelineSession = new FilterPipelineSession();
+        FilterBar = new FilterBarViewModel(PipelineSession);
+        FilterBar.Configure(null, ApplyFilterPipelineAsync);
     }
 
     [ObservableProperty]
@@ -144,6 +174,7 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
             ctx.Page = 1;
         }
         await RefreshDataAsync();
+        SyncFilterBarPipeline();
     }
 
     private void ReconcileExcelFilterStatesWithLocalDistincts()
@@ -246,6 +277,7 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
     public async Task ApplyFilterPipelineAsync(FilterPipeline pipeline)
     {
         if (pipeline == null) throw new ArgumentNullException(nameof(pipeline));
+        PipelineSession.ReplacePipeline(pipeline);
         if (Context is FilterContext ctx)
         {
             var compiled = FilterPipelineCompiler.Compile(pipeline);
@@ -262,6 +294,22 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
     public FilterPipeline CreatePipelineFromCurrentSnapshot()
     {
         return FilterPipelineInterop.FromLegacySnapshot(ExtractSnapshot());
+    }
+
+    /// <inheritdoc />
+    public async Task ApplyBarCriterionAsync(string nodeId, string propertyName, ExcelFilterState state)
+    {
+        if (PipelineSession.TryGetNode(nodeId, out FilterPipelineNode? node) && node is CriterionPipelineNode c)
+            FilterBarCriterionMapper.ApplyStateToCriterion(c, propertyName, state);
+
+        await ApplyFilterPipelineAsync(PipelineSession.Pipeline);
+    }
+
+    /// <inheritdoc />
+    public async Task RemoveBarNodeAsync(string nodeId)
+    {
+        PipelineSession.RemoveNode(nodeId);
+        await ApplyFilterPipelineAsync(PipelineSession.Pipeline);
     }
 
     private IReadOnlyList<FilterSnapshotEntry> CleanSnapshotEntries(IEnumerable<FilterSnapshotEntry> entries)

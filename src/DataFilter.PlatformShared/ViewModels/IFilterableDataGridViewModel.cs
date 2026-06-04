@@ -5,6 +5,8 @@ using DataFilter.Core.Abstractions;
 using DataFilter.Core.Pipeline;
 using DataFilter.Filtering.ExcelLike.Abstractions;
 using DataFilter.Filtering.ExcelLike.Models;
+using DataFilter.PlatformShared.FilterBar;
+using DataFilter.PlatformShared.Pipeline;
 
 namespace DataFilter.PlatformShared.ViewModels;
 
@@ -40,6 +42,22 @@ public interface IFilterableDataGridViewModel : INotifyPropertyChanged
     /// Builds a mutable <see cref="FilterPipeline"/> from the current legacy snapshot (for UI editing / presets).
     /// </summary>
     FilterPipeline CreatePipelineFromCurrentSnapshot();
+    /// <summary>
+    /// Live pipeline used by the filter bar (stable node ids).
+    /// </summary>
+    FilterPipelineSession PipelineSession { get; }
+    /// <summary>
+    /// Active-filters bar view model.
+    /// </summary>
+    FilterBarViewModel FilterBar { get; }
+    /// <summary>
+    /// Applies popup state to a single pipeline criterion (filter bar edit).
+    /// </summary>
+    Task ApplyBarCriterionAsync(string nodeId, string propertyName, ExcelFilterState state);
+    /// <summary>
+    /// Removes a pipeline node and refreshes data (filter bar).
+    /// </summary>
+    Task RemoveBarNodeAsync(string nodeId);
     HashSet<string> FilterableProperties { get; }
 
     /// <summary>
