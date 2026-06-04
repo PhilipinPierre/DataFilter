@@ -71,6 +71,32 @@ public sealed class LocalFilterContractsTests
         });
     }
 
+    [Fact]
+    public async Task FilterPipelineJson_DisabledCriterion_DoesNotApplyDisabledFilter()
+    {
+        await RunAsync(nameof(FilterPipelineJson_DisabledCriterion_DoesNotApplyDisabledFilter), async (page, errors) =>
+        {
+            await PlaywrightContractHelpers.NavigateToRouteAsync(
+                page, _host, DemoViewCatalog.Blazor.Local, "df-filter-btn-Department", errors);
+
+            var rows = page.Locator("table.df-grid tbody tr");
+            var unfiltered = await rows.CountAsync();
+            Assert.True(unfiltered > 0);
+
+            await page.GetByTestId("df-pipeline-json").FillAsync(FilterPipelinePresets.DisabledCriterionIgnoredJson);
+            await page.GetByTestId("df-pipeline-apply").ClickAsync();
+            await page.WaitForTimeoutAsync(400);
+
+            var after = await rows.CountAsync();
+            Assert.True(after > 0);
+            Assert.True(after < unfiltered);
+
+            var depts = await PlaywrightContractHelpers.GetColumnValuesAsync(page, "Department");
+            if (depts.Count > 0)
+                Assert.Contains(depts, d => !RowInvariants.DepartmentEquals(d, "IT"));
+        });
+    }
+
     [Theory]
     [MemberData(nameof(ColumnMatrix.DefaultPropertyNameTheoryData), MemberType = typeof(ColumnMatrix))]
     public async Task PopupOpenClose_AllColumns(string propertyName)
