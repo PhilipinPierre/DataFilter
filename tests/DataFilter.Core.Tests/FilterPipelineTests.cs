@@ -137,6 +137,66 @@ public class FilterPipelineTests
         Assert.False(expr.Compile()(new Item { Value = 1 }));
     }
 
+    [Fact]
+    public void Editor_AddAnd_At_Root_And_Inserts_Sibling()
+    {
+        var pipeline = new FilterPipeline();
+        var a = new CriterionPipelineNode { PropertyName = "A", Operator = nameof(FilterOperator.Equals), Value = 1 };
+        pipeline.RootNodes.Add(a);
+
+        var added = FilterPipelineEditor.AddAndCriterion(pipeline, a.Id);
+
+        Assert.NotNull(added);
+        Assert.Equal(2, pipeline.RootNodes.Count);
+        Assert.Equal(a.Id, pipeline.RootNodes[0].Id);
+    }
+
+    [Fact]
+    public void Editor_AddAnd_Under_Or_Root_Wraps_In_And_Group()
+    {
+        var pipeline = new FilterPipeline { RootCombineOperator = LogicalOperator.Or };
+        var a = new CriterionPipelineNode { PropertyName = "A", Operator = nameof(FilterOperator.Equals), Value = 1 };
+        pipeline.RootNodes.Add(a);
+
+        var added = FilterPipelineEditor.AddAndCriterion(pipeline, a.Id);
+
+        Assert.NotNull(added);
+        Assert.Single(pipeline.RootNodes);
+        var g = Assert.IsType<GroupPipelineNode>(pipeline.RootNodes[0]);
+        Assert.Equal(LogicalOperator.And, g.CombineOperator);
+        Assert.Equal(2, g.Children.Count);
+    }
+
+    [Fact]
+    public void Editor_AddAnd_On_And_Group_Adds_Child()
+    {
+        var pipeline = new FilterPipeline();
+        var g = new GroupPipelineNode { CombineOperator = LogicalOperator.And };
+        g.Children.Add(new CriterionPipelineNode { PropertyName = "A", Operator = nameof(FilterOperator.Equals), Value = 1 });
+        pipeline.RootNodes.Add(g);
+
+        var added = FilterPipelineEditor.AddAndCriterion(pipeline, g.Id);
+
+        Assert.NotNull(added);
+        Assert.Equal(2, g.Children.Count);
+    }
+
+    [Fact]
+    public void IdMerger_Preserves_Criterion_Id_On_Sync()
+    {
+        var existing = new FilterPipeline();
+        var c = new CriterionPipelineNode("stable-id") { PropertyName = "X", Operator = nameof(FilterOperator.Equals), Value = 1 };
+        existing.RootNodes.Add(c);
+
+        var incoming = new FilterPipeline();
+        incoming.RootNodes.Add(new CriterionPipelineNode { PropertyName = "X", Operator = nameof(FilterOperator.Equals), Value = 1 });
+
+        FilterPipelineIdMerger.MergeIds(existing, incoming);
+
+        var merged = Assert.IsType<CriterionPipelineNode>(incoming.RootNodes[0]);
+        Assert.Equal("stable-id", merged.Id);
+    }
+
     private sealed class Item
     {
         public int Value { get; set; }

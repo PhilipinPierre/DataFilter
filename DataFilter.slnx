@@ -43,6 +43,7 @@
     <Project Path="tests/DataFilter.Core.Tests/DataFilter.Core.Tests.csproj" />
     <Project Path="tests/DataFilter.Expressions.Server.Tests/DataFilter.Expressions.Server.Tests.csproj" />
     <Project Path="tests/DataFilter.Filtering.ExcelLike.Tests/DataFilter.Filtering.ExcelLike.Tests.csproj" />
+    <Project Path="tests/DataFilter.PlatformShared.Tests/DataFilter.PlatformShared.Tests.csproj" />
     <Project Path="tests/DataFilter.Maui.Tests/DataFilter.Maui.Tests.csproj" />
     <Project Path="tests/UIContracts.Appium.Tests/UIContracts.Appium.Tests.csproj" />
     <Project Path="tests/UIContracts.Common/UIContracts.Common.csproj" />
