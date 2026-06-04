@@ -57,6 +57,7 @@ public sealed partial class FilterableDataGrid : ListView
                 {
                     popup.ViewModel.OnApply += (_, __) => flyout.Hide();
                     popup.ViewModel.OnClear += (_, __) => flyout.Hide();
+                    popup.CancelRequested += (_, __) => flyout.Hide();
                 }
                 bool isRtl = btn.FlowDirection == FlowDirection.RightToLeft;
                 var desired = new Point(isRtl ? -popup.Width : btn.ActualWidth, btn.ActualHeight);

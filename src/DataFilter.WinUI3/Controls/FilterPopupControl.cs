@@ -11,6 +11,8 @@ namespace DataFilter.WinUI3.Controls;
 
 public sealed class FilterPopupControl : UserControl
 {
+    public event EventHandler? CancelRequested;
+
     public ColumnFilterViewModel? ViewModel { get; private set; }
     private bool _isInitialized;
 
@@ -22,6 +24,7 @@ public sealed class FilterPopupControl : UserControl
     private readonly TextBlock _advancedValueLabel = new() { FontSize = 10 };
     private readonly TextBlock _advancedToLabel = new() { FontSize = 10, Margin = new Thickness(0, 4, 0, 0) };
     private readonly Button _okBtn = new() { HorizontalAlignment = HorizontalAlignment.Stretch };
+    private readonly Button _cancelBtn = new() { HorizontalAlignment = HorizontalAlignment.Stretch };
     private readonly Button _clearBtn = new() { HorizontalAlignment = HorizontalAlignment.Stretch };
     private readonly ComboBox _accMode = new() { HorizontalAlignment = HorizontalAlignment.Stretch, Margin = new Thickness(20, 0, 0, 0), FontSize = 11 };
     private readonly ComboBox _opCombo = new() { HorizontalAlignment = HorizontalAlignment.Stretch };
@@ -50,6 +53,9 @@ public sealed class FilterPopupControl : UserControl
         _sortPanel.Children.Add(CreateButton(LocalizationManager.Instance["SortDescending"], "SortDescendingCommand"));
         _sortPanel.Children.Add(CreateButton(LocalizationManager.Instance["AddSubSortAscending"], "AddSubSortAscendingCommand"));
         _sortPanel.Children.Add(CreateButton(LocalizationManager.Instance["AddSubSortDescending"], "AddSubSortDescendingCommand"));
+        _clearBtn.Content = LocalizationManager.Instance["Clear"];
+        _clearBtn.SetBinding(Button.CommandProperty, new Binding { Path = new PropertyPath("ClearCommand") });
+        _sortPanel.Children.Add(_clearBtn);
         _sortPanel.Children.Add(new MenuFlyoutSeparator());
         Grid.SetRow(_sortPanel, 0);
         root.Children.Add(_sortPanel);
@@ -124,10 +130,10 @@ public sealed class FilterPopupControl : UserControl
         Grid.SetColumn(_okBtn, 0);
         actions.Children.Add(_okBtn);
 
-        _clearBtn.Content = LocalizationManager.Instance["Clear"];
-        _clearBtn.SetBinding(Button.CommandProperty, new Binding { Path = new PropertyPath("ClearCommand") });
-        Grid.SetColumn(_clearBtn, 2);
-        actions.Children.Add(_clearBtn);
+        _cancelBtn.Content = LocalizationManager.Instance["Cancel"];
+        _cancelBtn.Click += (_, _) => CancelRequested?.Invoke(this, EventArgs.Empty);
+        Grid.SetColumn(_cancelBtn, 2);
+        actions.Children.Add(_cancelBtn);
 
         Grid.SetRow(actions, 4);
         root.Children.Add(actions);
@@ -204,6 +210,7 @@ public sealed class FilterPopupControl : UserControl
         _advancedValueLabel.Text = LocalizationManager.Instance["ValueText"];
         _advancedToLabel.Text = LocalizationManager.Instance["ToText"];
         _okBtn.Content = LocalizationManager.Instance["Ok"];
+        _cancelBtn.Content = LocalizationManager.Instance["Cancel"];
         _clearBtn.Content = LocalizationManager.Instance["Clear"];
 
         // Rebuild displayed enum lists with localized labels

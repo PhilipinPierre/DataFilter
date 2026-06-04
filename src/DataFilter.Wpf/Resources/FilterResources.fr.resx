@@ -44,6 +44,7 @@
   <data name="AddToFilter" xml:space="preserve"><value>Ajouter la sélection actuelle au filtre</value></data>
   <data name="AdvancedFilter" xml:space="preserve"><value>Filtre avancé</value></data>
   <data name="Blanks" xml:space="preserve"><value>(Vides)</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Annuler</value></data>
   <data name="Clear" xml:space="preserve"><value>Effacer</value></data>
   <data name="LoadingText" xml:space="preserve"><value>Chargement...</value></data>
   <data name="Ok" xml:space="preserve"><value>OK</value></data>

@@ -17,6 +17,7 @@
                 <button class="df-sort-button" @onclick="() => ViewModel.SortDescendingCommand.Execute(null)">@LocalizationManager.Instance["SortDescending"]</button>
                 <button class="df-sort-button" @onclick="() => ViewModel.AddSubSortAscendingCommand.Execute(null)">@LocalizationManager.Instance["AddSubSortAscending"]</button>
                 <button class="df-sort-button" @onclick="() => ViewModel.AddSubSortDescendingCommand.Execute(null)">@LocalizationManager.Instance["AddSubSortDescending"]</button>
+                <button class="df-sort-button" data-testid="df-clear" @onclick="Clear">@LocalizationManager.Instance["Clear"]</button>
             </div>
 
             <hr />
@@ -100,7 +101,7 @@
         <!-- Footer Buttons -->
         <div class="df-footer-buttons">
             <button class="df-btn-primary" @onclick="Apply">@LocalizationManager.Instance["Ok"]</button>
-            <button class="df-btn-secondary" @onclick="Clear">@LocalizationManager.Instance["Clear"]</button>
+            <button class="df-btn-secondary" data-testid="df-cancel" @onclick="Cancel">@LocalizationManager.Instance["Cancel"]</button>
         </div>
 
         <div id="@_resizeHandleId" class="df-resize-handle"></div>
@@ -185,6 +186,11 @@
     private void Clear()
     {
         ViewModel.ClearCommand.Execute(null);
+    }
+
+    private void Cancel()
+    {
+        Close();
     }
 
     private void Close()

@@ -64,6 +64,10 @@
                     AutomationProperties.AutomationId="df-add-subsort-desc"
                     Command="{Binding AddSubSortDescendingCommand}"
                     Margin="0,2" />
+            <Button Content="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[Clear]}"
+                    AutomationProperties.AutomationId="df-clear"
+                    Command="{Binding ClearCommand}"
+                    Margin="0,2" />
             <Separator Margin="0,5" />
         </StackPanel>
 
@@ -227,9 +231,9 @@
                     Command="{Binding ApplyCommand}"
                     Style="{DynamicResource FilterButtonStyle}" />
             <Button Grid.Column="2"
-                    Content="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[Clear]}"
-                    AutomationProperties.AutomationId="df-clear"
-                    Command="{Binding ClearCommand}"
+                    Content="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[Cancel]}"
+                    AutomationProperties.AutomationId="df-cancel"
+                    Click="OnCancelClick"
                     Style="{DynamicResource FilterButtonStyle}" />
         </Grid>
 

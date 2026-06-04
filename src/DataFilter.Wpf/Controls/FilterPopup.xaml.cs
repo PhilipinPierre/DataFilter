@@ -7,10 +7,15 @@ namespace DataFilter.Wpf.Controls;
 /// </summary>
 public partial class FilterPopup : UserControl
 {
+    public event EventHandler? CancelRequested;
+
     public FilterPopup()
     {
         InitializeComponent();
     }
+
+    private void OnCancelClick(object sender, System.Windows.RoutedEventArgs e)
+        => CancelRequested?.Invoke(this, EventArgs.Empty);
 
     private void OnResizeThumbDragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
     {

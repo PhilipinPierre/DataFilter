@@ -79,6 +79,7 @@ public sealed class ListViewFilterHeaderAdapter : IDisposable
                 {
                     popup.ViewModel.OnApply += (_, __) => flyout.Hide();
                     popup.ViewModel.OnClear += (_, __) => flyout.Hide();
+                    popup.CancelRequested += (_, __) => flyout.Hide();
                 }
 
                 bool isRtl = btn.FlowDirection == FlowDirection.RightToLeft;

@@ -60,7 +60,7 @@ UI integrations apply this override when opening the popup and restore the previ
 
 Some frequently used keys:
 
-- `Ok`, `Clear`
+- `Ok`, `Cancel`, `Clear`
 - `SortAscending`, `SortDescending`, `AddSubSortAscending`, `AddSubSortDescending`
 - `AdvancedFilter`
 - `OperatorText`, `ValueText`, `ToText`

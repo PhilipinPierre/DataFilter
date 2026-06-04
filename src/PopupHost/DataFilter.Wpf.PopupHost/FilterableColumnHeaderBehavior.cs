@@ -446,6 +446,7 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         }
         _filterPopup.Child = filterControl;
 
+        filterControl.CancelRequested += (_, _) => _filterPopup.IsOpen = false;
         _viewModel!.OnApply += (_, _) => _filterPopup.IsOpen = false;
         _viewModel.OnClear += (_, _) => _filterPopup.IsOpen = false;
 

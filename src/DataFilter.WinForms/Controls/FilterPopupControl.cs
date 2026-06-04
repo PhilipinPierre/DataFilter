@@ -23,7 +23,8 @@ public sealed class FilterPopupControl : UserControl
     private readonly Button _addSortAsc = new() { Text = "Add Sort A to Z", Dock = DockStyle.Top, Height = 24 };
     private readonly Button _addSortDesc = new() { Text = "Add Sort Z to A", Dock = DockStyle.Top, Height = 24 };
     private readonly Button _ok = new() { Text = "OK", Dock = DockStyle.Left, Width = 90, AccessibleName = "df-ok" };
-    private readonly Button _clear = new() { Text = "Clear", Dock = DockStyle.Right, Width = 90, AccessibleName = "df-clear" };
+    private readonly Button _cancel = new() { Text = "Cancel", Dock = DockStyle.Right, Width = 90, AccessibleName = "df-cancel" };
+    private readonly Button _clear = new() { Text = "Clear", Dock = DockStyle.Top, Height = 24, AccessibleName = "df-clear" };
     private readonly Panel _advancedPanel = new() { Dock = DockStyle.Top, Height = 92, Visible = false };
 
     public ColumnFilterViewModel? ViewModel { get; private set; }
@@ -31,7 +32,8 @@ public sealed class FilterPopupControl : UserControl
 
     public FilterPopupControl()
     {
-        var sortPanel = new Panel { Dock = DockStyle.Top, Height = 100 };
+        var sortPanel = new Panel { Dock = DockStyle.Top, Height = 124 };
+        sortPanel.Controls.Add(_clear);
         sortPanel.Controls.Add(_addSortDesc);
         sortPanel.Controls.Add(_addSortAsc);
         sortPanel.Controls.Add(_sortDesc);
@@ -43,7 +45,7 @@ public sealed class FilterPopupControl : UserControl
 
         var buttons = new Panel { Dock = DockStyle.Bottom, Height = 38 };
         buttons.Controls.Add(_ok);
-        buttons.Controls.Add(_clear);
+        buttons.Controls.Add(_cancel);
 
         Controls.Add(_values);
         Controls.Add(_loading);
@@ -67,6 +69,7 @@ public sealed class FilterPopupControl : UserControl
             _accumulationMode.Visible = _addToExisting.Checked;
         };
         _ok.Click += (_, _) => ViewModel?.ApplyCommand.Execute(null);
+        _cancel.Click += (_, _) => RequestClose?.Invoke();
         _clear.Click += (_, _) => ViewModel?.ClearCommand.Execute(null);
         _selectAll.CheckedChanged += (_, _) => OnSelectAllChanged(_selectAll.Checked);
         _advanced.CheckedChanged += (_, _) => _advancedPanel.Visible = _advanced.Checked;
@@ -183,6 +186,7 @@ public sealed class FilterPopupControl : UserControl
         _addSortAsc.Text = LocalizationManager.Instance["AddSubSortAscending"];
         _addSortDesc.Text = LocalizationManager.Instance["AddSubSortDescending"];
         _ok.Text = LocalizationManager.Instance["Ok"];
+        _cancel.Text = LocalizationManager.Instance["Cancel"];
         _clear.Text = LocalizationManager.Instance["Clear"];
         _custom1.PlaceholderText = LocalizationManager.Instance["ValueText"];
         _custom2.PlaceholderText = LocalizationManager.Instance["ToText"];

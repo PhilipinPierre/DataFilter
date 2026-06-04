@@ -23,6 +23,7 @@ public static class FilterHeaderBehavior
 
         columnVm.OnApply += (_, _) => LocalizationManager.Instance.SetCulture(previousCulture);
         columnVm.OnClear += (_, _) => LocalizationManager.Instance.SetCulture(previousCulture);
+        popup.CancelRequested += (_, _) => LocalizationManager.Instance.SetCulture(previousCulture);
 
         popup.Bind(columnVm);
         return popup;

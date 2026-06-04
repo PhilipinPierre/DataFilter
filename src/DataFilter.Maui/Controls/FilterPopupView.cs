@@ -24,6 +24,7 @@ public sealed class FilterPopupView : ContentView
     private Label? _selectAllLabel;
     private readonly Entry _searchEntry;
     private readonly Button _okButton;
+    private readonly Button _cancelButton;
     private readonly Button _clearButton;
     private readonly Picker _modePicker;
     private readonly Picker _opPicker;
@@ -50,6 +51,11 @@ public sealed class FilterPopupView : ContentView
         sortGrid.Add(CreateSortButton("Add A-Z", "AddSubSortAscendingCommand"), 0, 1);
         sortGrid.Add(CreateSortButton("Add Z-A", "AddSubSortDescendingCommand"), 1, 1);
         root.Add(sortGrid);
+
+        _clearButton = new Button();
+        _clearButton.SetBinding(Button.CommandProperty, new Binding("ClearCommand"));
+        root.Add(_clearButton);
+
         root.Add(new BoxView { HeightRequest = 1 });
 
         // 2. Search & Accumulation
@@ -113,9 +119,9 @@ public sealed class FilterPopupView : ContentView
         _okButton.SetBinding(Button.CommandProperty, new Binding("ApplyCommand"));
         actions.Add(_okButton, 0, 0);
 
-        _clearButton = new Button();
-        _clearButton.SetBinding(Button.CommandProperty, new Binding("ClearCommand"));
-        actions.Add(_clearButton, 1, 0);
+        _cancelButton = new Button();
+        _cancelButton.Clicked += (_, _) => CloseRequested?.Invoke(this, EventArgs.Empty);
+        actions.Add(_cancelButton, 1, 0);
         root.Add(actions);
 
         Content = root;
@@ -272,6 +278,7 @@ public sealed class FilterPopupView : ContentView
         if (_selectAllLabel != null)
             _selectAllLabel.Text = LocalizationManager.Instance["SelectAll"];
         _okButton.Text = LocalizationManager.Instance["Ok"];
+        _cancelButton.Text = LocalizationManager.Instance["Cancel"];
         _clearButton.Text = LocalizationManager.Instance["Clear"];
 
         BuildLocalizedLists();
