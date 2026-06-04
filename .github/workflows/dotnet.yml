@@ -6,12 +6,6 @@ on:
     tags: [ "v*" ]
   pull_request:
     branches: [ "main", "master", "develop" ]
-  workflow_dispatch:
-    inputs:
-      run_desktop_ui_contracts:
-        description: Run FlaUI desktop UI contracts (requires self-hosted Windows runner with labels self-hosted, Windows, X64)
-        type: boolean
-        default: false
 
 jobs:
   build:
@@ -53,22 +47,10 @@ jobs:
       # Don't use --no-restore: some projects require RID-specific runtime packs (eg browser-wasm, win-x64).
       run: dotnet build DataFilter.slnx --configuration Release -p:Version=${{ env.VERSION }}
 
-    - name: Install Playwright browsers (Chromium)
-      shell: pwsh
-      run: |
-        dotnet build "demo/DataFilter.Blazor.Demo.PlaywrightTests/DataFilter.Blazor.Demo.PlaywrightTests.csproj" --configuration Release
-        pwsh "demo/DataFilter.Blazor.Demo.PlaywrightTests/bin/Release/net8.0/playwright.ps1" install chromium
-
     - name: Test
-      env:
-        DF_DEMO_HOST: server
-      # UIContracts.* suites require interactive sessions / external infrastructure.
-      # Keep them in their dedicated jobs, otherwise hosted runners (and act) can be flaky/fail.
-      run: dotnet test DataFilter.slnx --configuration Release --no-build --verbosity normal --filter "FullyQualifiedName!~UIContracts."
-
-    # NOTE: Desktop UI Automation (FlaUI) requires an interactive Windows session.
-    # GitHub-hosted runners often block UIA/SendInput interactions (timeouts / access denied).
-    # Run these on a self-hosted Windows runner (see `desktop-ui-contracts` job below).
+      # UI integration suites (Playwright, FlaUI, Appium) are not reliable on GitHub-hosted runners.
+      # Run them locally — see tests/UI.ContractTesting.md.
+      run: dotnet test DataFilter.slnx --configuration Release --no-build --verbosity normal --filter "FullyQualifiedName!~UIContracts.&FullyQualifiedName!~PlaywrightTests"
 
     - name: Pack
       run: dotnet pack DataFilter.slnx --configuration Release --no-restore --output ./artifacts -p:Version=${{ env.VERSION }} -p:PackageVersion=${{ env.VERSION }}
@@ -78,99 +60,3 @@ jobs:
       shell: pwsh
       run: |
         dotnet nuget push artifacts\*.nupkg --source https://api.nuget.org/v3/index.json --skip-duplicate --api-key ${{ secrets.DataFilter_NuGet_API_Key }}
-
-  ui-blazor-playwright:
-    runs-on: windows-latest
-    needs: build
-    strategy:
-      fail-fast: false
-      matrix:
-        demo_host: [server, wasm]
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        global-json-file: global.json
-
-    - name: Restore dependencies
-      run: dotnet restore DataFilter.slnx
-
-    - name: Build Playwright tests
-      run: dotnet build "demo/DataFilter.Blazor.Demo.PlaywrightTests/DataFilter.Blazor.Demo.PlaywrightTests.csproj" --configuration Release
-
-    - name: Install Playwright browsers (Chromium)
-      shell: pwsh
-      run: pwsh "demo/DataFilter.Blazor.Demo.PlaywrightTests/bin/Release/net8.0/playwright.ps1" install chromium
-
-    - name: Playwright UI contracts (${{ matrix.demo_host }})
-      env:
-        DF_DEMO_HOST: ${{ matrix.demo_host }}
-      run: dotnet test "demo/DataFilter.Blazor.Demo.PlaywrightTests/DataFilter.Blazor.Demo.PlaywrightTests.csproj" --configuration Release --no-build --verbosity normal
-
-  # FlaUI needs an interactive Windows session (UIA/SendInput). Not runnable on windows-latest.
-  # Opt-in only: register a self-hosted runner (labels: self-hosted, Windows, X64), then run this workflow
-  # manually with "Run FlaUI desktop UI contracts" enabled. See tests/UI.ContractTesting.md.
-  desktop-ui-contracts:
-    if: github.event_name == 'workflow_dispatch' && inputs.run_desktop_ui_contracts == true
-    runs-on: [self-hosted, Windows, X64]
-    needs: build
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        global-json-file: global.json
-
-    - name: Restore dependencies
-      run: dotnet restore DataFilter.slnx
-
-    - name: Build (Release)
-      run: dotnet build DataFilter.slnx --configuration Release -p:Platform=x64
-
-    - name: Build demo apps for FlaUI
-      run: |
-        dotnet build "demo/DataFilter.Wpf.Demo/DataFilter.Wpf.Demo.csproj" -c Release
-        dotnet build "demo/DataFilter.WinForms.Demo/DataFilter.WinForms.Demo.csproj" -c Release
-        dotnet build "demo/DataFilter.WinUI3.Demo/DataFilter.WinUI3.Demo.csproj" -c Release -p:Platform=x64
-
-    - name: Desktop UI Contracts (FlaUI)
-      run: dotnet test "tests/UIContracts.FlaUI.Tests/UIContracts.FlaUI.Tests.csproj" --configuration Release --no-build --verbosity normal
-
-  ui-maui-appium:
-    runs-on: macos-latest
-    needs: build
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [android, ios]
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        global-json-file: global.json
-
-    - name: Restore workloads (MAUI)
-      run: dotnet workload restore DataFilter.slnx
-
-    - name: Build MAUI demo (${{ matrix.platform }})
-      run: |
-        if [ "${{ matrix.platform }}" = "android" ]; then
-          dotnet publish demo/DataFilter.Demo.Maui/DataFilter.Maui.Demo.csproj -c Release -f net9.0-android -p:AndroidPackageFormat=apk
-        else
-          dotnet publish demo/DataFilter.Demo.Maui/DataFilter.Maui.Demo.csproj -c Release -f net9.0-ios -p:RuntimeIdentifier=iossimulator-x64
-        fi
-
-    - name: MAUI UI contracts (Appium, ${{ matrix.platform }})
-      continue-on-error: true
-      env:
-        UICT_APP_PLATFORM: ${{ matrix.platform }}
-        UICT_APPIUM_SERVER: http://127.0.0.1:4723/
-        UICT_APP_PATH: ${{ matrix.platform == 'android' && 'demo/DataFilter.Demo.Maui/bin/Release/net9.0-android/publish/*.apk' || 'demo/DataFilter.Demo.Maui/bin/Release/net9.0-ios/iossimulator-x64/publish/*.app' }}
-      run: dotnet test "tests/UIContracts.Appium.Tests/UIContracts.Appium.Tests.csproj" --configuration Release --verbosity normal

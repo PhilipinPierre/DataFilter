@@ -20,7 +20,7 @@ L’approche recommandée est une “contract suite” commune (mêmes scénario
 ## Blazor (Server + WASM hosted)
 - **Framework**: Playwright E2E (Chromium) — `demo/DataFilter.Blazor.Demo.PlaywrightTests`
 - **Routes**: `/demo/attach`, `/demo/local` (pipeline JSON), `/demo/async`, `/demo/hybrid`, `/demo/collectionview`
-- **CI**: job `ui-blazor-playwright` (matrix `DF_DEMO_HOST=server|wasm`)
+- **CI**: non exécuté sur GitHub Actions (tests locaux uniquement)
 
 ```powershell
 $env:DF_DEMO_HOST = "server"   # ou wasm
@@ -46,7 +46,7 @@ dotnet test demo/DataFilter.Blazor.Demo.PlaywrightTests/DataFilter.Blazor.Demo.P
 
 ## Desktop (FlaUI)
 - **Projet**: `tests/UIContracts.FlaUI.Tests` (WPF, WinUI 3, WinForms)
-- **CI**: job `desktop-ui-contracts` **uniquement sur déclenchement manuel** (`workflow_dispatch` + case « Run FlaUI desktop UI contracts »). Nécessite un runner **self-hosted** (`self-hosted`, `Windows`, `X64`). Les PR/push ne lancent pas ce job (pas de runner personnel requis pour merger).
+- **CI**: non exécuté sur GitHub Actions (session interactive / runner self-hosted requis — tests locaux)
 - **Prérequis local**:
 
 ```powershell
@@ -67,7 +67,7 @@ dotnet test tests/UIContracts.FlaUI.Tests/UIContracts.FlaUI.Tests.csproj -c Rele
 ## MAUI (Appium)
 - **Projet**: `tests/UIContracts.Appium.Tests`
 - **Variables**: `UICT_APP_PLATFORM`, `UICT_APPIUM_SERVER`, `UICT_APP_PATH`
-- **CI**: job `ui-maui-appium` (matrix Android/iOS, `continue-on-error` tant qu’Appium n’est pas câblé)
+- **CI**: non exécuté sur GitHub Actions (Appium / émulateurs — tests locaux)
 
 ```powershell
 $env:UICT_APP_PLATFORM = "android"
