@@ -55,8 +55,19 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
     public void SetFilterBarColumnTitleResolver(Func<string, string>? resolver)
     {
         _filterBarColumnTitleResolver = resolver;
-        FilterBar.Configure(_filterBarColumnTitleResolver, ApplyFilterPipelineAsync);
+        FilterBar.Configure(_filterBarColumnTitleResolver, ApplyFilterPipelineAsync, ResolveDefaultFilterBarPropertyName);
         FilterBar.RebuildDisplay();
+    }
+
+    private string? ResolveDefaultFilterBarPropertyName()
+    {
+        if (FilterableProperties.Count > 0)
+            return FilterableProperties.First();
+
+        return ItemType
+            .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+            .FirstOrDefault(p => p.CanRead && p.GetIndexParameters().Length == 0)
+            ?.Name;
     }
 
     private void SyncFilterBarPipeline()
@@ -90,7 +101,7 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
         CultureOverride = cultureOverride;
         PipelineSession = new FilterPipelineSession();
         FilterBar = new FilterBarViewModel(PipelineSession);
-        FilterBar.Configure(null, ApplyFilterPipelineAsync);
+        FilterBar.Configure(null, ApplyFilterPipelineAsync, ResolveDefaultFilterBarPropertyName);
     }
 
     [ObservableProperty]

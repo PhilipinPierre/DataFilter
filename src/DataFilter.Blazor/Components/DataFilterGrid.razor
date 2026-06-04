@@ -116,8 +116,11 @@ else
     protected override void OnInitialized()
     {
         _filterBar = new FilterBarViewModel(_pipelineSession);
-        _filterBar.Configure(ResolveColumnTitle, ApplyFilterPipelineAsync);
+        _filterBar.Configure(ResolveColumnTitle, ApplyFilterPipelineAsync, ResolveDefaultFilterBarPropertyName);
     }
+
+    private string? ResolveDefaultFilterBarPropertyName() =>
+        Columns.FirstOrDefault(c => !string.IsNullOrWhiteSpace(c.PropertyName))?.PropertyName;
 
     protected override async Task OnParametersSetAsync()
     {

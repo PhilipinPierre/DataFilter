@@ -13,6 +13,9 @@ public sealed class FilterPopupView : ContentView
     public ColumnFilterViewModel? ViewModel { get; private set; }
     public event EventHandler? CloseRequested;
 
+    /// <summary>Raised when the user cancels without applying (bar draft removal).</summary>
+    public event EventHandler? CancelRequested;
+
     private readonly ObservableCollection<FlatFilterItem> _flatItems = new();
     private readonly CollectionView _itemsView;
     private readonly VerticalStackLayout _advancedLayout;
@@ -120,7 +123,7 @@ public sealed class FilterPopupView : ContentView
         actions.Add(_okButton, 0, 0);
 
         _cancelButton = new Button();
-        _cancelButton.Clicked += (_, _) => CloseRequested?.Invoke(this, EventArgs.Empty);
+        _cancelButton.Clicked += (_, _) => CancelRequested?.Invoke(this, EventArgs.Empty);
         actions.Add(_cancelButton, 1, 0);
         root.Add(actions);
 

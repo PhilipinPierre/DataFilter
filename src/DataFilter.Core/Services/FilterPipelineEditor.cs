@@ -147,6 +147,57 @@ public static class FilterPipelineEditor
     }
 
     /// <summary>
+    /// Appends a new AND-grouped cluster at root level (combined with existing roots via OR).
+    /// Wraps current root nodes in an AND group when <see cref="FilterPipeline.RootCombineOperator"/> is not yet OR.
+    /// </summary>
+    public static CriterionPipelineNode? AddOrGroup(FilterPipeline pipeline, string propertyName)
+    {
+        if (pipeline == null) throw new ArgumentNullException(nameof(pipeline));
+        if (string.IsNullOrWhiteSpace(propertyName))
+            throw new ArgumentException("PropertyName is required.", nameof(propertyName));
+
+        var newGroup = new GroupPipelineNode
+        {
+            CombineOperator = LogicalOperator.And,
+            DisplayName = string.Empty,
+            IsEnabled = true
+        };
+        var newCriterion = CreateCriterionDraft(propertyName);
+        newGroup.Children.Add(newCriterion);
+
+        if (pipeline.RootNodes.Count == 0)
+        {
+            pipeline.RootNodes.Add(newGroup);
+            pipeline.RootCombineOperator = LogicalOperator.And;
+            return newCriterion;
+        }
+
+        EnsureRootOrCombine(pipeline);
+        pipeline.RootNodes.Add(newGroup);
+        return newCriterion;
+    }
+
+    private static void EnsureRootOrCombine(FilterPipeline pipeline)
+    {
+        if (pipeline.RootCombineOperator == LogicalOperator.Or)
+            return;
+
+        var wrapper = new GroupPipelineNode
+        {
+            CombineOperator = LogicalOperator.And,
+            DisplayName = string.Empty,
+            IsEnabled = true
+        };
+
+        foreach (FilterPipelineNode node in pipeline.RootNodes)
+            wrapper.Children.Add(node);
+
+        pipeline.RootNodes.Clear();
+        pipeline.RootNodes.Add(wrapper);
+        pipeline.RootCombineOperator = LogicalOperator.Or;
+    }
+
+    /// <summary>
     /// Adds a new AND-combined criterion on the same column as <paramref name="anchorNodeId"/>.
     /// Returns null when the anchor is missing or its column cannot be resolved.
     /// </summary>
@@ -215,6 +266,198 @@ public static class FilterPipelineEditor
             },
             _ => throw new InvalidOperationException($"Unknown node type: {node.GetType().Name}")
         };
+    }
+
+    /// <summary>
+    /// Moves a criterion into the AND cluster identified by <paramref name="targetClusterAnchorNodeId"/>
+    /// (an AND group id, or any node id inside the target cluster from the filter bar).
+    /// </summary>
+    public static bool MoveCriterionToCluster(FilterPipeline pipeline, string criterionNodeId, string targetClusterAnchorNodeId)
+    {
+        if (pipeline == null) throw new ArgumentNullException(nameof(pipeline));
+        if (string.IsNullOrEmpty(criterionNodeId) || string.IsNullOrEmpty(targetClusterAnchorNodeId))
+            return false;
+
+        if (!TryFind(pipeline, criterionNodeId, out _, out FilterPipelineNode? moving) || moving is not CriterionPipelineNode criterion)
+            return false;
+
+        if (!TryResolveAndClusterContainer(pipeline, targetClusterAnchorNodeId, out List<FilterPipelineNode>? container, out _))
+            return false;
+
+        if (ContainerAlreadyContains(container, criterionNodeId))
+            return false;
+
+        if (!TryFind(pipeline, criterionNodeId, out NodeLocation sourceLocation, out _))
+            return false;
+
+        var detached = (CriterionPipelineNode)CloneNodeShallow(criterion);
+        sourceLocation.Container.RemoveAt(sourceLocation.Index);
+        Compact(pipeline);
+
+        if (!TryResolveAndClusterContainer(pipeline, targetClusterAnchorNodeId, out container, out _))
+            return false;
+
+        if (ContainerAlreadyContains(container, detached.Id))
+            return false;
+
+        container.Add(detached);
+        Compact(pipeline);
+        return true;
+    }
+
+    /// <summary>
+    /// Moves a criterion into a new OR sibling at <paramref name="orInsertIndex"/> (0..RootNodes.Count).
+    /// </summary>
+    public static bool MoveCriterionToOrGap(FilterPipeline pipeline, string criterionNodeId, int orInsertIndex)
+    {
+        if (pipeline == null) throw new ArgumentNullException(nameof(pipeline));
+        if (string.IsNullOrEmpty(criterionNodeId))
+            return false;
+
+        if (!TryFind(pipeline, criterionNodeId, out NodeLocation sourceLocation, out FilterPipelineNode? moving)
+            || moving is not CriterionPipelineNode criterion)
+        {
+            return false;
+        }
+
+        var detached = (CriterionPipelineNode)CloneNodeShallow(criterion);
+        sourceLocation.Container.RemoveAt(sourceLocation.Index);
+        Compact(pipeline);
+
+        if (pipeline.RootNodes.Count == 0)
+        {
+            var loneGroup = new GroupPipelineNode
+            {
+                CombineOperator = LogicalOperator.And,
+                DisplayName = string.Empty,
+                IsEnabled = detached.IsEnabled
+            };
+            loneGroup.Children.Add(detached);
+            pipeline.RootNodes.Add(loneGroup);
+            pipeline.RootCombineOperator = LogicalOperator.Or;
+            Compact(pipeline);
+            return true;
+        }
+
+        if (pipeline.RootCombineOperator != LogicalOperator.Or)
+            EnsureRootOrCombine(pipeline);
+
+        int index = Math.Clamp(orInsertIndex, 0, pipeline.RootNodes.Count);
+        var group = new GroupPipelineNode
+        {
+            CombineOperator = LogicalOperator.And,
+            DisplayName = string.Empty,
+            IsEnabled = detached.IsEnabled
+        };
+        group.Children.Add(detached);
+        pipeline.RootNodes.Insert(index, group);
+        Compact(pipeline);
+        return true;
+    }
+
+    /// <summary>
+    /// Removes empty groups and unwraps trivial single-child AND groups where safe.
+    /// </summary>
+    public static void Compact(FilterPipeline pipeline)
+    {
+        if (pipeline == null) throw new ArgumentNullException(nameof(pipeline));
+
+        CompactList(pipeline.RootNodes, pipeline.RootCombineOperator == LogicalOperator.And);
+
+        if (pipeline.RootCombineOperator == LogicalOperator.Or)
+        {
+            for (int i = pipeline.RootNodes.Count - 1; i >= 0; i--)
+            {
+                if (pipeline.RootNodes[i] is GroupPipelineNode g)
+                    CompactAndGroupChildren(g);
+            }
+        }
+    }
+
+    private static bool ContainerAlreadyContains(List<FilterPipelineNode> container, string nodeId) =>
+        container.Any(n => string.Equals(n.Id, nodeId, StringComparison.Ordinal));
+
+    private static bool TryResolveAndClusterContainer(
+        FilterPipeline pipeline,
+        string anchorNodeId,
+        out List<FilterPipelineNode> container,
+        out GroupPipelineNode? andGroup)
+    {
+        container = null!;
+        andGroup = null;
+
+        if (!TryFind(pipeline, anchorNodeId, out NodeLocation location, out FilterPipelineNode? anchor) || anchor == null)
+            return false;
+
+        if (anchor is GroupPipelineNode group && group.CombineOperator == LogicalOperator.And)
+        {
+            andGroup = group;
+            container = group.Children;
+            return true;
+        }
+
+        if (anchor is CriterionPipelineNode)
+        {
+            if (location.ParentAndOrGroup is GroupPipelineNode parentAnd
+                && parentAnd.CombineOperator == LogicalOperator.And)
+            {
+                andGroup = parentAnd;
+                container = parentAnd.Children;
+                return true;
+            }
+
+            if (location.ParentAndOrGroup == null && pipeline.RootCombineOperator == LogicalOperator.And)
+            {
+                container = pipeline.RootNodes;
+                return true;
+            }
+
+            var wrapper = new GroupPipelineNode
+            {
+                CombineOperator = LogicalOperator.And,
+                DisplayName = string.Empty,
+                IsEnabled = anchor.IsEnabled
+            };
+            wrapper.Children.Add(CloneNodeShallow(anchor));
+            location.Container[location.Index] = wrapper;
+            andGroup = wrapper;
+            container = wrapper.Children;
+            return true;
+        }
+
+        return false;
+    }
+
+    private static void CompactList(List<FilterPipelineNode> nodes, bool unwrapSingleChildAndGroups)
+    {
+        for (int i = nodes.Count - 1; i >= 0; i--)
+        {
+            if (nodes[i] is GroupPipelineNode g)
+            {
+                CompactAndGroupChildren(g);
+                if (g.Children.Count == 0)
+                    nodes.RemoveAt(i);
+                else if (unwrapSingleChildAndGroups
+                         && g.CombineOperator == LogicalOperator.And
+                         && g.Children.Count == 1)
+                    nodes[i] = g.Children[0];
+            }
+        }
+    }
+
+    private static void CompactAndGroupChildren(GroupPipelineNode group)
+    {
+        for (int i = group.Children.Count - 1; i >= 0; i--)
+        {
+            if (group.Children[i] is GroupPipelineNode nested)
+            {
+                CompactAndGroupChildren(nested);
+                if (nested.Children.Count == 0)
+                    group.Children.RemoveAt(i);
+                else if (nested.CombineOperator == LogicalOperator.And && nested.Children.Count == 1)
+                    group.Children[i] = nested.Children[0];
+            }
+        }
     }
 
     /// <summary>

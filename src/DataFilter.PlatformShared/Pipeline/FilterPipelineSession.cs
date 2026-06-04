@@ -70,6 +70,41 @@ public sealed class FilterPipelineSession
     }
 
     /// <summary>
+    /// Adds a new OR-grouped AND cluster with one draft criterion on <paramref name="propertyName"/>.
+    /// </summary>
+    public CriterionPipelineNode? AddOrGroup(string propertyName)
+    {
+        CriterionPipelineNode? created = FilterPipelineEditor.AddOrGroup(_pipeline, propertyName);
+        if (created != null)
+            OnPipelineChanged();
+        return created;
+    }
+
+    /// <summary>
+    /// Moves a criterion into another AND cluster (see <see cref="FilterPipelineEditor.MoveCriterionToCluster"/>).
+    /// </summary>
+    public bool MoveCriterionToCluster(string criterionNodeId, string targetClusterAnchorNodeId)
+    {
+        if (!FilterPipelineEditor.MoveCriterionToCluster(_pipeline, criterionNodeId, targetClusterAnchorNodeId))
+            return false;
+
+        OnPipelineChanged();
+        return true;
+    }
+
+    /// <summary>
+    /// Moves a criterion to a new OR sibling at <paramref name="orInsertIndex"/>.
+    /// </summary>
+    public bool MoveCriterionToOrGap(string criterionNodeId, int orInsertIndex)
+    {
+        if (!FilterPipelineEditor.MoveCriterionToOrGap(_pipeline, criterionNodeId, orInsertIndex))
+            return false;
+
+        OnPipelineChanged();
+        return true;
+    }
+
+    /// <summary>
     /// Adds an AND criterion relative to an anchor node or AND group.
     /// </summary>
     public CriterionPipelineNode? AddAndCriterion(string anchorNodeId)

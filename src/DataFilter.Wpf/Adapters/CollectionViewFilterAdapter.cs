@@ -107,7 +107,7 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
         _filteredItemsWrapper = new CollectionViewGenericWrapper<T>(collectionView);
         PipelineSession = new FilterPipelineSession();
         FilterBar = new FilterBarViewModel(PipelineSession);
-        FilterBar.Configure(null, ApplyFilterPipelineAsync);
+        FilterBar.Configure(null, ApplyFilterPipelineAsync, ResolveDefaultFilterBarPropertyName);
     }
 
     private void SyncFilterBarPipeline()
@@ -332,6 +332,17 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
 
         await RefreshDataAsync();
         FilterBar.RebuildDisplay();
+    }
+
+    private string? ResolveDefaultFilterBarPropertyName()
+    {
+        if (FilterableProperties.Count > 0)
+            return FilterableProperties.First();
+
+        return typeof(T)
+            .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+            .FirstOrDefault(p => p.CanRead && p.GetIndexParameters().Length == 0)
+            ?.Name;
     }
 
     /// <inheritdoc />

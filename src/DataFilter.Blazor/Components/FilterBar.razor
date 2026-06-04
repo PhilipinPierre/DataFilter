@@ -3,15 +3,30 @@
 @using DataFilter.PlatformShared.ViewModels
 
 <div class="df-filter-bar" data-testid="df-filter-bar">
+    <button type="button"
+            class="df-filter-bar-add-or-group"
+            title="@LocalizationManager.Instance["FilterBar_AddOrGroup"]"
+            data-testid="df-filter-bar-add-or-group"
+            @onclick="() => ViewModel.AddOrGroupCommand.Execute(null)">OR+</button>
     @foreach (var segment in ViewModel.Segments)
     {
         @if (segment is FilterBarOrSeparatorItem orSep)
         {
-            <span class="df-filter-bar-or">@orSep.Text</span>
+            <span class="df-filter-bar-or df-filter-bar-drop-target @(_orDropIndex == orSep.OrInsertIndex ? "drag-over" : "")"
+                  data-testid="@($"df-filter-bar-or-gap-{orSep.OrInsertIndex}")"
+                  @ondragover="e => OnOrGapDragOver(e, orSep.OrInsertIndex)"
+                  @ondragover:preventDefault="true"
+                  @ondragleave="OnDragLeave"
+                  @ondrop="e => OnOrGapDrop(e, orSep.OrInsertIndex)">@orSep.Text</span>
         }
         else if (segment is FilterBarAndClusterItem cluster)
         {
-            <div class="df-filter-bar-cluster" data-testid="@($"df-filter-bar-group-{cluster.GroupNodeId ?? "root"}")">
+            <div class="df-filter-bar-cluster df-filter-bar-drop-target @(_clusterDropAnchor == cluster.AddAndAnchorNodeId ? "drag-over" : "")"
+                 data-testid="@($"df-filter-bar-group-{cluster.GroupNodeId ?? "root"}")"
+                 @ondragover="e => OnClusterDragOver(e, cluster.AddAndAnchorNodeId)"
+                 @ondragover:preventDefault="true"
+                 @ondragleave="OnDragLeave"
+                 @ondrop="e => OnClusterDrop(e, cluster.AddAndAnchorNodeId)">
                 @if (cluster.CanAddAnd && !string.IsNullOrEmpty(cluster.AddAndAnchorNodeId))
                 {
                     <button type="button"
@@ -23,7 +38,10 @@
                 @foreach (var chip in cluster.Chips)
                 {
                     <div class="df-filter-bar-chip @(chip.IsEnabled ? "" : "disabled")"
-                         data-testid="@($"df-filter-bar-chip-{chip.NodeId}")">
+                         draggable="true"
+                         data-testid="@($"df-filter-bar-chip-{chip.NodeId}")"
+                         @ondragstart="e => OnChipDragStart(chip.NodeId)"
+                         @ondragend="OnDragEnd">
                         <button type="button" class="df-filter-bar-chip-label"
                                 @onclick="() => OnEditChip(chip)"
                                 @oncontextmenu="e => OnToggleChip(e, chip.NodeId)"
@@ -44,12 +62,74 @@
     }
 </div>
 
+@implements IDisposable
+
 @code {
     [Parameter, EditorRequired]
     public FilterBarViewModel ViewModel { get; set; } = default!;
 
     [Parameter]
     public EventCallback<FilterBarEditRequest> OnEdit { get; set; }
+
+    private string? _dragCriterionId;
+    private string? _clusterDropAnchor;
+    private int? _orDropIndex;
+
+    protected override void OnInitialized() =>
+        ViewModel.DisplayChanged += OnDisplayChanged;
+
+    public void Dispose() => ViewModel.DisplayChanged -= OnDisplayChanged;
+
+    private void OnDisplayChanged(object? sender, EventArgs e) => _ = InvokeAsync(StateHasChanged);
+
+    private void OnChipDragStart(string nodeId) => _dragCriterionId = nodeId;
+
+    private void OnDragEnd()
+    {
+        _dragCriterionId = null;
+        _clusterDropAnchor = null;
+        _orDropIndex = null;
+    }
+
+    private void OnDragLeave()
+    {
+        _clusterDropAnchor = null;
+        _orDropIndex = null;
+    }
+
+    private void OnClusterDragOver(DragEventArgs e, string anchorNodeId)
+    {
+        if (!string.IsNullOrEmpty(_dragCriterionId))
+            _clusterDropAnchor = anchorNodeId;
+    }
+
+    private async Task OnClusterDrop(DragEventArgs e, string anchorNodeId)
+    {
+        if (string.IsNullOrEmpty(_dragCriterionId) || string.IsNullOrEmpty(anchorNodeId))
+            return;
+
+        if (ViewModel.MoveToClusterCommand.CanExecute((_dragCriterionId, anchorNodeId)))
+            await ViewModel.MoveToClusterCommand.ExecuteAsync((_dragCriterionId, anchorNodeId));
+
+        OnDragEnd();
+    }
+
+    private void OnOrGapDragOver(DragEventArgs e, int orInsertIndex)
+    {
+        if (!string.IsNullOrEmpty(_dragCriterionId))
+            _orDropIndex = orInsertIndex;
+    }
+
+    private async Task OnOrGapDrop(DragEventArgs e, int orInsertIndex)
+    {
+        if (string.IsNullOrEmpty(_dragCriterionId))
+            return;
+
+        if (ViewModel.MoveToOrGapCommand.CanExecute((_dragCriterionId, orInsertIndex)))
+            await ViewModel.MoveToOrGapCommand.ExecuteAsync((_dragCriterionId, orInsertIndex));
+
+        OnDragEnd();
+    }
 
     private void OnEditChip(FilterBarChipItem chip) =>
         OnEdit.InvokeAsync(new FilterBarEditRequest { NodeId = chip.NodeId, PropertyName = chip.PropertyName });

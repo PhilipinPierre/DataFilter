@@ -11,6 +11,9 @@ public abstract class FilterBarDisplayItem;
 public sealed class FilterBarOrSeparatorItem : FilterBarDisplayItem
 {
     public string Text { get; init; } = string.Empty;
+
+    /// <summary>Index at which a criterion dropped on this separator is inserted as a new OR group.</summary>
+    public int OrInsertIndex { get; init; }
 }
 
 /// <summary>

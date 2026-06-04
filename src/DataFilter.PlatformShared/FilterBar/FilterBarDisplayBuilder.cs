@@ -27,7 +27,13 @@ public static class FilterBarDisplayBuilder
             for (int i = 0; i < pipeline.RootNodes.Count; i++)
             {
                 if (i > 0)
-                    items.Add(new FilterBarOrSeparatorItem { Text = LocalizationManager.Instance["FilterBar_Or"] });
+                {
+                    items.Add(new FilterBarOrSeparatorItem
+                    {
+                        Text = LocalizationManager.Instance["FilterBar_Or"],
+                        OrInsertIndex = i
+                    });
+                }
 
                 AppendRootSegment(pipeline.RootNodes[i], items, resolveColumnTitle);
             }
@@ -59,7 +65,13 @@ public static class FilterBarDisplayBuilder
                 for (int i = 0; i < g.Children.Count; i++)
                 {
                     if (i > 0)
-                        items.Add(new FilterBarOrSeparatorItem { Text = LocalizationManager.Instance["FilterBar_Or"] });
+                    {
+                        items.Add(new FilterBarOrSeparatorItem
+                        {
+                            Text = LocalizationManager.Instance["FilterBar_Or"],
+                            OrInsertIndex = i
+                        });
+                    }
 
                     AppendRootSegment(g.Children[i], items, resolveColumnTitle);
                 }

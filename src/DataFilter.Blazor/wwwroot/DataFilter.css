@@ -26,6 +26,19 @@
     background: rgba(0, 0, 0, 0.03);
 }
 
+.df-filter-bar-drop-target.drag-over {
+    outline: 2px dashed var(--df-popup-border);
+    outline-offset: 2px;
+}
+
+.df-filter-bar-chip[draggable="true"] {
+    cursor: grab;
+}
+
+.df-filter-bar-chip[draggable="true"]:active {
+    cursor: grabbing;
+}
+
 .df-filter-bar-chip {
     display: inline-flex;
     align-items: center;

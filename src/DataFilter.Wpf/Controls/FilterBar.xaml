@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:fb="clr-namespace:DataFilter.PlatformShared.FilterBar;assembly=DataFilter.PlatformShared"
              xmlns:converters="clr-namespace:DataFilter.Wpf.Converters"
+             xmlns:loc="clr-namespace:DataFilter.Localization;assembly=DataFilter.Localization"
              x:Name="Root"
              AutomationProperties.AutomationId="df-filter-bar"
              Visibility="Collapsed">
@@ -10,11 +11,16 @@
         <converters:BoolToVisibilityConverter x:Key="BoolToVis" />
 
         <DataTemplate DataType="{x:Type fb:FilterBarOrSeparatorItem}">
-            <TextBlock Text="{Binding Text}"
-                       VerticalAlignment="Center"
-                       Margin="12,4,4,4"
-                       FontWeight="SemiBold"
-                       Foreground="{DynamicResource FilterPopupForeground}" />
+            <Border Margin="4,4,4,4"
+                    Padding="8,4"
+                    AllowDrop="True"
+                    DragOver="OrGap_DragOver"
+                    Drop="OrGap_Drop">
+                <TextBlock Text="{Binding Text}"
+                           VerticalAlignment="Center"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource FilterPopupForeground}" />
+            </Border>
         </DataTemplate>
 
         <DataTemplate x:Key="ChipTemplate">
@@ -23,7 +29,10 @@
                     CornerRadius="4"
                     BorderThickness="1"
                     BorderBrush="{DynamicResource FilterPopupBorder}"
-                    Background="{DynamicResource FilterPopupBackground}">
+                    Background="{DynamicResource FilterPopupBackground}"
+                    PreviewMouseLeftButtonDown="Chip_PreviewMouseLeftButtonDown"
+                    PreviewMouseMove="Chip_PreviewMouseMove"
+                    GiveFeedback="Chip_GiveFeedback">
                 <Border.Style>
                     <Style TargetType="Border">
                         <Style.Triggers>
@@ -69,6 +78,9 @@
                     BorderThickness="1"
                     BorderBrush="{DynamicResource FilterPopupBorder}"
                     Background="#08000000"
+                    AllowDrop="True"
+                    DragOver="Cluster_DragOver"
+                    Drop="Cluster_Drop"
                     AutomationProperties.AutomationId="{Binding GroupNodeId, StringFormat=df-filter-bar-group-{0}}">
                 <WrapPanel Orientation="Horizontal">
                     <Button Content="+"
@@ -94,12 +106,21 @@
     <ScrollViewer HorizontalScrollBarVisibility="Auto"
                   VerticalScrollBarVisibility="Disabled"
                   Padding="4">
-        <ItemsControl ItemsSource="{Binding Segments}">
+        <StackPanel Orientation="Horizontal">
+            <Button Content="OR+"
+                    Command="{Binding AddOrGroupCommand}"
+                    ToolTip="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[FilterBar_AddOrGroup]}"
+                    AutomationProperties.AutomationId="df-filter-bar-add-or-group"
+                    Margin="2,4,8,4"
+                    Padding="8,2"
+                    VerticalAlignment="Center" />
+            <ItemsControl ItemsSource="{Binding Segments}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                     <WrapPanel Orientation="Horizontal" />
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
         </ItemsControl>
+        </StackPanel>
     </ScrollViewer>
 </UserControl>

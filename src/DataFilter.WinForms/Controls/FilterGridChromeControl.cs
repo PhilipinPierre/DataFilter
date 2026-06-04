@@ -1,5 +1,7 @@
 using System.ComponentModel;
+using DataFilter.PlatformShared.FilterBar;
 using DataFilter.PlatformShared.ViewModels;
+using DataFilter.WinForms.Services;
 
 namespace DataFilter.WinForms.Controls;
 
@@ -9,11 +11,13 @@ namespace DataFilter.WinForms.Controls;
 public sealed class FilterGridChromeControl : Panel
 {
     private readonly FilterBarControl _filterBar = new();
+    private readonly FilterBarPopupService _popupService = new();
 
     public FilterGridChromeControl()
     {
         Dock = DockStyle.Fill;
         _filterBar.Dock = DockStyle.Top;
+        _filterBar.OnEditRequestedHandler = OnFilterBarEditRequested;
         Controls.Add(_filterBar);
     }
 
@@ -43,5 +47,13 @@ public sealed class FilterGridChromeControl : Panel
         grid.Dock = DockStyle.Fill;
         Controls.Add(grid);
         grid.BringToFront();
+    }
+
+    private async void OnFilterBarEditRequested(FilterBarEditRequest request)
+    {
+        if (_filterBar.GridViewModel == null)
+            return;
+
+        await _popupService.ShowAsync(_filterBar.GridViewModel, request, _filterBar);
     }
 }

@@ -32,12 +32,51 @@ Excel-style column filters continue to use **`ApplyColumnFilter`** / **`ClearCol
 `IFilterableDataGridViewModel` exposes:
 
 - **`FilterPipelineSession PipelineSession`** — live pipeline with stable node IDs (synced from context).
-- **`FilterBarViewModel FilterBar`** — chips, AND/OR layout, enable/disable, remove, and **+** (add AND criterion).
+- **`FilterBarViewModel FilterBar`** — chips, AND/OR layout, enable/disable, remove, **+** (add AND criterion on the same cluster), and **OR+** (add a new OR group).
 - **`ApplyBarCriterionAsync` / `RemoveBarNodeAsync`** — targeted edits from the bar popup.
 
-Each UI package provides a default bar control (hidden by default). Enable it with **`ShowFilterBar="True"`** (WPF: `FilterGridChrome`, Blazor: `DataFilterGrid`, WinForms: `FilterGridChromeControl`, WinUI 3: `FilterBarControl`, MAUI: `FilterBarView`).
+Each UI package provides a default bar control (hidden by default). Enable it with **`ShowFilterBar="True"`**:
 
-Interactions: left-click chip → column popup (single criterion); right-click → toggle enabled; **×** or Clear → remove node; **+** → add AND sibling and open popup for the new criterion.
+| Stack | Chrome host (bar + popup wiring) | Bar control alone |
+|-------|----------------------------------|-------------------|
+| WPF | `FilterGridChrome` | `FilterBar` (popup built-in) |
+| Blazor | `DataFilterGrid` | `FilterBar` |
+| WinForms | `FilterGridChromeControl` | `FilterBarControl` |
+| WinUI 3 | `FilterGridChrome` | `FilterBarControl` |
+| MAUI | `FilterGridChromeView` | `FilterBarView` |
+
+Prefer the **chrome** host so bar edits open the column popup with pipeline apply/remove semantics.
+
+Interactions: left-click chip → column popup (single criterion); right-click → toggle enabled; **×** or Clear → remove node; **+** → add AND sibling on the same cluster; **OR+** → add a new AND group (e.g. `(Department = IT AND Name starts with Alice) OR (Department = RH AND Name starts with Bob)`). Set **`FilterPipeline.RootCombineOperator`** to **`Or`** automatically when a second group is added.
+
+**Drag and drop**: drag a chip onto another **cluster** (bordered AND group) to move the criterion into that group; drag onto an **OR** separator to detach it into its own OR branch at that position. Uses **`FilterPipelineEditor.MoveCriterionToCluster`** / **`MoveCriterionToOrGap`** and reapplies the pipeline to the grid.
+
+Example JSON (two OR groups):
+
+```json
+{
+  "schemaVersion": 1,
+  "rootCombineOperator": "Or",
+  "nodes": [
+    {
+      "kind": "group",
+      "logicalOperator": "And",
+      "children": [
+        { "kind": "criterion", "propertyName": "Department", "operator": "Equals", "value": "IT" },
+        { "kind": "criterion", "propertyName": "Name", "operator": "StartsWith", "value": "Alice" }
+      ]
+    },
+    {
+      "kind": "group",
+      "logicalOperator": "And",
+      "children": [
+        { "kind": "criterion", "propertyName": "Department", "operator": "Equals", "value": "RH" },
+        { "kind": "criterion", "propertyName": "Name", "operator": "StartsWith", "value": "Bob" }
+      ]
+    }
+  ]
+}
+```
 
 ## `FilterableDataGridViewModel` and column popup sync
 

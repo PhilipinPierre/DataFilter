@@ -14,6 +14,7 @@ namespace DataFilter.Wpf.Controls;
 public partial class FilterBar : UserControl
 {
     private readonly FilterBarPopupService _popupService = new();
+    private Point? _chipDragStart;
 
     public static readonly DependencyProperty FilterBarViewModelProperty =
         DependencyProperty.Register(nameof(FilterBarViewModel), typeof(FilterBarViewModel), typeof(FilterBar),
@@ -108,5 +109,91 @@ public partial class FilterBar : UserControl
         e.Handled = true;
         if (FilterBarViewModel.ToggleEnabledCommand.CanExecute(nodeId))
             FilterBarViewModel.ToggleEnabledCommand.Execute(nodeId);
+    }
+
+    private void Chip_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) =>
+        _chipDragStart = e.GetPosition(null);
+
+    private void Chip_PreviewMouseMove(object sender, MouseEventArgs e)
+    {
+        if (e.LeftButton != MouseButtonState.Pressed || _chipDragStart == null)
+            return;
+
+        Point pos = e.GetPosition(null);
+        if (Math.Abs(pos.X - _chipDragStart.Value.X) < SystemParameters.MinimumHorizontalDragDistance
+            && Math.Abs(pos.Y - _chipDragStart.Value.Y) < SystemParameters.MinimumVerticalDragDistance)
+        {
+            return;
+        }
+
+        if (sender is not FrameworkElement { DataContext: FilterBarChipItem chip })
+            return;
+
+        _chipDragStart = null;
+        var data = new DataObject(FilterBarDragFormats.CriterionNodeId, chip.NodeId);
+        DragDrop.DoDragDrop(sender as DependencyObject ?? this, data, DragDropEffects.Move);
+    }
+
+    private void Chip_GiveFeedback(object sender, GiveFeedbackEventArgs e)
+    {
+        e.UseDefaultCursors = true;
+        e.Handled = true;
+    }
+
+    private void Cluster_DragOver(object sender, DragEventArgs e)
+    {
+        if (TryGetDraggedNodeId(e, out _))
+            e.Effects = DragDropEffects.Move;
+        e.Handled = true;
+    }
+
+    private void Cluster_Drop(object sender, DragEventArgs e)
+    {
+        if (FilterBarViewModel == null
+            || !TryGetDraggedNodeId(e, out string? nodeId)
+            || sender is not FrameworkElement { DataContext: FilterBarAndClusterItem cluster })
+        {
+            return;
+        }
+
+        if (string.IsNullOrEmpty(cluster.AddAndAnchorNodeId))
+            return;
+
+        if (FilterBarViewModel.MoveToClusterCommand.CanExecute((nodeId, cluster.AddAndAnchorNodeId)))
+            FilterBarViewModel.MoveToClusterCommand.Execute((nodeId, cluster.AddAndAnchorNodeId));
+
+        e.Handled = true;
+    }
+
+    private void OrGap_DragOver(object sender, DragEventArgs e)
+    {
+        if (TryGetDraggedNodeId(e, out _))
+            e.Effects = DragDropEffects.Move;
+        e.Handled = true;
+    }
+
+    private void OrGap_Drop(object sender, DragEventArgs e)
+    {
+        if (FilterBarViewModel == null
+            || !TryGetDraggedNodeId(e, out string? nodeId)
+            || sender is not FrameworkElement { DataContext: FilterBarOrSeparatorItem sep })
+        {
+            return;
+        }
+
+        if (FilterBarViewModel.MoveToOrGapCommand.CanExecute((nodeId, sep.OrInsertIndex)))
+            FilterBarViewModel.MoveToOrGapCommand.Execute((nodeId, sep.OrInsertIndex));
+
+        e.Handled = true;
+    }
+
+    private static bool TryGetDraggedNodeId(DragEventArgs e, out string? nodeId)
+    {
+        nodeId = null;
+        if (!e.Data.GetDataPresent(FilterBarDragFormats.CriterionNodeId))
+            return false;
+
+        nodeId = e.Data.GetData(FilterBarDragFormats.CriterionNodeId) as string;
+        return !string.IsNullOrEmpty(nodeId);
     }
 }

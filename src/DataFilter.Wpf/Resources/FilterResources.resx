@@ -75,6 +75,7 @@
   <data name="FilterBar_And" xml:space="preserve"><value>AND</value></data>
   <data name="FilterBar_Or" xml:space="preserve"><value>OR</value></data>
   <data name="FilterBar_AddAnd" xml:space="preserve"><value>Add AND filter</value></data>
+  <data name="FilterBar_AddOrGroup" xml:space="preserve"><value>Add OR group</value></data>
   <data name="FilterBar_NewFilter" xml:space="preserve"><value>New filter</value></data>
   <data name="FilterBar_OrGroup" xml:space="preserve"><value>OR group</value></data>
 </root>

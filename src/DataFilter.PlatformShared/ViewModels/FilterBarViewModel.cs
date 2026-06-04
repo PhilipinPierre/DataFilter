@@ -16,6 +16,7 @@ public partial class FilterBarViewModel : ObservableObject
 {
     private readonly FilterPipelineSession _session;
     private Func<string, string>? _resolveColumnTitle;
+    private Func<string>? _resolveDefaultPropertyName;
     private Func<FilterPipeline, Task>? _applyPipelineAsync;
 
     public FilterBarViewModel(FilterPipelineSession session)
@@ -33,13 +34,20 @@ public partial class FilterBarViewModel : ObservableObject
     public event EventHandler<FilterBarEditRequest>? EditRequested;
 
     /// <summary>
+    /// Raised when <see cref="Segments"/> were rebuilt (pipeline, culture, or layout).
+    /// </summary>
+    public event EventHandler? DisplayChanged;
+
+    /// <summary>
     /// Configures column title resolution and pipeline apply callback from the grid host.
     /// </summary>
     public void Configure(
         Func<string, string>? resolveColumnTitle,
-        Func<FilterPipeline, Task> applyPipelineAsync)
+        Func<FilterPipeline, Task> applyPipelineAsync,
+        Func<string>? resolveDefaultPropertyName = null)
     {
         _resolveColumnTitle = resolveColumnTitle;
+        _resolveDefaultPropertyName = resolveDefaultPropertyName;
         _applyPipelineAsync = applyPipelineAsync ?? throw new ArgumentNullException(nameof(applyPipelineAsync));
     }
 
@@ -48,6 +56,8 @@ public partial class FilterBarViewModel : ObservableObject
         Segments.Clear();
         foreach (FilterBarDisplayItem item in FilterBarDisplayBuilder.Build(_session.Pipeline, _resolveColumnTitle))
             Segments.Add(item);
+
+        DisplayChanged?.Invoke(this, EventArgs.Empty);
     }
 
     [RelayCommand]
@@ -80,6 +90,50 @@ public partial class FilterBarViewModel : ObservableObject
             return;
 
         EditRequested?.Invoke(this, new FilterBarEditRequest { NodeId = nodeId, PropertyName = propertyName });
+    }
+
+    [RelayCommand]
+    private void AddOrGroup()
+    {
+        string? propertyName = _resolveDefaultPropertyName?.Invoke();
+        if (string.IsNullOrWhiteSpace(propertyName))
+            return;
+
+        CriterionPipelineNode? created = _session.AddOrGroup(propertyName);
+        if (created == null)
+            return;
+
+        RebuildDisplay();
+        EditRequested?.Invoke(this, new FilterBarEditRequest
+        {
+            NodeId = created.Id,
+            PropertyName = created.PropertyName,
+            IsNew = true
+        });
+    }
+
+    [RelayCommand]
+    private async Task MoveToClusterAsync((string CriterionNodeId, string TargetClusterAnchorNodeId) args)
+    {
+        if (string.IsNullOrEmpty(args.CriterionNodeId) || string.IsNullOrEmpty(args.TargetClusterAnchorNodeId))
+            return;
+
+        if (!_session.MoveCriterionToCluster(args.CriterionNodeId, args.TargetClusterAnchorNodeId))
+            return;
+
+        await ApplyPipelineAsync().ConfigureAwait(false);
+    }
+
+    [RelayCommand]
+    private async Task MoveToOrGapAsync((string CriterionNodeId, int OrInsertIndex) args)
+    {
+        if (string.IsNullOrEmpty(args.CriterionNodeId))
+            return;
+
+        if (!_session.MoveCriterionToOrGap(args.CriterionNodeId, args.OrInsertIndex))
+            return;
+
+        await ApplyPipelineAsync().ConfigureAwait(false);
     }
 
     [RelayCommand]

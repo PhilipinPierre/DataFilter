@@ -34,10 +34,17 @@ public sealed class FilterBarControl : Panel
         set
         {
             if (_viewModel != null)
+            {
                 _viewModel.EditRequested -= OnEditRequested;
+                _viewModel.DisplayChanged -= OnDisplayChanged;
+            }
             _viewModel = value;
             if (_viewModel != null)
+            {
                 _viewModel.EditRequested += OnEditRequested;
+                _viewModel.DisplayChanged += OnDisplayChanged;
+            }
+
             RebuildUi();
         }
     }
@@ -85,17 +92,23 @@ public sealed class FilterBarControl : Panel
             return;
         }
 
+        _flow.Controls.Add(CreateOrGroupButton());
+
         foreach (FilterBarDisplayItem segment in _viewModel.Segments)
         {
             if (segment is FilterBarOrSeparatorItem orSep)
             {
-                _flow.Controls.Add(new Label
+                var orLabel = new Label
                 {
                     Text = orSep.Text,
                     AutoSize = true,
                     Margin = new Padding(8, 6, 4, 4),
-                    Font = new Font(Font, FontStyle.Bold)
-                });
+                    Font = new Font(Font, FontStyle.Bold),
+                    AllowDrop = true,
+                    Tag = orSep.OrInsertIndex
+                };
+                WireOrGapDrop(orLabel);
+                _flow.Controls.Add(orLabel);
             }
             else if (segment is FilterBarAndClusterItem cluster)
             {
@@ -105,8 +118,11 @@ public sealed class FilterBarControl : Panel
                     WrapContents = true,
                     Margin = new Padding(4),
                     Padding = new Padding(4),
-                    BorderStyle = BorderStyle.FixedSingle
+                    BorderStyle = BorderStyle.FixedSingle,
+                    AllowDrop = true,
+                    Tag = cluster.AddAndAnchorNodeId
                 };
+                WireClusterDrop(clusterPanel);
                 if (cluster.CanAddAnd && !string.IsNullOrEmpty(cluster.AddAndAnchorNodeId))
                     clusterPanel.Controls.Add(CreateAddButton(cluster.AddAndAnchorNodeId));
 
@@ -122,7 +138,7 @@ public sealed class FilterBarControl : Panel
 
     private Panel CreateChipPanel(FilterBarChipItem chip)
     {
-        var panel = new FlowLayoutPanel { AutoSize = true, Margin = new Padding(2) };
+        var panel = new FlowLayoutPanel { AutoSize = true, Margin = new Padding(2), Tag = chip.NodeId };
         var label = new Button
         {
             Text = chip.DisplayText,
@@ -137,6 +153,7 @@ public sealed class FilterBarControl : Panel
             if (e.Button == MouseButtons.Right && _viewModel?.ToggleEnabledCommand.CanExecute(chip.NodeId) == true)
                 _viewModel.ToggleEnabledCommand.Execute(chip.NodeId);
         };
+        WireChipDrag(panel);
         panel.Controls.Add(label);
         if (chip.CanAddAnd)
             panel.Controls.Add(CreateAddButton(chip.NodeId));
@@ -144,6 +161,21 @@ public sealed class FilterBarControl : Panel
         remove.Click += (_, _) => _viewModel?.RemoveCommand.Execute(chip.NodeId);
         panel.Controls.Add(remove);
         return panel;
+    }
+
+    private Button CreateOrGroupButton()
+    {
+        var btn = new Button
+        {
+            Text = "OR+",
+            AutoSize = true,
+            FlatStyle = FlatStyle.Flat,
+            AccessibleName = "df-filter-bar-add-or-group"
+        };
+        var toolTip = new ToolTip { ToolTipTitle = LocalizationManager.Instance["FilterBar_AddOrGroup"] };
+        toolTip.SetToolTip(btn, LocalizationManager.Instance["FilterBar_AddOrGroup"]);
+        btn.Click += (_, _) => _viewModel?.AddOrGroupCommand.Execute(null);
+        return btn;
     }
 
     private Button CreateAddButton(string nodeId)
@@ -160,4 +192,75 @@ public sealed class FilterBarControl : Panel
     }
 
     private void OnEditRequested(object? sender, FilterBarEditRequest e) => _onEdit?.Invoke(e);
+
+    private void OnDisplayChanged(object? sender, EventArgs e) => RebuildUi();
+
+    private void WireChipDrag(Control chipPanel)
+    {
+        Point? dragStart = null;
+        chipPanel.MouseDown += (_, e) =>
+        {
+            if (e.Button == MouseButtons.Left)
+                dragStart = e.Location;
+        };
+        chipPanel.MouseMove += (_, e) =>
+        {
+            if (e.Button != MouseButtons.Left || dragStart == null || chipPanel.Tag is not string nodeId)
+                return;
+
+            Size dragSize = SystemInformation.DragSize;
+            if (Math.Abs(e.X - dragStart.Value.X) < dragSize.Width
+                && Math.Abs(e.Y - dragStart.Value.Y) < dragSize.Height)
+            {
+                return;
+            }
+
+            dragStart = null;
+            var data = new DataObject();
+            data.SetData(FilterBarDragFormats.CriterionNodeId, nodeId);
+            chipPanel.DoDragDrop(data, DragDropEffects.Move);
+        };
+    }
+
+    private void WireClusterDrop(Control target)
+    {
+        target.DragEnter += (_, e) =>
+        {
+            if (e.Data?.GetDataPresent(FilterBarDragFormats.CriterionNodeId) == true)
+                e.Effect = DragDropEffects.Move;
+        };
+        target.DragDrop += (_, e) =>
+        {
+            if (_viewModel == null
+                || e.Data?.GetData(FilterBarDragFormats.CriterionNodeId) is not string nodeId
+                || target.Tag is not string anchor)
+            {
+                return;
+            }
+
+            if (_viewModel.MoveToClusterCommand.CanExecute((nodeId, anchor)))
+                _viewModel.MoveToClusterCommand.Execute((nodeId, anchor));
+        };
+    }
+
+    private void WireOrGapDrop(Control target)
+    {
+        target.DragEnter += (_, e) =>
+        {
+            if (e.Data?.GetDataPresent(FilterBarDragFormats.CriterionNodeId) == true)
+                e.Effect = DragDropEffects.Move;
+        };
+        target.DragDrop += (_, e) =>
+        {
+            if (_viewModel == null
+                || e.Data?.GetData(FilterBarDragFormats.CriterionNodeId) is not string nodeId
+                || target.Tag is not int orIndex)
+            {
+                return;
+            }
+
+            if (_viewModel.MoveToOrGapCommand.CanExecute((nodeId, orIndex)))
+                _viewModel.MoveToOrGapCommand.Execute((nodeId, orIndex));
+        };
+    }
 }

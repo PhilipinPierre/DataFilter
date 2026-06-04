@@ -206,6 +206,72 @@ public class FilterPipelineTests
     }
 
     [Fact]
+    public void Editor_AddOrGroup_On_Empty_Pipeline_Creates_And_Group()
+    {
+        var pipeline = new FilterPipeline();
+        var added = FilterPipelineEditor.AddOrGroup(pipeline, "Department");
+
+        Assert.NotNull(added);
+        Assert.Equal("Department", added.PropertyName);
+        Assert.Single(pipeline.RootNodes);
+        var g = Assert.IsType<GroupPipelineNode>(pipeline.RootNodes[0]);
+        Assert.Equal(LogicalOperator.And, g.CombineOperator);
+    }
+
+    [Fact]
+    public void Editor_AddOrGroup_Wraps_Existing_And_Root_In_Or()
+    {
+        var pipeline = new FilterPipeline();
+        pipeline.RootNodes.Add(new CriterionPipelineNode { PropertyName = "Department", Operator = nameof(FilterOperator.Equals), Value = "IT" });
+        pipeline.RootNodes.Add(new CriterionPipelineNode { PropertyName = "Name", Operator = nameof(FilterOperator.StartsWith), Value = "Alice" });
+
+        var added = FilterPipelineEditor.AddOrGroup(pipeline, "Department");
+
+        Assert.NotNull(added);
+        Assert.Equal(LogicalOperator.Or, pipeline.RootCombineOperator);
+        Assert.Equal(2, pipeline.RootNodes.Count);
+        var first = Assert.IsType<GroupPipelineNode>(pipeline.RootNodes[0]);
+        Assert.Equal(2, first.Children.Count);
+        var second = Assert.IsType<GroupPipelineNode>(pipeline.RootNodes[1]);
+        Assert.Single(second.Children);
+    }
+
+    [Fact]
+    public void Editor_MoveCriterion_To_And_Group()
+    {
+        var pipeline = new FilterPipeline { RootCombineOperator = LogicalOperator.Or };
+        var g1 = new GroupPipelineNode { CombineOperator = LogicalOperator.And };
+        g1.Children.Add(new CriterionPipelineNode("a") { PropertyName = "Department", Operator = nameof(FilterOperator.Equals), Value = "IT" });
+        var g2 = new GroupPipelineNode { CombineOperator = LogicalOperator.And };
+        g2.Children.Add(new CriterionPipelineNode("b") { PropertyName = "Name", Operator = nameof(FilterOperator.StartsWith), Value = "Bob" });
+        pipeline.RootNodes.Add(g1);
+        pipeline.RootNodes.Add(g2);
+
+        Assert.True(FilterPipelineEditor.MoveCriterionToCluster(pipeline, "b", g1.Id));
+        Assert.Equal(2, g1.Children.Count);
+        Assert.Single(pipeline.RootNodes);
+    }
+
+    [Fact]
+    public void Editor_MoveCriterion_To_Or_Gap_Creates_New_Group()
+    {
+        var pipeline = new FilterPipeline { RootCombineOperator = LogicalOperator.Or };
+        var g1 = new GroupPipelineNode { CombineOperator = LogicalOperator.And };
+        g1.Children.Add(new CriterionPipelineNode("a") { PropertyName = "Department", Operator = nameof(FilterOperator.Equals), Value = "IT" });
+        var g2 = new GroupPipelineNode { CombineOperator = LogicalOperator.And };
+        g2.Children.Add(new CriterionPipelineNode("b") { PropertyName = "Name", Operator = nameof(FilterOperator.StartsWith), Value = "Bob" });
+        pipeline.RootNodes.Add(g1);
+        pipeline.RootNodes.Add(g2);
+
+        Assert.True(FilterPipelineEditor.MoveCriterionToOrGap(pipeline, "b", 1));
+        Assert.Equal(2, pipeline.RootNodes.Count);
+        Assert.Single(g1.Children);
+        var inserted = Assert.IsType<GroupPipelineNode>(pipeline.RootNodes[1]);
+        Assert.Single(inserted.Children);
+        Assert.Equal("b", inserted.Children[0].Id);
+    }
+
+    [Fact]
     public void IdMerger_Preserves_Criterion_Id_On_Sync()
     {
         var existing = new FilterPipeline();
