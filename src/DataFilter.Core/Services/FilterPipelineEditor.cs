@@ -1,4 +1,4 @@
-using DataFilter.Core.Enums;
+﻿using DataFilter.Core.Enums;
 using DataFilter.Core.Pipeline;
 
 namespace DataFilter.Core.Services;
@@ -121,15 +121,45 @@ public static class FilterPipelineEditor
     }
 
     /// <summary>
-    /// Adds a new AND-combined criterion relative to <paramref name="anchorNodeId"/>.
-    /// Returns the new criterion, or null if the anchor was not found.
+    /// Resolves the column <see cref="CriterionPipelineNode.PropertyName"/> for bar edits and AND inserts.
+    /// For AND groups, uses the first descendant criterion with a non-empty property name.
+    /// </summary>
+    public static string? TryResolveColumnPropertyName(FilterPipelineNode node)
+    {
+        if (node == null) throw new ArgumentNullException(nameof(node));
+
+        switch (node)
+        {
+            case CriterionPipelineNode c:
+                return string.IsNullOrWhiteSpace(c.PropertyName) ? null : c.PropertyName;
+            case GroupPipelineNode g when g.CombineOperator == LogicalOperator.And:
+                foreach (FilterPipelineNode child in g.Children)
+                {
+                    string? name = TryResolveColumnPropertyName(child);
+                    if (!string.IsNullOrWhiteSpace(name))
+                        return name;
+                }
+
+                return null;
+            default:
+                return null;
+        }
+    }
+
+    /// <summary>
+    /// Adds a new AND-combined criterion on the same column as <paramref name="anchorNodeId"/>.
+    /// Returns null when the anchor is missing or its column cannot be resolved.
     /// </summary>
     public static CriterionPipelineNode? AddAndCriterion(FilterPipeline pipeline, string anchorNodeId)
     {
         if (!TryFind(pipeline, anchorNodeId, out NodeLocation location, out FilterPipelineNode? anchor) || anchor == null)
             return null;
 
-        var newCriterion = CreateEmptyCriterion();
+        string? propertyName = TryResolveColumnPropertyName(anchor);
+        if (string.IsNullOrWhiteSpace(propertyName))
+            return null;
+
+        var newCriterion = CreateCriterionDraft(propertyName);
 
         if (anchor is GroupPipelineNode andGroup && andGroup.CombineOperator == LogicalOperator.And)
         {
@@ -188,14 +218,19 @@ public static class FilterPipelineEditor
     }
 
     /// <summary>
-    /// Creates a placeholder criterion for popup editing.
+    /// Creates a draft criterion for popup editing on a known column.
     /// </summary>
-    public static CriterionPipelineNode CreateEmptyCriterion() =>
-        new()
+    public static CriterionPipelineNode CreateCriterionDraft(string propertyName)
+    {
+        if (string.IsNullOrWhiteSpace(propertyName))
+            throw new ArgumentException("PropertyName is required.", nameof(propertyName));
+
+        return new CriterionPipelineNode
         {
-            PropertyName = string.Empty,
+            PropertyName = propertyName,
             Operator = nameof(FilterOperator.Equals),
             Value = null,
             IsEnabled = true
         };
+    }
 }

@@ -1,10 +1,10 @@
 using DataFilter.PlatformShared.FilterBar;
 using DataFilter.PlatformShared.ViewModels;
 using DataFilter.Wpf.Services;
+using GridVm = DataFilter.PlatformShared.ViewModels.IFilterableDataGridViewModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using GridVm = DataFilter.PlatformShared.ViewModels.IFilterableDataGridViewModel;
 
 namespace DataFilter.Wpf.Controls;
 
@@ -52,28 +52,25 @@ public partial class FilterBar : UserControl
         Unloaded += OnUnloaded;
     }
 
-    private static void OnFilterBarViewModelChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    private void OnLoaded(object sender, RoutedEventArgs e) => SubscribeEditRequested();
+
+    private void OnUnloaded(object sender, RoutedEventArgs e) => UnsubscribeEditRequested();
+
+    private void SubscribeEditRequested()
     {
-        if (d is FilterBar bar)
-            bar.DataContext = e.NewValue;
+        if (FilterBarViewModel == null)
+            return;
+
+        FilterBarViewModel.EditRequested -= OnEditRequested;
+        FilterBarViewModel.EditRequested += OnEditRequested;
     }
 
-    private static void OnShowFilterBarChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    private void UnsubscribeEditRequested()
     {
-        if (d is FilterBar bar && e.NewValue is bool visible)
-            bar.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
-    }
+        if (FilterBarViewModel == null)
+            return;
 
-    private void OnLoaded(object sender, RoutedEventArgs e)
-    {
-        if (FilterBarViewModel != null)
-            FilterBarViewModel.EditRequested += OnEditRequested;
-    }
-
-    private void OnUnloaded(object sender, RoutedEventArgs e)
-    {
-        if (FilterBarViewModel != null)
-            FilterBarViewModel.EditRequested -= OnEditRequested;
+        FilterBarViewModel.EditRequested -= OnEditRequested;
     }
 
     private async void OnEditRequested(object? sender, FilterBarEditRequest request)
@@ -83,6 +80,24 @@ public partial class FilterBar : UserControl
 
         FrameworkElement anchor = request.Anchor as FrameworkElement ?? this;
         await _popupService.ShowAsync(GridViewModel, request, anchor);
+    }
+
+    private static void OnFilterBarViewModelChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is not FilterBar bar)
+            return;
+
+        if (e.OldValue is FilterBarViewModel oldVm)
+            oldVm.EditRequested -= bar.OnEditRequested;
+
+        bar.DataContext = e.NewValue;
+        bar.SubscribeEditRequested();
+    }
+
+    private static void OnShowFilterBarChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is FilterBar bar && e.NewValue is bool visible)
+            bar.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void Chip_PreviewMouseRightButtonUp(object sender, MouseButtonEventArgs e)

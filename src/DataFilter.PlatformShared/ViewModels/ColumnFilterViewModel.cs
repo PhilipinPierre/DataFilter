@@ -1210,9 +1210,11 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
     /// <summary>
     /// Loads the popup from a pipeline criterion.
     /// </summary>
-    public async System.Threading.Tasks.Task LoadFromCriterionAsync(CriterionPipelineNode node)
+    public async System.Threading.Tasks.Task LoadFromCriterionAsync(
+        CriterionPipelineNode node,
+        ExcelFilterState? columnState = null)
     {
-        var state = FilterBarCriterionMapper.StateFromCriterion(node);
+        var state = FilterBarCriterionMapper.ResolveStateForEdit(node, columnState);
         await LoadStateAsync(state);
     }
 

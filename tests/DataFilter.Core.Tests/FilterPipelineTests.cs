@@ -147,8 +147,19 @@ public class FilterPipelineTests
         var added = FilterPipelineEditor.AddAndCriterion(pipeline, a.Id);
 
         Assert.NotNull(added);
+        Assert.Equal("A", added.PropertyName);
         Assert.Equal(2, pipeline.RootNodes.Count);
         Assert.Equal(a.Id, pipeline.RootNodes[0].Id);
+    }
+
+    [Fact]
+    public void Editor_AddAnd_Returns_Null_When_Anchor_Has_No_Column()
+    {
+        var pipeline = new FilterPipeline();
+        var a = new CriterionPipelineNode { PropertyName = "", Operator = nameof(FilterOperator.Equals), Value = 1 };
+        pipeline.RootNodes.Add(a);
+
+        Assert.Null(FilterPipelineEditor.AddAndCriterion(pipeline, a.Id));
     }
 
     [Fact]
@@ -168,6 +179,18 @@ public class FilterPipelineTests
     }
 
     [Fact]
+    public void Compiler_Skips_Criterion_With_Empty_PropertyName()
+    {
+        var pipeline = new FilterPipeline();
+        pipeline.RootNodes.Add(new CriterionPipelineNode { PropertyName = "A", Operator = nameof(FilterOperator.Equals), Value = 1 });
+        pipeline.RootNodes.Add(new CriterionPipelineNode { PropertyName = "", Operator = nameof(FilterOperator.Equals), Value = 2 });
+
+        var compiled = FilterPipelineCompiler.Compile(pipeline);
+
+        Assert.Single(compiled);
+    }
+
+    [Fact]
     public void Editor_AddAnd_On_And_Group_Adds_Child()
     {
         var pipeline = new FilterPipeline();
@@ -178,6 +201,7 @@ public class FilterPipelineTests
         var added = FilterPipelineEditor.AddAndCriterion(pipeline, g.Id);
 
         Assert.NotNull(added);
+        Assert.Equal("A", added.PropertyName);
         Assert.Equal(2, g.Children.Count);
     }
 

@@ -46,7 +46,6 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
     /// </summary>
     protected virtual void OnFilterDescriptorsChanged(FilterDescriptorsChangedEventArgs? args = null)
     {
-        SyncFilterBarPipeline();
         FilterDescriptorsChanged?.Invoke(this, args ?? new FilterDescriptorsChangedEventArgs());
     }
 
@@ -162,7 +161,10 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
         }
 
         if (AsyncDataProvider == null && localSourceChanged && Context.Descriptors.Count > 0)
+        {
+            SyncFilterBarPipeline();
             OnFilterDescriptorsChanged(new FilterDescriptorsChangedEventArgs());
+        }
     }
 
     public async void ApplyColumnFilter(string propertyName, ExcelFilterState state)
@@ -197,6 +199,7 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
             ctx.Page = 1;
         }
         await RefreshDataAsync();
+        SyncFilterBarPipeline();
         OnFilterDescriptorsChanged(new FilterDescriptorsChangedEventArgs { AffectedPropertyName = propertyName });
     }
 
@@ -278,15 +281,7 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
     {
         if (pipeline == null) throw new ArgumentNullException(nameof(pipeline));
         PipelineSession.ReplacePipeline(pipeline);
-        if (Context is FilterContext ctx)
-        {
-            var compiled = FilterPipelineCompiler.Compile(pipeline);
-            var excelDescriptors = FilterDescriptorToExcelConverter.ConvertCompiledPipeline(compiled);
-            ctx.ReplaceDescriptors(excelDescriptors);
-            ctx.Page = 1;
-        }
-
-        await RefreshDataAsync();
+        await ApplyPipelineSessionToContextAsync();
         OnFilterDescriptorsChanged(new FilterDescriptorsChangedEventArgs());
     }
 
@@ -302,14 +297,34 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
         if (PipelineSession.TryGetNode(nodeId, out FilterPipelineNode? node) && node is CriterionPipelineNode c)
             FilterBarCriterionMapper.ApplyStateToCriterion(c, propertyName, state);
 
-        await ApplyFilterPipelineAsync(PipelineSession.Pipeline);
+        await ApplyPipelineSessionToContextAsync();
+        OnFilterDescriptorsChanged(new FilterDescriptorsChangedEventArgs { AffectedPropertyName = propertyName });
     }
 
     /// <inheritdoc />
     public async Task RemoveBarNodeAsync(string nodeId)
     {
         PipelineSession.RemoveNode(nodeId);
-        await ApplyFilterPipelineAsync(PipelineSession.Pipeline);
+        await ApplyPipelineSessionToContextAsync();
+        OnFilterDescriptorsChanged(new FilterDescriptorsChangedEventArgs());
+    }
+
+    /// <summary>
+    /// Applies enabled pipeline nodes to <see cref="Context"/> without rebuilding the session graph
+    /// (preserves disabled nodes and bar structure).
+    /// </summary>
+    private async Task ApplyPipelineSessionToContextAsync()
+    {
+        if (Context is FilterContext ctx)
+        {
+            var compiled = FilterPipelineCompiler.Compile(PipelineSession.Pipeline);
+            var excelDescriptors = FilterDescriptorToExcelConverter.ConvertCompiledPipeline(compiled);
+            ctx.ReplaceDescriptors(excelDescriptors);
+            ctx.Page = 1;
+        }
+
+        await RefreshDataAsync();
+        FilterBar.RebuildDisplay();
     }
 
     private IReadOnlyList<FilterSnapshotEntry> CleanSnapshotEntries(IEnumerable<FilterSnapshotEntry> entries)
@@ -361,6 +376,7 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
 
         new FilterSnapshotBuilder().RestoreSnapshot(Context, filteredSnapshot);
         await RefreshDataAsync();
+        SyncFilterBarPipeline();
         OnFilterDescriptorsChanged(new FilterDescriptorsChangedEventArgs());
     }
 }

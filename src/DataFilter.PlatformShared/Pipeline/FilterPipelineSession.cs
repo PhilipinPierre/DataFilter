@@ -91,7 +91,10 @@ public sealed class FilterPipelineSession
             return false;
         }
 
-        c.PropertyName = propertyName ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(propertyName))
+            return false;
+
+        c.PropertyName = propertyName;
         c.Operator = operatorName ?? string.Empty;
         c.Value = value;
         c.IsEnabled = isEnabled;

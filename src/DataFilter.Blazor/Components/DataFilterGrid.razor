@@ -334,14 +334,16 @@ else
         }
 
         await ApplyFiltersCoreAsync(converted);
-        SyncFilterBarFromContext();
+        _filterBar.RebuildDisplay();
     }
 
     private async Task HandleBarEditAsync(FilterBarEditRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.PropertyName))
+            return;
+
         var col = Columns.FirstOrDefault(c =>
-            string.Equals(c.PropertyName, request.PropertyName, StringComparison.OrdinalIgnoreCase))
-            ?? Columns.FirstOrDefault(c => !string.IsNullOrWhiteSpace(c.PropertyName));
+            string.Equals(c.PropertyName, request.PropertyName, StringComparison.OrdinalIgnoreCase));
         if (col == null)
             return;
 
@@ -358,7 +360,10 @@ else
         });
 
         if (_pipelineSession.TryGetNode(request.NodeId, out var node) && node is CriterionPipelineNode c)
-            await vm.LoadFromCriterionAsync(c);
+        {
+            ExcelFilterState? columnState = request.IsNew || !vm.IsFilterActive ? null : vm.FilterState;
+            await vm.LoadFromCriterionAsync(c, columnState);
+        }
         else
             await vm.SearchCommand.ExecuteAsync(string.Empty);
 
@@ -383,13 +388,37 @@ else
         if (_pipelineSession.TryGetNode(nodeId, out var node) && node is CriterionPipelineNode c)
             FilterBarCriterionMapper.ApplyStateToCriterion(c, propertyName, state);
 
-        await ApplyFilterPipelineAsync(_pipelineSession.Pipeline);
+        await ApplyPipelineSessionToContextAsync();
     }
 
     private async Task RemoveBarNodeAsync(string nodeId)
     {
         _pipelineSession.RemoveNode(nodeId);
-        await ApplyFilterPipelineAsync(_pipelineSession.Pipeline);
+        await ApplyPipelineSessionToContextAsync();
+    }
+
+    private async Task ApplyPipelineSessionToContextAsync()
+    {
+        var compiled = FilterPipelineCompiler.Compile(_pipelineSession.Pipeline);
+        var converted = FilterDescriptorToExcelConverter.ConvertCompiledPipeline(compiled);
+        _context.ReplaceDescriptors(converted);
+        _context.Page = 1;
+
+        var byProperty = converted
+            .OfType<ExcelFilterDescriptor>()
+            .ToDictionary(d => d.PropertyName, d => d.State, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var col in Columns.Where(c => !string.IsNullOrWhiteSpace(c.PropertyName)))
+        {
+            var colVm = GetViewModel(col);
+            if (byProperty.TryGetValue(col.PropertyName, out var st))
+                await colVm.LoadStateAsync(st);
+            else
+                colVm.ClearFilter();
+        }
+
+        await ApplyFiltersCoreAsync(converted);
+        _filterBar.RebuildDisplay();
     }
 
     private void SetSortInternal(string propertyName, bool isDescending)

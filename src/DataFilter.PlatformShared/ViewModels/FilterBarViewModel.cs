@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DataFilter.Core.Pipeline;
+using DataFilter.Core.Services;
+using DataFilter.Localization;
 using DataFilter.PlatformShared.FilterBar;
 using DataFilter.PlatformShared.Pipeline;
 
@@ -20,6 +22,7 @@ public partial class FilterBarViewModel : ObservableObject
     {
         _session = session ?? throw new ArgumentNullException(nameof(session));
         _session.PipelineChanged += (_, _) => RebuildDisplay();
+        LocalizationManager.Instance.CultureChanged += (_, _) => RebuildDisplay();
     }
 
     public ObservableCollection<FilterBarDisplayItem> Segments { get; } = new();
@@ -72,7 +75,10 @@ public partial class FilterBarViewModel : ObservableObject
         if (!_session.TryGetNode(nodeId, out FilterPipelineNode? node) || node == null)
             return;
 
-        string propertyName = node is CriterionPipelineNode c ? c.PropertyName : string.Empty;
+        string? propertyName = FilterPipelineEditor.TryResolveColumnPropertyName(node);
+        if (string.IsNullOrWhiteSpace(propertyName))
+            return;
+
         EditRequested?.Invoke(this, new FilterBarEditRequest { NodeId = nodeId, PropertyName = propertyName });
     }
 
@@ -83,7 +89,8 @@ public partial class FilterBarViewModel : ObservableObject
         if (created == null)
             return;
 
-        await ApplyPipelineAsync().ConfigureAwait(false);
+        // Same column as anchor; do not apply until the popup confirms the rule.
+        RebuildDisplay();
         EditRequested?.Invoke(this, new FilterBarEditRequest
         {
             NodeId = created.Id,

@@ -1,3 +1,4 @@
+using DataFilter.Core.Abstractions;
 using DataFilter.Core.Enums;
 using DataFilter.Core.Models;
 using DataFilter.Core.Pipeline;
@@ -24,20 +25,57 @@ public static class FilterBarCriterionMapper
     }
 
     /// <summary>
-    /// Writes popup state onto a single criterion node (primary rule only).
+    /// Picks popup state for bar edit: node snapshot when it carries a rule, otherwise column context state.
+    /// </summary>
+    public static ExcelFilterState ResolveStateForEdit(CriterionPipelineNode node, ExcelFilterState? columnState)
+    {
+        ExcelFilterState fromNode = StateFromCriterion(node);
+        if (columnState != null && !CriterionHasStoredRule(node))
+            return columnState;
+        return fromNode;
+    }
+
+    /// <summary>
+    /// True when the pipeline node carries a real operator/value (not an empty placeholder).
+    /// </summary>
+    public static bool CriterionHasStoredRule(CriterionPipelineNode node) =>
+        !string.IsNullOrEmpty(node.Operator)
+        && !(string.Equals(node.Operator, nameof(FilterOperator.Equals), StringComparison.OrdinalIgnoreCase) && node.Value == null);
+
+    /// <summary>
+    /// Writes popup state onto a single criterion node (primary compiled rule).
     /// </summary>
     public static void ApplyStateToCriterion(CriterionPipelineNode node, string propertyName, ExcelFilterState state)
     {
+        if (string.IsNullOrWhiteSpace(propertyName))
+            throw new ArgumentException("PropertyName is required.", nameof(propertyName));
+
         node.PropertyName = propertyName;
-        if (!TryGetPrimaryRule(propertyName, state, out string? op, out object? value))
+        if (TryGetPrimaryRule(propertyName, state, out string? op, out object? value))
         {
-            node.Operator = nameof(FilterOperator.Equals);
-            node.Value = null;
+            node.Operator = op!;
+            node.Value = value;
             return;
         }
 
-        node.Operator = op!;
-        node.Value = value;
+        if (state.CustomOperator != null)
+        {
+            node.Operator = state.CustomOperator.Value.ToString();
+            node.Value = state.CustomOperator == FilterOperator.Between
+                ? new RangeValue(state.CustomValue1, state.CustomValue2)
+                : state.CustomValue1;
+            return;
+        }
+
+        if (!state.SelectAll && state.SelectedValues.Count > 0)
+        {
+            node.Operator = nameof(FilterOperator.In);
+            node.Value = state.SelectedValues.ToList();
+            return;
+        }
+
+        node.Operator = nameof(FilterOperator.Equals);
+        node.Value = null;
     }
 
     private static bool TryGetPrimaryRule(string propertyName, ExcelFilterState state, out string? op, out object? value)
@@ -45,27 +83,31 @@ public static class FilterBarCriterionMapper
         op = null;
         value = null;
         var excel = new ExcelFilterDescriptor(propertyName, state);
-        foreach (var d in excel.Descriptors)
-        {
-            if (d is FilterDescriptor fd)
-            {
-                op = fd.Operator.ToString();
-                value = fd.Value;
-                return true;
-            }
+        IFilterDescriptor? primary = GetPrimaryCompiledRule(excel);
+        if (primary == null)
+            return false;
 
-            if (d is FilterGroup fg)
+        op = primary.Operator.ToString();
+        value = primary.Value;
+        return true;
+    }
+
+    private static IFilterDescriptor? GetPrimaryCompiledRule(IFilterGroup group)
+    {
+        foreach (IFilterDescriptor d in group.Descriptors)
+        {
+            switch (d)
             {
-                var first = fg.Descriptors.OfType<FilterDescriptor>().FirstOrDefault();
-                if (first != null)
-                {
-                    op = first.Operator.ToString();
-                    value = first.Value;
-                    return true;
-                }
+                case FilterGroup fg:
+                    IFilterDescriptor? nested = GetPrimaryCompiledRule(fg);
+                    if (nested != null)
+                        return nested;
+                    break;
+                default:
+                    return d;
             }
         }
 
-        return false;
+        return null;
     }
 }

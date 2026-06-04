@@ -127,14 +127,16 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
         CollectionView.Refresh();
 
         if (sourceChanged && Context.Descriptors.Count > 0)
+        {
+            SyncFilterBarPipeline();
             OnFilterDescriptorsChanged();
+        }
 
         return Task.CompletedTask;
     }
 
     private void OnFilterDescriptorsChanged(FilterDescriptorsChangedEventArgs? args = null)
     {
-        SyncFilterBarPipeline();
         FilterDescriptorsChanged?.Invoke(this, args ?? new FilterDescriptorsChangedEventArgs());
     }
 
@@ -162,6 +164,7 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
         }
 
         RefreshDataAsync();
+        SyncFilterBarPipeline();
     }
 
     /// <inheritdoc />
@@ -174,6 +177,7 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
         }
 
         RefreshDataAsync();
+        SyncFilterBarPipeline();
         OnFilterDescriptorsChanged(new FilterDescriptorsChangedEventArgs { AffectedPropertyName = propertyName });
     }
 
@@ -283,6 +287,7 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
             }
 
             RefreshDataAsync();
+            SyncFilterBarPipeline();
             OnFilterDescriptorsChanged();
         }
     }
@@ -293,14 +298,16 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
         if (PipelineSession.TryGetNode(nodeId, out FilterPipelineNode? node) && node is CriterionPipelineNode c)
             FilterBarCriterionMapper.ApplyStateToCriterion(c, propertyName, state);
 
-        await ApplyFilterPipelineAsync(PipelineSession.Pipeline);
+        await ApplyPipelineSessionToContextAsync();
+        OnFilterDescriptorsChanged(new FilterDescriptorsChangedEventArgs { AffectedPropertyName = propertyName });
     }
 
     /// <inheritdoc />
     public async Task RemoveBarNodeAsync(string nodeId)
     {
         PipelineSession.RemoveNode(nodeId);
-        await ApplyFilterPipelineAsync(PipelineSession.Pipeline);
+        await ApplyPipelineSessionToContextAsync();
+        OnFilterDescriptorsChanged();
     }
 
     /// <inheritdoc />
@@ -308,9 +315,15 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
     {
         if (pipeline == null) throw new ArgumentNullException(nameof(pipeline));
         PipelineSession.ReplacePipeline(pipeline);
+        await ApplyPipelineSessionToContextAsync();
+        OnFilterDescriptorsChanged();
+    }
+
+    private async Task ApplyPipelineSessionToContextAsync()
+    {
         if (Context is FilterContext ctx)
         {
-            var compiled = FilterPipelineCompiler.Compile(pipeline);
+            var compiled = FilterPipelineCompiler.Compile(PipelineSession.Pipeline);
             var excelDescriptors = FilterDescriptorToExcelConverter.ConvertCompiledPipeline(compiled);
             ctx.ReplaceDescriptors(excelDescriptors);
             _columnFilterStates.Clear();
@@ -318,7 +331,7 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
         }
 
         await RefreshDataAsync();
-        OnFilterDescriptorsChanged();
+        FilterBar.RebuildDisplay();
     }
 
     /// <inheritdoc />

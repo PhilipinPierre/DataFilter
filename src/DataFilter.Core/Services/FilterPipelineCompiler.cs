@@ -51,7 +51,7 @@ public static class FilterPipelineCompiler
         switch (node)
         {
             case CriterionPipelineNode c:
-                return CompileCriterion(c);
+                return CompileCriterion(c); // null when PropertyName not set yet (bar « + » draft)
             case GroupPipelineNode g:
                 return CompileGroup(g);
             default:
@@ -59,10 +59,10 @@ public static class FilterPipelineCompiler
         }
     }
 
-    private static IFilterDescriptor CompileCriterion(CriterionPipelineNode c)
+    private static IFilterDescriptor? CompileCriterion(CriterionPipelineNode c)
     {
         if (string.IsNullOrWhiteSpace(c.PropertyName))
-            throw new ArgumentException("Criterion PropertyName is required.", nameof(c));
+            return null;
 
         FilterOperator op = (FilterOperator)Enum.Parse(typeof(FilterOperator), c.Operator, ignoreCase: true);
         return new FilterDescriptor(c.PropertyName, op, c.Value);

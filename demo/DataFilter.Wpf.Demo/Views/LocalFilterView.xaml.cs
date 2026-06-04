@@ -1,4 +1,5 @@
 using System.Windows.Controls;
+using System.Windows.Data;
 using DataFilter.Wpf.Controls;
 using FilterableGrid = DataFilter.Wpf.Controls.FilterableDataGrid;
 
@@ -17,14 +18,15 @@ public partial class LocalFilterView : UserControl
         if (DataContext is not ViewModels.LocalFilterScenarioViewModel vm)
             return;
 
-        var grid = new FilterableGrid
-        {
-            ViewModel = vm.GridViewModel,
-            ItemsSource = vm.GridViewModel.FilteredItems,
-            AutoGenerateColumns = true,
-            FilterContext = vm.GridViewModel.Context
-        };
-        System.Windows.Controls.VirtualizingPanel.SetIsVirtualizing(grid, true);
+        var gridVm = vm.GridViewModel;
+        var grid = new FilterableGrid { AutoGenerateColumns = true };
+        VirtualizingPanel.SetIsVirtualizing(grid, true);
+
+        // One-shot ItemsSource assignment does not refresh when FilteredItems is replaced after filtering.
+        grid.SetBinding(FilterableGrid.ItemsSourceProperty, new Binding(nameof(gridVm.FilteredItems)) { Source = gridVm });
+        grid.SetBinding(FilterableGrid.ViewModelProperty, new Binding { Source = gridVm });
+        grid.SetBinding(FilterableGrid.FilterContextProperty, new Binding(nameof(gridVm.Context)) { Source = gridVm });
+
         GridChrome.SetGridContent(grid);
     }
 }
