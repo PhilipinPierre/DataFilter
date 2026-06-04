@@ -22,4 +22,18 @@ public static class RowInvariants
         var trimmed = value.Trim();
         return prefixes.Any(p => trimmed.StartsWith(p, StringComparison.OrdinalIgnoreCase));
     }
+
+    public static bool SalaryBetween(string value, decimal min, decimal max)
+    {
+        if (!decimal.TryParse(value.Replace(",", "").Trim(), out var n))
+            return false;
+        return n >= min && n <= max;
+    }
+
+    public static bool HireDateBetweenTicks(string dataValueTicks, long minTicks, long maxTicks)
+    {
+        if (!long.TryParse(dataValueTicks.Trim(), out var ticks))
+            return false;
+        return ticks >= minTicks && ticks <= maxTicks;
+    }
 }
