@@ -36,6 +36,7 @@
                            FontWeight="Bold"
                            Margin="0,0,0,6" />
                 <TextBox Text="{Binding PipelineJson, UpdateSourceTrigger=PropertyChanged}"
+                         AutomationProperties.AutomationId="df-pipeline-json"
                          AcceptsReturn="True"
                          TextWrapping="Wrap"
                          VerticalScrollBarVisibility="Auto"
@@ -47,10 +48,12 @@
                             Margin="0,8,0,0"
                             VerticalAlignment="Stretch">
                     <Button Content="Sync from grid"
+                            AutomationProperties.AutomationId="df-pipeline-sync"
                             Command="{Binding SyncPipelineFromGridCommand}"
                             Margin="0,0,8,0"
                             Padding="12,4" />
                     <Button Content="Apply JSON"
+                            AutomationProperties.AutomationId="df-pipeline-apply"
                             Command="{Binding ApplyPipelineJsonCommand}"
                             Padding="12,4" />
                 </StackPanel>
