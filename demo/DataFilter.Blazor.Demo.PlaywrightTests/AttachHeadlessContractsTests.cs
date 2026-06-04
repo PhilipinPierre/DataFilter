@@ -1,4 +1,5 @@
 using Microsoft.Playwright;
+using UIContracts.Common;
 using Xunit;
 
 namespace DataFilter.Blazor.Demo.PlaywrightTests;
@@ -710,6 +711,76 @@ public sealed class AttachHeadlessContractsTests
                 if (names.Count > 1)
                     AssertSorted(names, descending: false);
             }
+        });
+    }
+
+    [Fact]
+    public async Task Filtering_CountryEqualsUSA()
+    {
+        await RunWithTracingAsync(nameof(Filtering_CountryEqualsUSA), new ViewportSize { Width = 1280, Height = 720 }, async (page, errors) =>
+        {
+            await NavigateToAttachAsync(page, errors);
+            await OpenPopupAsync(page, "Country", errors);
+            var popup = page.Locator("#df-filter-popup-Country");
+            await EnsureCustomFilterExpandedAsync(popup);
+            await popup.Locator("select.df-custom-input").SelectOptionAsync(new[] { "Equals" });
+            await popup.Locator("input.df-custom-input").First.FillAsync("USA");
+            await popup.Locator("button.df-btn-primary").ClickAsync();
+            await page.WaitForTimeoutAsync(250);
+
+            var countries = await GetColumnValuesAsync(page, "Country");
+            Assert.NotEmpty(countries);
+            Assert.All(countries, c => Assert.True(RowInvariants.CountryEquals(c, "USA")));
+        });
+    }
+
+    [Fact]
+    public async Task Filtering_MultiColumn_DeptItAndCountryUsa()
+    {
+        await RunWithTracingAsync(nameof(Filtering_MultiColumn_DeptItAndCountryUsa), new ViewportSize { Width = 1280, Height = 720 }, async (page, errors) =>
+        {
+            await NavigateToAttachAsync(page, errors);
+
+            await OpenPopupAsync(page, "Department", errors);
+            var deptPopup = page.Locator("#df-filter-popup-Department");
+            await EnsureCustomFilterExpandedAsync(deptPopup);
+            await deptPopup.Locator("select.df-custom-input").SelectOptionAsync(new[] { "Equals" });
+            await deptPopup.Locator("input.df-custom-input").First.FillAsync("IT");
+            await deptPopup.Locator("button.df-btn-primary").ClickAsync();
+            await page.WaitForTimeoutAsync(250);
+
+            await OpenPopupAsync(page, "Country", errors);
+            var countryPopup = page.Locator("#df-filter-popup-Country");
+            await EnsureCustomFilterExpandedAsync(countryPopup);
+            await countryPopup.Locator("select.df-custom-input").SelectOptionAsync(new[] { "Equals" });
+            await countryPopup.Locator("input.df-custom-input").First.FillAsync("USA");
+            await countryPopup.Locator("button.df-btn-primary").ClickAsync();
+            await page.WaitForTimeoutAsync(250);
+
+            var depts = await GetColumnValuesAsync(page, "Department");
+            var countries = await GetColumnValuesAsync(page, "Country");
+            if (depts.Count == 0)
+            {
+                // Dataset may have no IT+USA rows; still valid if filter applied without crash.
+                return;
+            }
+
+            Assert.All(depts, d => Assert.True(RowInvariants.DepartmentEquals(d, "IT")));
+            Assert.All(countries, c => Assert.True(RowInvariants.CountryEquals(c, "USA")));
+        });
+    }
+
+    [Theory]
+    [MemberData(nameof(ColumnMatrix.DefaultPropertyNameTheoryData), MemberType = typeof(ColumnMatrix))]
+    public async Task PopupOpenClose_AllColumns(string propertyName)
+    {
+        await RunWithTracingAsync($"PopupOpenClose_{propertyName}", new ViewportSize { Width = 1280, Height = 720 }, async (page, errors) =>
+        {
+            await NavigateToAttachAsync(page, errors);
+            await OpenPopupAsync(page, propertyName, errors);
+            var popup = page.Locator($"#df-filter-popup-{propertyName}");
+            await page.Mouse.ClickAsync(2, 2);
+            await popup.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Detached });
         });
     }
 
