@@ -81,6 +81,7 @@ else
     private bool _isLoading;
     private int _currentPage = 1;
     private readonly FilterContext _context = new();
+    private IEnumerable<TItem>? _itemsSourceReference;
 
     private DataFilterGridContext<TItem> GridContext => new(
         getColumnFilterViewModel: id =>
@@ -94,30 +95,43 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
-        await ApplyFiltersAsync();
+        var itemsSourceChanged = !ReferenceEquals(_itemsSourceReference, Items);
+        _itemsSourceReference = Items;
+
+        // Re-applying from column VMs on every parent re-render would wipe JSON/pipeline presets.
+        if (itemsSourceChanged || _filteredItems.Count == 0)
+            await ApplyFiltersAsync();
     }
 
     private async Task ApplyFiltersAsync()
+    {
+        await ApplyFiltersCoreAsync(CollectActiveDescriptorsFromViewModels());
+    }
+
+    private List<IFilterDescriptor> CollectActiveDescriptorsFromViewModels()
+    {
+        var descriptors = new List<IFilterDescriptor>();
+        foreach (var entry in _viewModels)
+        {
+            var vm = entry.Value;
+            var column = Columns.FirstOrDefault(c => c.Id == entry.Key);
+            if (column == null || string.IsNullOrEmpty(column.PropertyName))
+                continue;
+
+            if (vm.IsFilterActive)
+                descriptors.Add(new ExcelFilterDescriptor(column.PropertyName, vm.FilterState));
+        }
+
+        return descriptors;
+    }
+
+    private async Task ApplyFiltersCoreAsync(IReadOnlyList<IFilterDescriptor> descriptors)
     {
         _isLoading = true;
         StateHasChanged();
 
         try
         {
-            var descriptors = new List<IFilterDescriptor>();
-            foreach (var entry in _viewModels)
-            {
-                var vm = entry.Value;
-                var column = Columns.FirstOrDefault(c => c.Id == entry.Key);
-                if (column == null || string.IsNullOrEmpty(column.PropertyName)) continue;
-
-                if (vm.IsFilterActive)
-                {
-                    descriptors.Add(new ExcelFilterDescriptor(column.PropertyName, vm.FilterState));
-                }
-            }
-
-            // Keep a coherent context for JSON snapshots/presets.
             _context.ReplaceDescriptors(descriptors);
             _context.ClearSort();
             foreach (var s in _sortDescriptors)
@@ -143,7 +157,6 @@ else
                     results = Items;
                 }
 
-                // Apply sorting after filtering (if any)
                 if (_sortDescriptors.Count > 0)
                 {
                     var flags = System.Reflection.BindingFlags.IgnoreCase | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance;
@@ -282,7 +295,7 @@ else
             }
         }
 
-        await ApplyFiltersAsync();
+        await ApplyFiltersCoreAsync(converted);
     }
 
     private void SetSortInternal(string propertyName, bool isDescending)
