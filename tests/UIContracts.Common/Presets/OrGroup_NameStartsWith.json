@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "rootCombineOperator": "And",
+  "nodes": [
+    {
+      "kind": "group",
+      "id": "name-or",
+      "isEnabled": true,
+      "displayName": "Name OR",
+      "logicalOperator": "Or",
+      "children": [
+        {
+          "kind": "criterion",
+          "id": "sw-a",
+          "isEnabled": true,
+          "propertyName": "Name",
+          "operator": "StartsWith",
+          "value": "A"
+        },
+        {
+          "kind": "criterion",
+          "id": "sw-h",
+          "isEnabled": true,
+          "propertyName": "Name",
+          "operator": "StartsWith",
+          "value": "H"
+        }
+      ]
+    }
+  ]
+}

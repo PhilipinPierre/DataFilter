@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "rootCombineOperator": "And",
+  "nodes": [
+    {
+      "kind": "criterion",
+      "id": "disabled-dept",
+      "isEnabled": false,
+      "propertyName": "Department",
+      "operator": "Equals",
+      "value": "IT"
+    },
+    {
+      "kind": "criterion",
+      "id": "enabled-active",
+      "isEnabled": true,
+      "propertyName": "IsActive",
+      "operator": "Equals",
+      "value": true
+    }
+  ]
+}

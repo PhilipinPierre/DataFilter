@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "rootCombineOperator": "And",
+  "nodes": [
+    {
+      "kind": "criterion",
+      "id": "demo-active",
+      "isEnabled": true,
+      "propertyName": "IsActive",
+      "operator": "Equals",
+      "value": true
+    }
+  ]
+}

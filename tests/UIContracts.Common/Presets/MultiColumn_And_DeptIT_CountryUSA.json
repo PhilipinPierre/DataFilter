@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "rootCombineOperator": "And",
+  "nodes": [
+    {
+      "kind": "criterion",
+      "id": "dept-it",
+      "isEnabled": true,
+      "propertyName": "Department",
+      "operator": "Equals",
+      "value": "IT"
+    },
+    {
+      "kind": "criterion",
+      "id": "country-usa",
+      "isEnabled": true,
+      "propertyName": "Country",
+      "operator": "Equals",
+      "value": "USA"
+    }
+  ]
+}
