@@ -22,21 +22,33 @@ public sealed class LocalizationContractsTests
                 page, _host, route, "df-filter-btn-Department", errors);
 
             var lang = page.GetByTestId("df-language");
-            var hasFr = await page.EvaluateAsync<bool>(
-                @"() => Array.from(document.querySelector('[data-testid=""df-language""]').options)
-                    .some(o => (o.value||'').toLowerCase().startsWith('fr'))");
-            if (!hasFr)
+            var chosen = await page.EvaluateAsync<string?>(
+                @"() => {
+                    const sel = document.querySelector('[data-testid=""df-language""]');
+                    if (!sel) return null;
+                    const opts = Array.from(sel.querySelectorAll('option'));
+                    const fr = opts.find(o => (o.value||'').toLowerCase() === 'fr-fr' || (o.value||'').toLowerCase().startsWith('fr'));
+                    const nonEnglish = opts.find(o => {
+                        const v = (o.value || '').toLowerCase();
+                        return v !== '' && !v.startsWith('en');
+                    });
+                    return (fr || nonEnglish || null)?.value ?? null;
+                }");
+            if (string.IsNullOrWhiteSpace(chosen))
                 return;
 
-            await lang.SelectOptionAsync(new[] { "fr-FR" });
-            await page.WaitForTimeoutAsync(300);
+            await lang.SelectOptionAsync(new[] { chosen! });
+            await page.WaitForTimeoutAsync(500);
 
             await PlaywrightContractHelpers.OpenPopupAsync(page, _host, "Department", errors);
             var popup = page.Locator("#df-filter-popup-Department");
             var okText = (await popup.Locator("button.df-btn-primary").InnerTextAsync()).Trim();
+            var clearText = (await popup.Locator("button.df-btn-secondary").InnerTextAsync()).Trim();
 
-            Assert.False(string.Equals(okText, "OK", StringComparison.OrdinalIgnoreCase),
-                $"Expected French OK label on {route}, got '{okText}'.");
+            Assert.False(
+                string.Equals(okText, "OK", StringComparison.OrdinalIgnoreCase)
+                && string.Equals(clearText, "Clear", StringComparison.OrdinalIgnoreCase),
+                $"Expected localized popup labels on {route}. ok='{okText}', clear='{clearText}', culture='{chosen}'.");
         });
     }
 

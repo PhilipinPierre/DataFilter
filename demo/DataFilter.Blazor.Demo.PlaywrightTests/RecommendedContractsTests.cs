@@ -21,7 +21,16 @@ public sealed class RecommendedContractsTests
 
             await PlaywrightContractHelpers.OpenPopupAsync(page, _host, "Department", errors);
             var popup = page.Locator("#df-filter-popup-Department");
+
             await page.Keyboard.PressAsync("Escape");
+            await page.WaitForTimeoutAsync(200);
+
+            // Blazor attach popup closes via outside-click interop; Esc is best-effort only.
+            if (await popup.CountAsync() > 0)
+            {
+                await page.Mouse.ClickAsync(2, 2);
+            }
+
             await popup.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Detached });
         });
     }

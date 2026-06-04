@@ -24,6 +24,7 @@ public sealed class ScenarioFilterContractsTests
             Assert.True(before.Count > 1);
 
             await PlaywrightContractHelpers.ApplyDepartmentEqualsItAsync(page, _host, errors);
+            await PlaywrightContractHelpers.WaitForGridDataRowsAsync(page);
 
             var depts = await PlaywrightContractHelpers.GetColumnValuesAsync(page, "Department");
             Assert.NotEmpty(depts);

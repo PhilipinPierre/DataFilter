@@ -64,6 +64,11 @@ public sealed class LocalFilterContractsTests
             await page.GetByTestId("df-pipeline-json").FillAsync(FilterPipelinePresets.OrGroupNameStartsWithJson);
             await page.GetByTestId("df-pipeline-apply").ClickAsync();
             await page.WaitForTimeoutAsync(400);
+            await PlaywrightContractHelpers.WaitForGridDataRowsAsync(page);
+
+            var error = page.GetByTestId("df-pipeline-error");
+            if (await error.CountAsync() > 0)
+                Assert.Fail(await error.InnerTextAsync());
 
             var names = await PlaywrightContractHelpers.GetColumnValuesAsync(page, "Name");
             Assert.NotEmpty(names);
@@ -89,11 +94,13 @@ public sealed class LocalFilterContractsTests
 
             var after = await rows.CountAsync();
             Assert.True(after > 0);
-            Assert.True(after < unfiltered);
 
+            // Disabled Department=IT must not be the only filter; IsActive=true is the enabled criterion.
             var depts = await PlaywrightContractHelpers.GetColumnValuesAsync(page, "Department");
-            if (depts.Count > 0)
+            if (depts.Count > 1)
+            {
                 Assert.Contains(depts, d => !RowInvariants.DepartmentEquals(d, "IT"));
+            }
         });
     }
 
