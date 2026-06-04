@@ -25,6 +25,7 @@
                             <Label Text="{Binding Id}" WidthRequest="60" VerticalOptions="Center" />
                             <Label Text="{Binding Name}" WidthRequest="130" VerticalOptions="Center" FontAttributes="Bold" />
                             <Label Text="{Binding Department}" AutomationId="df-row-dept" WidthRequest="120" VerticalOptions="Center" />
+                            <Label Text="{Binding Country}" AutomationId="df-row-country" WidthRequest="120" VerticalOptions="Center" />
                         </HorizontalStackLayout>
                     </ViewCell>
                 </DataTemplate>

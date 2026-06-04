@@ -18,7 +18,8 @@ public partial class AttachFilterPage : ContentPage
             viewModel: viewModel.GridViewModel,
             new ListViewFilterHeaderAdapter.Column("Id", "Id", new GridLength(80)),
             new ListViewFilterHeaderAdapter.Column("Name", "Name", new GridLength(150)),
-            new ListViewFilterHeaderAdapter.Column("Dept", "Department", new GridLength(150)));
+            new ListViewFilterHeaderAdapter.Column("Dept", "Department", new GridLength(120)),
+            new ListViewFilterHeaderAdapter.Column("Country", "Country", new GridLength(120)));
     }
 }
 
