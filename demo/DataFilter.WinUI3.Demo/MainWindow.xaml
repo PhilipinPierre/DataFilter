@@ -27,7 +27,10 @@
             <Button Content="Regenerate Data" Command="{x:Bind ViewModel.RegenerateCommand}" VerticalAlignment="Center"/>
             <Button Content="Clear filters" Command="{x:Bind ViewModel.ClearFiltersCommand}" VerticalAlignment="Center"/>
             <TextBlock Text="Direction:" VerticalAlignment="Center" Margin="10,0,0,0"/>
-            <ComboBox x:Name="DirectionCombo" Width="110" VerticalAlignment="Center"/>
+            <ComboBox x:Name="DirectionCombo"
+                      automation:AutomationProperties.AutomationId="df-direction"
+                      Width="110"
+                      VerticalAlignment="Center"/>
             <TextBlock Text="Language:" VerticalAlignment="Center" Margin="10,0,0,0"/>
             <ComboBox x:Name="LanguageCombo"
                       automation:AutomationProperties.AutomationId="df-language"
