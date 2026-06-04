@@ -45,6 +45,7 @@
     <Project Path="tests/DataFilter.Filtering.ExcelLike.Tests/DataFilter.Filtering.ExcelLike.Tests.csproj" />
     <Project Path="tests/DataFilter.Maui.Tests/DataFilter.Maui.Tests.csproj" />
     <Project Path="tests/UIContracts.Appium.Tests/UIContracts.Appium.Tests.csproj" />
+    <Project Path="tests/UIContracts.Common/UIContracts.Common.csproj" />
     <Project Path="tests/UIContracts.FlaUI.Tests/UIContracts.FlaUI.Tests.csproj" />
     <Project Path="tests/DataFilter.WinForms.Tests/DataFilter.WinForms.Tests.csproj" />
     <Project Path="tests/DataFilter.WinUI3.Tests/DataFilter.WinUI3.Tests.csproj" />
