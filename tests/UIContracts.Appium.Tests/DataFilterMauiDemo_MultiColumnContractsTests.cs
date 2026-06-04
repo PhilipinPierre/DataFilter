@@ -74,12 +74,12 @@ public sealed class DataFilterMauiDemo_MultiColumnContractsTests
             Assert.Equal("IT", (el.Text ?? "").Trim());
         }
 
-        // Second column filter: Country (header button may not expose AutomationId on MAUI attach page).
-        FindByText(driver, "Country")?.Click();
-        var countryPopup = driver.FindElements(MobileBy.AccessibilityId("df-filter-popup-Country"));
-        if (countryPopup.Count == 0)
+        var countryBtn = driver.FindElements(MobileBy.AccessibilityId("df-filter-btn-Country"));
+        if (countryBtn.Count == 0)
             return;
 
+        countryBtn[0].Click();
+        driver.FindElement(MobileBy.AccessibilityId("df-filter-popup-Country"));
         FindByText(driver, "USA")?.Click();
         FindByText(driver, "OK")?.Click();
 
@@ -87,6 +87,13 @@ public sealed class DataFilterMauiDemo_MultiColumnContractsTests
         {
             if (!el.Displayed) continue;
             Assert.Equal("IT", (el.Text ?? "").Trim());
+        }
+
+        var countries = driver.FindElements(MobileBy.AccessibilityId("df-row-country"));
+        foreach (var el in countries)
+        {
+            if (!el.Displayed) continue;
+            Assert.Equal("USA", (el.Text ?? "").Trim());
         }
     }
 
