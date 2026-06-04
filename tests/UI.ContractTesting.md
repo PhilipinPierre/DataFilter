@@ -46,7 +46,7 @@ dotnet test demo/DataFilter.Blazor.Demo.PlaywrightTests/DataFilter.Blazor.Demo.P
 
 ## Desktop (FlaUI)
 - **Projet**: `tests/UIContracts.FlaUI.Tests` (WPF, WinUI 3, WinForms)
-- **CI**: job `desktop-ui-contracts` sur runner **self-hosted** avec labels `self-hosted`, `Windows`, `X64`
+- **CI**: job `desktop-ui-contracts` **uniquement sur déclenchement manuel** (`workflow_dispatch` + case « Run FlaUI desktop UI contracts »). Nécessite un runner **self-hosted** (`self-hosted`, `Windows`, `X64`). Les PR/push ne lancent pas ce job (pas de runner personnel requis pour merger).
 - **Prérequis local**:
 
 ```powershell

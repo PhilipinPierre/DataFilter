@@ -6,6 +6,12 @@ on:
     tags: [ "v*" ]
   pull_request:
     branches: [ "main", "master", "develop" ]
+  workflow_dispatch:
+    inputs:
+      run_desktop_ui_contracts:
+        description: Run FlaUI desktop UI contracts (requires self-hosted Windows runner with labels self-hosted, Windows, X64)
+        type: boolean
+        default: false
 
 jobs:
   build:
@@ -103,9 +109,11 @@ jobs:
         DF_DEMO_HOST: ${{ matrix.demo_host }}
       run: dotnet test "demo/DataFilter.Blazor.Demo.PlaywrightTests/DataFilter.Blazor.Demo.PlaywrightTests.csproj" --configuration Release --no-build --verbosity normal
 
-  # Requires a self-hosted Windows runner with an interactive session (UIA/SendInput).
-  # Label the runner: self-hosted, Windows, X64. See tests/UI.ContractTesting.md.
+  # FlaUI needs an interactive Windows session (UIA/SendInput). Not runnable on windows-latest.
+  # Opt-in only: register a self-hosted runner (labels: self-hosted, Windows, X64), then run this workflow
+  # manually with "Run FlaUI desktop UI contracts" enabled. See tests/UI.ContractTesting.md.
   desktop-ui-contracts:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_desktop_ui_contracts == true
     runs-on: [self-hosted, Windows, X64]
     needs: build
     steps:

@@ -123,7 +123,7 @@ Projects:
 - **Desktop (UIA via FlaUI)**: `tests/UIContracts.FlaUI.Tests` (WPF / WinForms; WinUI3 requires Windows App Runtime)
 - **MAUI (Appium)**: `tests/UIContracts.Appium.Tests` (environment-driven; requires Appium + device/emulator)
 
-CI jobs (`.github/workflows/dotnet.yml`): `ui-blazor-playwright` (matrix server/wasm), `desktop-ui-contracts` (self-hosted FlaUI), `ui-maui-appium` (Android/iOS matrix on `macos-latest`, `continue-on-error` until Appium infra is wired).
+CI jobs (`.github/workflows/dotnet.yml`): `ui-blazor-playwright` (matrix server/wasm), `desktop-ui-contracts` (opt-in `workflow_dispatch` + self-hosted FlaUI; skipped on PR/push), `ui-maui-appium` (Android/iOS matrix on `macos-latest`, `continue-on-error` until Appium infra is wired).
 
 Important for automation stability:
 - Prefer deterministic selectors/IDs (`data-testid`, deterministic element IDs, `AutomationId`) over brittle UI tree traversal.
@@ -181,7 +181,7 @@ After the first `act` run installs the SDK via `setup-dotnet`, you may need once
 | **Test** (`DF_DEMO_HOST=server`) | Yes | Excludes `UIContracts.*` via `--filter "FullyQualifiedName!~UIContracts."` (FlaUI needs an interactive session; flaky under `act`/session-0). |
 | **Playwright E2E** (`DF_DEMO_HOST=wasm`) | Yes | Separate project run; navigation retries transient WASM fetch errors in `AttachHeadlessContractsTests`. |
 | **Pack / NuGet push** | Only on `v*` tags | Skipped on `pull_request`. |
-| **`desktop-ui-contracts`** | No | `if: workflow_dispatch` only; run FlaUI on a **self-hosted** Windows runner: `act workflow_dispatch -j desktop-ui-contracts`. |
+| **`desktop-ui-contracts`** | No (skipped on PR/push) | Manual **workflow_dispatch** with input `run_desktop_ui_contracts=true` and a **self-hosted** Windows runner; local: `act workflow_dispatch -j desktop-ui-contracts`. |
 
 **Pitfalls**
 
