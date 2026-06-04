@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using global::FlaUI.Core.AutomationElements;
 using global::FlaUI.Core.Definitions;
+using global::FlaUI.UIA3;
 
 namespace UIContracts.FlaUI.Tests;
 
@@ -59,11 +60,58 @@ internal static class FlaUIWinUI3DemoHost
         }
     }
 
-    public static void NavigateToAttach(Window window)
+    public static void NavigateToAttach(Window window) =>
+        NavigateToNavItem(window, UIContracts.Common.DemoViewCatalog.WinUi3.AttachNav);
+
+    public static void NavigateToAsync(Window window) =>
+        NavigateToNavItem(window, UIContracts.Common.DemoViewCatalog.WinUi3.AsyncNav);
+
+    public static void NavigateToHybrid(Window window) =>
+        NavigateToNavItem(window, UIContracts.Common.DemoViewCatalog.WinUi3.HybridNav);
+
+    public static void NavigateToListView(Window window) =>
+        NavigateToNavItem(window, UIContracts.Common.DemoViewCatalog.WinUi3.ListViewNav);
+
+    public static void NavigateToCollectionView(Window window) =>
+        NavigateToNavItem(window, UIContracts.Common.DemoViewCatalog.WinUi3.CollectionViewNav);
+
+    public static void ApplyEqualsFilter(Window window, UIA3Automation automation, string property, string value)
     {
-        var attachNavItem = window.FindFirstDescendant(cf =>
-            cf.ByControlType(ControlType.ListItem).And(cf.ByName(UIContracts.Common.DemoViewCatalog.WinUi3.AttachNav)));
-        attachNavItem?.AsListBoxItem().Select();
+        var btn = window.FindFirstDescendant(cf =>
+            cf.ByControlType(ControlType.Button).And(cf.ByAutomationId($"df-filter-btn-{property}")));
+        btn?.AsButton().Invoke();
+
+        var popup = automation.GetDesktop().FindFirstDescendant(cf => cf.ByAutomationId($"df-filter-popup-{property}"));
+        if (popup == null)
+            return;
+
+        var opCombo = popup.FindFirstDescendant(cf => cf.ByControlType(ControlType.ComboBox))?.AsComboBox();
+        opCombo?.Expand();
+        opCombo?.Items.FirstOrDefault(i => (i.Properties.Name.ValueOrDefault ?? "").Contains("Equals", StringComparison.OrdinalIgnoreCase))?.Select();
+
+        var edits = popup.FindAllDescendants(cf => cf.ByControlType(ControlType.Edit)).Select(e => e.AsTextBox()).ToList();
+        if (edits.Count > 0)
+            edits[0].Text = value;
+
+        var ok = popup.FindAllDescendants(cf => cf.ByControlType(ControlType.Button).Or(cf.ByAutomationId("df-ok")))
+            .Select(b => b.AsButton())
+            .FirstOrDefault(b => string.Equals(b.Properties.Name.ValueOrDefault, "OK", StringComparison.OrdinalIgnoreCase));
+        ok?.Invoke();
+    }
+
+    public static List<string> GetVisibleRowTexts(Window window, string automationId) =>
+        window.FindAllDescendants(cf => cf.ByAutomationId(automationId))
+            .Where(x => x.Properties.IsOffscreen.ValueOrDefault == false)
+            .Select(x => (x.AsLabel().Text ?? x.Properties.Name.ValueOrDefault ?? "").Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .ToList();
+
+    private static void NavigateToNavItem(Window window, string navText)
+    {
+        var item = window.FindFirstDescendant(cf =>
+            cf.ByControlType(ControlType.ListItem).And(cf.ByName(navText)));
+        item?.AsListBoxItem().Select();
+        Thread.Sleep(500);
     }
 
     public static void TryCloseApp(global::FlaUI.Core.Application app)

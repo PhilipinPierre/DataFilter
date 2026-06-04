@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using global::FlaUI.Core.AutomationElements;
 using global::FlaUI.Core.Definitions;
+using global::FlaUI.UIA3;
 
 namespace UIContracts.FlaUI.Tests;
 
@@ -20,6 +21,58 @@ internal static class FlaUIWpfDemoHost
 
     public static void NavigateToLocalTab(Window window) =>
         SelectTab(window, UIContracts.Common.DemoViewCatalog.Wpf.LocalTab);
+
+    public static void NavigateToAsyncTab(Window window) =>
+        SelectTab(window, UIContracts.Common.DemoViewCatalog.Wpf.AsyncTab);
+
+    public static void NavigateToHybridTab(Window window) =>
+        SelectTab(window, UIContracts.Common.DemoViewCatalog.Wpf.HybridTab);
+
+    public static void NavigateToListViewTab(Window window) =>
+        SelectTab(window, UIContracts.Common.DemoViewCatalog.Wpf.ListViewTab);
+
+    public static void NavigateToCollectionViewTab(Window window) =>
+        SelectTab(window, UIContracts.Common.DemoViewCatalog.Wpf.CollectionViewTab);
+
+    public static void ApplyListFilter(Window window, UIA3Automation automation, string propertyName, string value)
+    {
+        var beforeHandles = automation.GetDesktop()
+            .FindAllChildren(cf => cf.ByControlType(ControlType.Window))
+            .Select(x => x.Properties.NativeWindowHandle.ValueOrDefault)
+            .ToHashSet();
+
+        ClickByAutomationId(window, $"df-filter-btn-{propertyName}", TimeSpan.FromSeconds(15));
+
+        var popup = WaitForPopupRoot(automation, $"df-filter-popup-{propertyName}", TimeSpan.FromSeconds(10));
+
+        var selectAll = popup.FindFirstDescendant(cf => cf.ByAutomationId("df-select-all"))?.AsCheckBox();
+        if (selectAll != null && selectAll.IsChecked != false)
+            selectAll.Click();
+
+        var valueCheckbox = popup.FindFirstDescendant(cf => cf.ByControlType(ControlType.CheckBox).And(cf.ByName(value)))?.AsCheckBox();
+        if (valueCheckbox != null && valueCheckbox.IsChecked != true)
+            valueCheckbox.Click();
+
+        var ok = popup.FindFirstDescendant(cf => cf.ByAutomationId("df-ok"))?.AsButton();
+        ok?.Invoke();
+
+        _ = beforeHandles;
+    }
+
+    private static AutomationElement WaitForPopupRoot(UIA3Automation automation, string automationId, TimeSpan timeout)
+    {
+        AutomationElement? popup = null;
+        var deadline = DateTime.UtcNow + timeout;
+        while (DateTime.UtcNow < deadline)
+        {
+            popup = automation.GetDesktop().FindFirstDescendant(cf => cf.ByAutomationId(automationId));
+            if (popup != null)
+                return popup;
+            Thread.Sleep(100);
+        }
+
+        throw new TimeoutException($"Popup '{automationId}' not found.");
+    }
 
     private static void SelectTab(Window window, string tabHeader)
     {
