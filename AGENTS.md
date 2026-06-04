@@ -118,9 +118,12 @@ These tests focus on **user-visible behavior contracts** rather than pixel-perfe
 - filtering affects visible rows / items
 
 Projects:
-- **Blazor (Playwright E2E)**: `demo/DataFilter.Blazor.Demo.PlaywrightTests`
+- **Shared contract data**: `tests/UIContracts.Common` (column matrix, `FilterPipelinePresets`, `DemoViewCatalog`, row invariants)
+- **Blazor (Playwright E2E)**: `demo/DataFilter.Blazor.Demo.PlaywrightTests` (`/demo/attach`, `/demo/local` JSON pipeline, multi-column)
 - **Desktop (UIA via FlaUI)**: `tests/UIContracts.FlaUI.Tests` (WPF / WinForms; WinUI3 requires Windows App Runtime)
 - **MAUI (Appium)**: `tests/UIContracts.Appium.Tests` (environment-driven; requires Appium + device/emulator)
+
+CI jobs (`.github/workflows/dotnet.yml`): `ui-blazor-playwright` (matrix server/wasm), `desktop-ui-contracts` (self-hosted FlaUI), `ui-maui-appium` (Android/iOS matrix on `macos-latest`, `continue-on-error` until Appium infra is wired).
 
 Important for automation stability:
 - Prefer deterministic selectors/IDs (`data-testid`, deterministic element IDs, `AutomationId`) over brittle UI tree traversal.
