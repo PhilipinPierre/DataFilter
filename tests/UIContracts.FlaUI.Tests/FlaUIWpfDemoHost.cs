@@ -15,21 +15,31 @@ internal static class FlaUIWpfDemoHost
         return exe;
     }
 
-    public static void NavigateToAttachTab(Window window)
+    public static void NavigateToAttachTab(Window window) =>
+        SelectTab(window, UIContracts.Common.DemoViewCatalog.Wpf.AttachTab);
+
+    public static void NavigateToLocalTab(Window window) =>
+        SelectTab(window, UIContracts.Common.DemoViewCatalog.Wpf.LocalTab);
+
+    private static void SelectTab(Window window, string tabHeader)
     {
         var tabs = window.FindFirstDescendant(cf => cf.ByControlType(ControlType.Tab));
         var tabItems = tabs?.FindAllChildren(cf => cf.ByControlType(ControlType.TabItem));
         if (tabItems == null || tabItems.Length == 0)
-            return;
+            throw new InvalidOperationException("Tab control not found.");
 
         foreach (var tab in tabItems)
         {
-            if (tab.Name?.Contains("Attach", StringComparison.OrdinalIgnoreCase) == true)
+            var name = tab.Properties.Name.ValueOrDefault ?? string.Empty;
+            if (string.Equals(name, tabHeader, StringComparison.OrdinalIgnoreCase) ||
+                name.Contains(tabHeader, StringComparison.OrdinalIgnoreCase))
             {
                 tab.Click();
                 return;
             }
         }
+
+        throw new InvalidOperationException($"Tab '{tabHeader}' not found.");
     }
 
     public static void ClickByAutomationId(Window window, string automationId, TimeSpan timeout)
