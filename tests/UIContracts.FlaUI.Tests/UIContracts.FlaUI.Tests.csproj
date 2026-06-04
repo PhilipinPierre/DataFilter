@@ -25,4 +25,14 @@
     <ProjectReference Include="..\UIContracts.Common\UIContracts.Common.csproj" />
   </ItemGroup>
 
+  <!-- WinUI3 demo requires an explicit RID; build it separately before running WinUI3 contract tests. -->
+  <ItemGroup>
+    <ContractDemo Include="..\..\demo\DataFilter.Wpf.Demo\DataFilter.Wpf.Demo.csproj" />
+    <ContractDemo Include="..\..\demo\DataFilter.WinForms.Demo\DataFilter.WinForms.Demo.csproj" />
+  </ItemGroup>
+
+  <Target Name="BuildContractDemos" BeforeTargets="Build">
+    <MSBuild Projects="@(ContractDemo)" Targets="Build" Properties="Configuration=$(Configuration)" />
+  </Target>
+
 </Project>

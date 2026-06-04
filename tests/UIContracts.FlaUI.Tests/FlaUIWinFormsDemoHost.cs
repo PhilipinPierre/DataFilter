@@ -22,6 +22,7 @@ internal static class FlaUIWinFormsDemoHost
 
     public static void OpenDepartmentFilterPopup(Window window, UIA3Automation automation)
     {
+        FlaUIInputHelpers.Activate(window);
         var grid = window.FindFirstDescendant(cf =>
             cf.ByControlType(ControlType.Table).Or(cf.ByControlType(ControlType.DataGrid)));
         if (grid == null)
@@ -45,11 +46,11 @@ internal static class FlaUIWinFormsDemoHost
         var selectAll = popup.FindFirstDescendant(cf => cf.ByName("df-select-all"))
             ?? popup.FindFirstDescendant(cf => cf.ByControlType(ControlType.CheckBox).And(cf.ByName("Select All")));
         if (selectAll?.AsCheckBox() is { } sa && sa.IsChecked != false)
-            sa.Click();
+            FlaUIInputHelpers.SetCheckBoxState(sa, desiredChecked: false);
 
         var it = popup.FindFirstDescendant(cf => cf.ByControlType(ControlType.CheckBox).And(cf.ByName("IT")))?.AsCheckBox();
         if (it != null && it.IsChecked != true)
-            it.Click();
+            FlaUIInputHelpers.SetCheckBoxState(it, desiredChecked: true);
 
         var ok = popup.FindFirstDescendant(cf => cf.ByName("df-ok"))?.AsButton()
             ?? popup.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
@@ -108,10 +109,11 @@ internal static class FlaUIWinFormsDemoHost
 
     private static void SelectTab(Window window, string tabHeader)
     {
-        var tab = window.FindFirstDescendant(cf => cf.ByControlType(ControlType.Tab))?.AsTab();
-        var item = tab?.TabItems.FirstOrDefault(t =>
-            string.Equals(t.Name, tabHeader, StringComparison.OrdinalIgnoreCase));
-        item?.Select();
+        FlaUIInputHelpers.Activate(window);
+        var tab = window.FindFirstDescendant(cf => cf.ByControlType(ControlType.Tab))?.AsTab()
+            ?? throw new InvalidOperationException("Tab control not found.");
+        FlaUIInputHelpers.SelectTabItem(tab, tabHeader);
+        Thread.Sleep(200);
     }
 
     private static string FindRepoRoot()

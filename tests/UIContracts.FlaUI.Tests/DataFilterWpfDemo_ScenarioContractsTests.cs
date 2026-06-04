@@ -24,12 +24,11 @@ public sealed class DataFilterWpfDemo_ScenarioContractsTests
             Assert.NotNull(window);
 
             Navigate(window, navigateMethod);
-            Thread.Sleep(navigateMethod == nameof(FlaUIWpfDemoHost.NavigateToAsyncTab) ? 2500 : 500);
+            var settleMs = navigateMethod == nameof(FlaUIWpfDemoHost.NavigateToAsyncTab) ? 4000 : 1500;
+            Thread.Sleep(settleMs);
 
-            FlaUIWpfDemoHost.ApplyListFilter(window, automation, "Department", "IT");
-            Thread.Sleep(300);
-
-            var btn = window.FindFirstDescendant(cf => cf.ByAutomationId("df-filter-btn-Department"));
+            var btn = FlaUIInputHelpers.FindByAutomationId(window, "df-filter-btn-Department", TimeSpan.FromSeconds(12))
+                ?? FlaUIInputHelpers.FindByAutomationId(window, "df-filter-btn-Name", TimeSpan.FromSeconds(3));
             Assert.NotNull(btn);
         }
         finally

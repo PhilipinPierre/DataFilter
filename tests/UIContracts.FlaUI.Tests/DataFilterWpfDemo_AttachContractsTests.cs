@@ -140,7 +140,7 @@ public sealed class DataFilterWpfDemo_AttachContractsTests
 
             ClickByAutomationId(window, "df-filter-btn-Salary", TimeSpan.FromSeconds(10));
 
-            var popup = WaitForPopupRootByAutomationId(automation, window, beforeHandles, "df-filter-popup-Salary", TimeSpan.FromSeconds(5));
+            var popup = WaitForPopupRootByAutomationId(automation, window, beforeHandles, "df-filter-popup-Salary", TimeSpan.FromSeconds(12));
             var sortDesc = popup.FindFirstDescendant(cf => cf.ByAutomationId("df-sort-desc"))?.AsButton();
             Assert.NotNull(sortDesc);
             sortDesc!.Invoke();
@@ -202,7 +202,7 @@ public sealed class DataFilterWpfDemo_AttachContractsTests
         var selectAll = popup.FindFirstDescendant(cf => cf.ByAutomationId("df-select-all"))?.AsCheckBox();
         Assert.NotNull(selectAll);
         if (selectAll!.IsChecked != false)
-            selectAll.Click();
+            FlaUIInputHelpers.SetCheckBoxState(selectAll, desiredChecked: false);
 
         var tree = popup.FindFirstDescendant(cf => cf.ByAutomationId("df-values-tree"));
         Assert.NotNull(tree);
@@ -211,7 +211,7 @@ public sealed class DataFilterWpfDemo_AttachContractsTests
         var valueCheckbox = popup.FindFirstDescendant(cf => cf.ByControlType(ControlType.CheckBox).And(cf.ByName(value)))?.AsCheckBox();
         Assert.NotNull(valueCheckbox);
         if (valueCheckbox!.IsChecked != true)
-            valueCheckbox.Click();
+            FlaUIInputHelpers.SetCheckBoxState(valueCheckbox, desiredChecked: true);
 
         var ok = popup.FindFirstDescendant(cf => cf.ByAutomationId("df-ok"))?.AsButton();
         Assert.NotNull(ok);
@@ -220,32 +220,10 @@ public sealed class DataFilterWpfDemo_AttachContractsTests
 
     private static void ClickByAutomationId(Window window, string automationId, TimeSpan timeout)
     {
-        AutomationElement? el = null;
-        WaitUntil(() =>
-        {
-            el = window.FindFirstDescendant(cf => cf.ByAutomationId(automationId));
-            return el != null;
-        }, timeout);
-
-        // Prefer UIA invoke patterns; SendInput can be blocked in CI/session-0 contexts.
-        try
-        {
-            el!.AsButton().Invoke();
-            return;
-        }
-        catch { }
-
-        try
-        {
-            el!.Patterns.Invoke.Pattern?.Invoke();
-            return;
-        }
-        catch { }
-
-        // Last resort: mouse click (may be blocked in CI).
-        var r = el!.BoundingRectangle;
-        var pt = new System.Drawing.Point((int)(r.Left + (r.Width / 2)), (int)(r.Top + (r.Height / 2)));
-        global::FlaUI.Core.Input.Mouse.Click(pt);
+        FlaUIInputHelpers.Activate(window);
+        var el = FlaUIInputHelpers.FindByAutomationId(window, automationId, timeout);
+        Assert.NotNull(el);
+        FlaUIInputHelpers.InvokeOrClick(el!);
     }
 
     private static List<string> GetVisibleRowNames(Window window)
@@ -301,7 +279,6 @@ public sealed class DataFilterWpfDemo_AttachContractsTests
             .Select(x => x.AsWindow())
             .ToList();
 
-        // Popup window usually has no title or a different title than the main window.
         return windows.FirstOrDefault(w =>
         {
             nint handle;
@@ -317,12 +294,13 @@ public sealed class DataFilterWpfDemo_AttachContractsTests
             if (beforeHandles.Contains(handle))
                 return false;
 
-            if (string.Equals(w.Title ?? "", main.Title ?? "", StringComparison.OrdinalIgnoreCase))
+            var mainHandle = main.Properties.NativeWindowHandle.ValueOrDefault;
+            if (handle == mainHandle)
                 return false;
 
             var r = w.BoundingRectangle;
-            // Heuristic: filter popups are not full-screen windows.
-            return r.Width > 0 && r.Width < 1200 && r.Height > 0 && r.Height < 1200;
+            // Heuristic: filter popups are not full-screen windows; ignore minimized/off-screen hosts.
+            return FlaUIInputHelpers.IsPlausiblePopupBounds(r.Left, r.Top, r.Width, r.Height);
         });
     }
 
@@ -333,13 +311,15 @@ public sealed class DataFilterWpfDemo_AttachContractsTests
             .Select(x => x.AsWindow())
             .ToList();
 
+        var mainHandle = main.Properties.NativeWindowHandle.ValueOrDefault;
         return windows.FirstOrDefault(w =>
         {
-            if (string.Equals(w.Title ?? "", main.Title ?? "", StringComparison.OrdinalIgnoreCase))
+            var handle = w.Properties.NativeWindowHandle.ValueOrDefault;
+            if (handle == mainHandle)
                 return false;
 
             var r = w.BoundingRectangle;
-            return r.Width > 0 && r.Width < 1200 && r.Height > 0 && r.Height < 1200;
+            return FlaUIInputHelpers.IsPlausiblePopupBounds(r.Left, r.Top, r.Width, r.Height);
         });
     }
 

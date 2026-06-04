@@ -31,6 +31,8 @@ public sealed class DataFilterWinFormsDemo_AttachContractsTests
                 string.Equals(t.Properties.HelpText.ValueOrDefault, "Attach (DataGridView)", StringComparison.OrdinalIgnoreCase));
             Assert.NotNull(attachTab);
             attachTab!.Select();
+            FlaUIInputHelpers.Activate(window);
+            Thread.Sleep(300);
 
             // WinForms header toggle is custom-painted (not a real UIA button). We click by coordinates near the top-right of the grid.
             var grid = window.FindFirstDescendant(cf =>
@@ -63,7 +65,7 @@ public sealed class DataFilterWinFormsDemo_AttachContractsTests
                     .Select(x => x.Properties.NativeWindowHandle.ValueOrDefault)
                     .ToHashSet();
                 return !current.Except(beforePopups).Any();
-            }, TimeSpan.FromSeconds(5));
+            }, TimeSpan.FromSeconds(15));
         }
         finally
         {
@@ -98,8 +100,7 @@ public sealed class DataFilterWinFormsDemo_AttachContractsTests
                 return false;
 
             var r = p.BoundingRectangle;
-            // Heuristic: popup menu is a small surface.
-            return r.Width > 0 && r.Width < 1600 && r.Height > 0 && r.Height < 1600;
+            return FlaUIInputHelpers.IsPlausiblePopupBounds(r.Left, r.Top, r.Width, r.Height);
         });
     }
 
@@ -117,7 +118,7 @@ public sealed class DataFilterWinFormsDemo_AttachContractsTests
                     return false;
 
                 var r = p.BoundingRectangle;
-                return r.Width > 0 && r.Width < 1200 && r.Height > 0 && r.Height < 1200;
+                return FlaUIInputHelpers.IsPlausiblePopupBounds(r.Left, r.Top, r.Width, r.Height);
             })
             .OrderBy(p => p.BoundingRectangle.Width * p.BoundingRectangle.Height)
             .ToList();

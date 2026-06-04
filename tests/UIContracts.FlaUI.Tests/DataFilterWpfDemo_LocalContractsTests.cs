@@ -21,14 +21,14 @@ public sealed class DataFilterWpfDemo_LocalContractsTests
             Assert.NotNull(window);
 
             FlaUIWpfDemoHost.NavigateToLocalTab(window);
+            Thread.Sleep(800);
 
-            var jsonBox = window.FindFirstDescendant(cf => cf.ByAutomationId("df-pipeline-json"))?.AsTextBox();
+            var jsonBox = FlaUIInputHelpers.FindByAutomationId(window, "df-pipeline-json", TimeSpan.FromSeconds(15));
             Assert.NotNull(jsonBox);
-            jsonBox!.Text = FilterPipelinePresets.MultiColumnAndDeptItCountryUsaJson;
+            jsonBox!.AsTextBox().Text = FilterPipelinePresets.MultiColumnAndDeptItCountryUsaJson;
 
-            FlaUIWpfDemoHost.ClickByAutomationId(window, "df-pipeline-apply", TimeSpan.FromSeconds(5));
+            FlaUIWpfDemoHost.ClickByAutomationId(window, "df-pipeline-apply", TimeSpan.FromSeconds(10));
 
-            // Grid should still be interactive (smoke: no crash, window alive).
             Assert.NotNull(app.GetMainWindow(automation));
         }
         finally

@@ -47,11 +47,11 @@ internal static class FlaUIWpfDemoHost
 
         var selectAll = popup.FindFirstDescendant(cf => cf.ByAutomationId("df-select-all"))?.AsCheckBox();
         if (selectAll != null && selectAll.IsChecked != false)
-            selectAll.Click();
+            FlaUIInputHelpers.SetCheckBoxState(selectAll, desiredChecked: false);
 
         var valueCheckbox = popup.FindFirstDescendant(cf => cf.ByControlType(ControlType.CheckBox).And(cf.ByName(value)))?.AsCheckBox();
         if (valueCheckbox != null && valueCheckbox.IsChecked != true)
-            valueCheckbox.Click();
+            FlaUIInputHelpers.SetCheckBoxState(valueCheckbox, desiredChecked: true);
 
         var ok = popup.FindFirstDescendant(cf => cf.ByAutomationId("df-ok"))?.AsButton();
         ok?.Invoke();
@@ -76,41 +76,19 @@ internal static class FlaUIWpfDemoHost
 
     private static void SelectTab(Window window, string tabHeader)
     {
-        var tabs = window.FindFirstDescendant(cf => cf.ByControlType(ControlType.Tab));
-        var tabItems = tabs?.FindAllChildren(cf => cf.ByControlType(ControlType.TabItem));
-        if (tabItems == null || tabItems.Length == 0)
-            throw new InvalidOperationException("Tab control not found.");
-
-        foreach (var tab in tabItems)
-        {
-            var name = tab.Properties.Name.ValueOrDefault ?? string.Empty;
-            if (string.Equals(name, tabHeader, StringComparison.OrdinalIgnoreCase) ||
-                name.Contains(tabHeader, StringComparison.OrdinalIgnoreCase))
-            {
-                tab.Click();
-                return;
-            }
-        }
-
-        throw new InvalidOperationException($"Tab '{tabHeader}' not found.");
+        FlaUIInputHelpers.Activate(window);
+        var tab = window.FindFirstDescendant(cf => cf.ByControlType(ControlType.Tab))?.AsTab()
+            ?? throw new InvalidOperationException("Tab control not found.");
+        FlaUIInputHelpers.SelectTabItem(tab, tabHeader);
+        Thread.Sleep(200);
     }
 
     public static void ClickByAutomationId(Window window, string automationId, TimeSpan timeout)
     {
-        var deadline = DateTime.UtcNow + timeout;
-        AutomationElement? el = null;
-        while (DateTime.UtcNow < deadline)
-        {
-            el = window.FindFirstDescendant(cf => cf.ByAutomationId(automationId));
-            if (el != null)
-                break;
-            Thread.Sleep(100);
-        }
-
-        if (el == null)
-            throw new InvalidOperationException($"Could not find AutomationId '{automationId}' within {timeout}.");
-
-        el.Click();
+        FlaUIInputHelpers.Activate(window);
+        var el = FlaUIInputHelpers.FindByAutomationId(window, automationId, timeout)
+            ?? throw new InvalidOperationException($"Could not find AutomationId '{automationId}' within {timeout}.");
+        FlaUIInputHelpers.InvokeOrClick(el);
     }
 
     public static void TryCloseApp(global::FlaUI.Core.Application app)
