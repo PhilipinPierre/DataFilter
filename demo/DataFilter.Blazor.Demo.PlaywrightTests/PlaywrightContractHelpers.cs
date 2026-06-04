@@ -82,12 +82,33 @@ internal static class PlaywrightContractHelpers
             $"CapturedBrowserErrors:{Environment.NewLine}{string.Join(Environment.NewLine, errors)}");
     }
 
+    public static async Task WaitForGridDataRowsAsync(IPage page)
+    {
+        var rows = page.Locator("table.df-grid tbody tr");
+        await rows.First.WaitForAsync(new LocatorWaitForOptions { Timeout = 60_000 });
+        await page.WaitForFunctionAsync(
+            @"() => {
+                const trs = Array.from(document.querySelectorAll('table.df-grid tbody tr'));
+                return trs.length > 0 && !trs.some(tr => tr.textContent?.includes('Loading'));
+            }",
+            null,
+            new PageWaitForFunctionOptions { Timeout = 60_000 });
+    }
+
     public static async Task ApplyCustomEqualsAsync(ILocator popup, string value)
     {
         await EnsureCustomFilterExpandedAsync(popup);
         await popup.Locator("select.df-custom-input").SelectOptionAsync(new[] { "Equals" });
         await popup.Locator("input.df-custom-input").First.FillAsync(value);
         await popup.Locator("button.df-btn-primary").ClickAsync();
+    }
+
+    public static async Task ApplyDepartmentEqualsItAsync(IPage page, DemoHostFixture host, List<string> errors)
+    {
+        await OpenPopupAsync(page, host, "Department", errors);
+        var popup = page.Locator("#df-filter-popup-Department");
+        await ApplyCustomEqualsAsync(popup, "IT");
+        await page.WaitForTimeoutAsync(300);
     }
 
     public static async Task<List<string>> GetColumnValuesAsync(IPage page, string headerText)
