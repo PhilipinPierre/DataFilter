@@ -45,9 +45,24 @@ dotnet test demo/DataFilter.Blazor.Demo.PlaywrightTests/DataFilter.Blazor.Demo.P
 - **Limites**: setup CI plus long (émulateurs/simulateurs). Pour MAUI Windows-only, FlaUI/WinAppDriver peut suffire.
 
 ## Desktop (FlaUI)
-- **Projet**: `tests/UIContracts.FlaUI.Tests` (WPF, WinUI 3, WinForms smoke)
-- **CI**: job `desktop-ui-contracts` sur runner **self-hosted** Windows (session interactive)
-- **Prérequis local**: `dotnet build demo/DataFilter.Wpf.Demo -c Release` puis `dotnet test tests/UIContracts.FlaUI.Tests -c Release`
+- **Projet**: `tests/UIContracts.FlaUI.Tests` (WPF, WinUI 3, WinForms)
+- **CI**: job `desktop-ui-contracts` sur runner **self-hosted** avec labels `self-hosted`, `Windows`, `X64`
+- **Prérequis local**:
+
+```powershell
+dotnet build demo/DataFilter.Wpf.Demo/DataFilter.Wpf.Demo.csproj -c Release
+dotnet build demo/DataFilter.WinForms.Demo/DataFilter.WinForms.Demo.csproj -c Release
+dotnet build demo/DataFilter.WinUI3.Demo/DataFilter.WinUI3.Demo.csproj -c Release -p:Platform=x64
+dotnet test tests/UIContracts.FlaUI.Tests/UIContracts.FlaUI.Tests.csproj -c Release
+```
+
+### Configurer un runner self-hosted (GitHub Actions)
+
+1. Sur une VM/workstation **Windows 10/11** connectée (session utilisateur, pas Session 0 seule).
+2. Installer .NET SDK (voir `global.json`), workloads MAUI si besoin, **Windows App Runtime** pour WinUI3.
+3. Enregistrer le runner avec les labels : `self-hosted`, `Windows`, `X64`.
+4. Vérifier : `dotnet test tests/UIContracts.FlaUI.Tests -c Release` passe en local sur la machine.
+5. Les jobs `desktop-ui-contracts` échouent sur `windows-latest` (pas d’UIA interactive fiable).
 
 ## MAUI (Appium)
 - **Projet**: `tests/UIContracts.Appium.Tests`

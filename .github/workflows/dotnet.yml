@@ -104,8 +104,10 @@ jobs:
         DF_DEMO_HOST: ${{ matrix.demo_host }}
       run: dotnet test "demo/DataFilter.Blazor.Demo.PlaywrightTests/DataFilter.Blazor.Demo.PlaywrightTests.csproj" --configuration Release --no-build --verbosity normal
 
+  # Requires a self-hosted Windows runner with an interactive session (UIA/SendInput).
+  # Label the runner: self-hosted, Windows, X64. See tests/UI.ContractTesting.md.
   desktop-ui-contracts:
-    runs-on: self-hosted
+    runs-on: [self-hosted, Windows, X64]
     needs: build
     steps:
     - uses: actions/checkout@v4
@@ -121,7 +123,13 @@ jobs:
       run: dotnet restore DataFilter.slnx
 
     - name: Build (Release)
-      run: dotnet build DataFilter.slnx --configuration Release
+      run: dotnet build DataFilter.slnx --configuration Release -p:Platform=x64
+
+    - name: Build demo apps for FlaUI
+      run: |
+        dotnet build "demo/DataFilter.Wpf.Demo/DataFilter.Wpf.Demo.csproj" -c Release
+        dotnet build "demo/DataFilter.WinForms.Demo/DataFilter.WinForms.Demo.csproj" -c Release
+        dotnet build "demo/DataFilter.WinUI3.Demo/DataFilter.WinUI3.Demo.csproj" -c Release -p:Platform=x64
 
     - name: Desktop UI Contracts (FlaUI)
       run: dotnet test "tests/UIContracts.FlaUI.Tests/UIContracts.FlaUI.Tests.csproj" --configuration Release --no-build --verbosity normal
