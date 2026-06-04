@@ -27,6 +27,18 @@ from **`DataFilter.Localization.LocalizationManager`** so language switching wor
 
 Excel-style column filters continue to use **`ApplyColumnFilter`** / **`ClearColumnFilter`** (`AddOrUpdateDescriptor` under the hood). Mixing both approaches is possible but you should treat one path as the source of truth for a given screen, or sync explicitly.
 
+## Active filters bar (optional UI)
+
+`IFilterableDataGridViewModel` exposes:
+
+- **`FilterPipelineSession PipelineSession`** — live pipeline with stable node IDs (synced from context).
+- **`FilterBarViewModel FilterBar`** — chips, AND/OR layout, enable/disable, remove, and **+** (add AND criterion).
+- **`ApplyBarCriterionAsync` / `RemoveBarNodeAsync`** — targeted edits from the bar popup.
+
+Each UI package provides a default bar control (hidden by default). Enable it with **`ShowFilterBar="True"`** (WPF: `FilterGridChrome`, Blazor: `DataFilterGrid`, WinForms: `FilterGridChromeControl`, WinUI 3: `FilterBarControl`, MAUI: `FilterBarView`).
+
+Interactions: left-click chip → column popup (single criterion); right-click → toggle enabled; **×** or Clear → remove node; **+** → add AND sibling and open popup for the new criterion.
+
 ## `FilterableDataGridViewModel` and column popup sync
 
 - **`IFilterableDataGridViewModel.FilterDescriptorsChanged`**: Raised when the pipeline is applied/restored, when a column is cleared, and—on the **local** data path—when **`LocalDataSource`** **reference** changes after **`RefreshDataAsync`** (so column headers can refetch distinct values and **`LoadStateAsync`** into the popup).

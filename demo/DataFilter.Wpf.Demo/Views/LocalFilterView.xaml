@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:controls="clr-namespace:DataFilter.Wpf.Controls;assembly=DataFilter.Wpf.PopupHost"
+             xmlns:wpf="clr-namespace:DataFilter.Wpf.Controls;assembly=DataFilter.Wpf"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
              xmlns:viewmodels="clr-namespace:DataFilter.Wpf.Demo.ViewModels"
@@ -60,11 +61,9 @@
             </StackPanel>
         </Border>
 
-        <controls:FilterableDataGrid Grid.Row="2"
-                                     ViewModel="{Binding GridViewModel}"
-                                     ItemsSource="{Binding GridViewModel.FilteredItems}"
-                                     AutoGenerateColumns="True"
-                                     VirtualizingPanel.IsVirtualizing="True"
-                                     FilterContext="{Binding GridViewModel.Context}" />
+        <wpf:FilterGridChrome x:Name="GridChrome"
+                              Grid.Row="2"
+                              ShowFilterBar="True"
+                              GridViewModel="{Binding GridViewModel}" />
     </Grid>
 </UserControl>
