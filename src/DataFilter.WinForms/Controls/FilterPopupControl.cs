@@ -11,9 +11,9 @@ public sealed class FilterPopupControl : UserControl
     private readonly TextBox _search = new() { Dock = DockStyle.Top, PlaceholderText = "Search..." };
     private readonly CheckBox _addToExisting = new() { Dock = DockStyle.Top, Text = "Add selection to filter" };
     private readonly ComboBox _accumulationMode = new() { Dock = DockStyle.Top, DropDownStyle = ComboBoxStyle.DropDownList, Visible = false };
-    private readonly CheckBox _selectAll = new() { Dock = DockStyle.Top, Text = "Select All", ThreeState = false, Checked = true };
+    private readonly CheckBox _selectAll = new() { Dock = DockStyle.Top, Text = "Select All", ThreeState = false, Checked = true, AccessibleName = "df-select-all" };
     private readonly Label _loading = new() { Dock = DockStyle.Top, Text = "Loading...", TextAlign = System.Drawing.ContentAlignment.MiddleCenter, Visible = false };
-    private readonly TreeView _values = new() { Dock = DockStyle.Fill, CheckBoxes = true };
+    private readonly TreeView _values = new() { Dock = DockStyle.Fill, CheckBoxes = true, AccessibleName = "df-values-tree" };
     private readonly ComboBox _operator = new() { Dock = DockStyle.Top, DropDownStyle = ComboBoxStyle.DropDownList };
     private readonly TextBox _custom1 = new() { Dock = DockStyle.Top, PlaceholderText = "Value" };
     private readonly TextBox _custom2 = new() { Dock = DockStyle.Top, PlaceholderText = "To", Visible = false };
@@ -22,8 +22,8 @@ public sealed class FilterPopupControl : UserControl
     private readonly Button _sortDesc = new() { Text = "Sort Z to A", Dock = DockStyle.Top, Height = 24 };
     private readonly Button _addSortAsc = new() { Text = "Add Sort A to Z", Dock = DockStyle.Top, Height = 24 };
     private readonly Button _addSortDesc = new() { Text = "Add Sort Z to A", Dock = DockStyle.Top, Height = 24 };
-    private readonly Button _ok = new() { Text = "OK", Dock = DockStyle.Left, Width = 90 };
-    private readonly Button _clear = new() { Text = "Clear", Dock = DockStyle.Right, Width = 90 };
+    private readonly Button _ok = new() { Text = "OK", Dock = DockStyle.Left, Width = 90, AccessibleName = "df-ok" };
+    private readonly Button _clear = new() { Text = "Clear", Dock = DockStyle.Right, Width = 90, AccessibleName = "df-clear" };
     private readonly Panel _advancedPanel = new() { Dock = DockStyle.Top, Height = 92, Visible = false };
 
     public ColumnFilterViewModel? ViewModel { get; private set; }
