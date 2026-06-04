@@ -24,6 +24,12 @@ public sealed class FilterBarAndClusterItem : FilterBarDisplayItem
     public bool CanAddAnd { get; init; } = true;
 
     public IList<FilterBarChipItem> Chips { get; init; } = new List<FilterBarChipItem>();
+
+    /// <summary>Anchor for the cluster « + » button (<see cref="GroupNodeId"/> or last chip).</summary>
+    public string AddAndAnchorNodeId =>
+        !string.IsNullOrEmpty(GroupNodeId)
+            ? GroupNodeId!
+            : Chips.LastOrDefault()?.NodeId ?? string.Empty;
 }
 
 /// <summary>

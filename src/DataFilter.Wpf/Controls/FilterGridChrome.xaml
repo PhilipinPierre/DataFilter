@@ -1,0 +1,19 @@
+<UserControl x:Class="DataFilter.Wpf.Controls.FilterGridChrome"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:DataFilter.Wpf.Controls"
+             xmlns:vm="clr-namespace:DataFilter.PlatformShared.ViewModels;assembly=DataFilter.PlatformShared">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <controls:FilterBar x:Name="FilterBarHost"
+                            Grid.Row="0"
+                            FilterBarViewModel="{Binding GridViewModel.FilterBar, RelativeSource={RelativeSource AncestorType=controls:FilterGridChrome}}"
+                            GridViewModel="{Binding GridViewModel, RelativeSource={RelativeSource AncestorType=controls:FilterGridChrome}}"
+                            ShowFilterBar="{Binding ShowFilterBar, RelativeSource={RelativeSource AncestorType=controls:FilterGridChrome}}" />
+        <ContentPresenter x:Name="GridHost"
+                          Grid.Row="1" />
+    </Grid>
+</UserControl>

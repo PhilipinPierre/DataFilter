@@ -13,6 +13,8 @@ using DataFilter.Core.Services;
 using DataFilter.Filtering.ExcelLike.Abstractions;
 using DataFilter.Filtering.ExcelLike.Models;
 using DataFilter.Filtering.ExcelLike.Services;
+using DataFilter.PlatformShared.FilterBar;
+using DataFilter.PlatformShared.Pipeline;
 using DataFilter.PlatformShared.ViewModels;
 using DataFilter.Wpf.ViewModels;
 
@@ -89,6 +91,12 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
     /// <inheritdoc />
     public event EventHandler<FilterDescriptorsChangedEventArgs>? FilterDescriptorsChanged;
 
+    /// <inheritdoc />
+    public FilterPipelineSession PipelineSession { get; }
+
+    /// <inheritdoc />
+    public FilterBarViewModel FilterBar { get; }
+
     /// <summary>
     /// Initializes a new instance of the <see cref="CollectionViewFilterAdapter{T}"/> class.
     /// </summary>
@@ -97,6 +105,15 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
     {
         CollectionView = collectionView ?? throw new ArgumentNullException(nameof(collectionView));
         _filteredItemsWrapper = new CollectionViewGenericWrapper<T>(collectionView);
+        PipelineSession = new FilterPipelineSession();
+        FilterBar = new FilterBarViewModel(PipelineSession);
+        FilterBar.Configure(null, ApplyFilterPipelineAsync);
+    }
+
+    private void SyncFilterBarPipeline()
+    {
+        PipelineSession.SyncFromContext(Context);
+        FilterBar.RebuildDisplay();
     }
 
     /// <inheritdoc />
@@ -110,9 +127,15 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
         CollectionView.Refresh();
 
         if (sourceChanged && Context.Descriptors.Count > 0)
-            FilterDescriptorsChanged?.Invoke(this, new FilterDescriptorsChangedEventArgs());
+            OnFilterDescriptorsChanged();
 
         return Task.CompletedTask;
+    }
+
+    private void OnFilterDescriptorsChanged(FilterDescriptorsChangedEventArgs? args = null)
+    {
+        SyncFilterBarPipeline();
+        FilterDescriptorsChanged?.Invoke(this, args ?? new FilterDescriptorsChangedEventArgs());
     }
 
     private void ReconcileExcelFilterStatesWithLocalDistincts()
@@ -151,7 +174,7 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
         }
 
         RefreshDataAsync();
-        FilterDescriptorsChanged?.Invoke(this, new FilterDescriptorsChangedEventArgs { AffectedPropertyName = propertyName });
+        OnFilterDescriptorsChanged(new FilterDescriptorsChangedEventArgs { AffectedPropertyName = propertyName });
     }
 
     /// <inheritdoc />
@@ -260,14 +283,31 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
             }
 
             RefreshDataAsync();
-            FilterDescriptorsChanged?.Invoke(this, new FilterDescriptorsChangedEventArgs());
+            OnFilterDescriptorsChanged();
         }
+    }
+
+    /// <inheritdoc />
+    public async Task ApplyBarCriterionAsync(string nodeId, string propertyName, ExcelFilterState state)
+    {
+        if (PipelineSession.TryGetNode(nodeId, out FilterPipelineNode? node) && node is CriterionPipelineNode c)
+            FilterBarCriterionMapper.ApplyStateToCriterion(c, propertyName, state);
+
+        await ApplyFilterPipelineAsync(PipelineSession.Pipeline);
+    }
+
+    /// <inheritdoc />
+    public async Task RemoveBarNodeAsync(string nodeId)
+    {
+        PipelineSession.RemoveNode(nodeId);
+        await ApplyFilterPipelineAsync(PipelineSession.Pipeline);
     }
 
     /// <inheritdoc />
     public async Task ApplyFilterPipelineAsync(FilterPipeline pipeline)
     {
         if (pipeline == null) throw new ArgumentNullException(nameof(pipeline));
+        PipelineSession.ReplacePipeline(pipeline);
         if (Context is FilterContext ctx)
         {
             var compiled = FilterPipelineCompiler.Compile(pipeline);
@@ -278,7 +318,7 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
         }
 
         await RefreshDataAsync();
-        FilterDescriptorsChanged?.Invoke(this, new FilterDescriptorsChangedEventArgs());
+        OnFilterDescriptorsChanged();
     }
 
     /// <inheritdoc />
