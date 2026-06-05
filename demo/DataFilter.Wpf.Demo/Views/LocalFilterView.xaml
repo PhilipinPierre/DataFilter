@@ -30,7 +30,9 @@
                   Margin="10,0,10,10"
                   Padding="10"
                   BorderBrush="LightGray"
-                  BorderThickness="1">
+                  BorderThickness="1"
+                  IsExpanded="True"
+                  AutomationProperties.AutomationId="df-pipeline-panel">
             <Expander.Header>
                 <TextBlock Text="Filter pipeline preset"
                            FontWeight="Bold"/>

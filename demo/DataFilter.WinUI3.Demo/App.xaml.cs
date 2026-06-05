@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Extensions.DependencyInjection;
 using DataFilter.Demo.Shared;
 using DataFilter.WinUI3.Demo.ViewModels;
