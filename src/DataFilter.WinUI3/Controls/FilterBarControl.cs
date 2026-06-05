@@ -117,8 +117,6 @@ public sealed class FilterBarControl : UserControl
                     AllowDrop = true
                 };
                 WireClusterDrop(wrap, cluster.AddAndAnchorNodeId);
-                if (cluster.CanAddAnd && !string.IsNullOrEmpty(cluster.AddAndAnchorNodeId))
-                    wrap.Children.Add(CreateAddButton(cluster.AddAndAnchorNodeId));
                 foreach (FilterBarChipItem chip in cluster.Chips)
                     wrap.Children.Add(CreateChip(chip));
                 _layout.Children.Add(wrap);
@@ -139,20 +137,10 @@ public sealed class FilterBarControl : UserControl
         label.Click += (_, _) => EditRequested?.Invoke(this, new FilterBarEditRequest { NodeId = chip.NodeId, PropertyName = chip.PropertyName });
         label.RightTapped += (_, _) => _viewModel?.ToggleEnabledCommand.Execute(chip.NodeId);
         row.Children.Add(label);
-        if (chip.CanAddAnd)
-            row.Children.Add(CreateAddButton(chip.NodeId));
         var remove = new Button { Content = "×", Padding = new Thickness(4, 0, 4, 0) };
         remove.Click += (_, _) => _viewModel?.RemoveCommand.Execute(chip.NodeId);
         row.Children.Add(remove);
         return row;
-    }
-
-    private Button CreateAddButton(string nodeId)
-    {
-        var btn = new Button { Content = "+", Padding = new Thickness(4, 0, 4, 0) };
-        AutomationProperties.SetName(btn, $"df-filter-bar-add-{nodeId}");
-        btn.Click += (_, _) => _viewModel?.AddAndCommand.Execute(nodeId);
-        return btn;
     }
 
     private void OnEditRequested(object? sender, FilterBarEditRequest e) => EditRequested?.Invoke(this, e);

@@ -271,6 +271,7 @@ public static class FilterPipelineEditor
     /// <summary>
     /// Moves a criterion into the AND cluster identified by <paramref name="targetClusterAnchorNodeId"/>
     /// (an AND group id, or any node id inside the target cluster from the filter bar).
+    /// When the source and target sit in different OR root branches, the criterion is duplicated instead of moved.
     /// </summary>
     public static bool MoveCriterionToCluster(FilterPipeline pipeline, string criterionNodeId, string targetClusterAnchorNodeId)
     {
@@ -280,6 +281,9 @@ public static class FilterPipelineEditor
 
         if (!TryFind(pipeline, criterionNodeId, out _, out FilterPipelineNode? moving) || moving is not CriterionPipelineNode criterion)
             return false;
+
+        if (AreInDifferentOrRootBranches(pipeline, criterionNodeId, targetClusterAnchorNodeId))
+            return CopyCriterionToCluster(pipeline, criterionNodeId, targetClusterAnchorNodeId) != null;
 
         if (!TryResolveAndClusterContainer(pipeline, targetClusterAnchorNodeId, out List<FilterPipelineNode>? container, out _))
             return false;
@@ -303,6 +307,30 @@ public static class FilterPipelineEditor
         container.Add(detached);
         Compact(pipeline);
         return true;
+    }
+
+    /// <summary>
+    /// Duplicates a criterion into another AND cluster (new node id). Source node is left unchanged.
+    /// </summary>
+    public static CriterionPipelineNode? CopyCriterionToCluster(
+        FilterPipeline pipeline,
+        string criterionNodeId,
+        string targetClusterAnchorNodeId)
+    {
+        if (pipeline == null) throw new ArgumentNullException(nameof(pipeline));
+        if (string.IsNullOrEmpty(criterionNodeId) || string.IsNullOrEmpty(targetClusterAnchorNodeId))
+            return null;
+
+        if (!TryFind(pipeline, criterionNodeId, out _, out FilterPipelineNode? moving) || moving is not CriterionPipelineNode criterion)
+            return null;
+
+        if (!TryResolveAndClusterContainer(pipeline, targetClusterAnchorNodeId, out List<FilterPipelineNode>? container, out _))
+            return null;
+
+        var duplicate = CloneCriterionForDuplicate(criterion);
+        container.Add(duplicate);
+        Compact(pipeline);
+        return duplicate;
     }
 
     /// <summary>
@@ -381,6 +409,51 @@ public static class FilterPipelineEditor
 
     private static bool ContainerAlreadyContains(List<FilterPipelineNode> container, string nodeId) =>
         container.Any(n => string.Equals(n.Id, nodeId, StringComparison.Ordinal));
+
+    private static bool AreInDifferentOrRootBranches(
+        FilterPipeline pipeline,
+        string sourceNodeId,
+        string targetAnchorNodeId)
+    {
+        int? sourceBranch = TryGetOrRootBranchIndex(pipeline, sourceNodeId);
+        int? targetBranch = TryGetOrRootBranchIndex(pipeline, targetAnchorNodeId);
+        return sourceBranch != null && targetBranch != null && sourceBranch.Value != targetBranch.Value;
+    }
+
+    private static int? TryGetOrRootBranchIndex(FilterPipeline pipeline, string nodeId)
+    {
+        if (pipeline.RootCombineOperator != LogicalOperator.Or)
+            return null;
+
+        if (!TryFind(pipeline, nodeId, out NodeLocation location, out _))
+            return null;
+
+        if (location.ParentAndOrGroup == null)
+            return location.Index;
+
+        string? walkId = location.ParentAndOrGroup.Id;
+        while (!string.IsNullOrEmpty(walkId))
+        {
+            if (!TryFind(pipeline, walkId, out NodeLocation parentLocation, out _))
+                return null;
+
+            if (parentLocation.ParentAndOrGroup == null && ReferenceEquals(parentLocation.Container, pipeline.RootNodes))
+                return parentLocation.Index;
+
+            walkId = parentLocation.ParentAndOrGroup?.Id;
+        }
+
+        return null;
+    }
+
+    private static CriterionPipelineNode CloneCriterionForDuplicate(CriterionPipelineNode criterion) =>
+        new()
+        {
+            IsEnabled = criterion.IsEnabled,
+            PropertyName = criterion.PropertyName,
+            Operator = criterion.Operator,
+            Value = criterion.Value
+        };
 
     private static bool TryResolveAndClusterContainer(
         FilterPipeline pipeline,

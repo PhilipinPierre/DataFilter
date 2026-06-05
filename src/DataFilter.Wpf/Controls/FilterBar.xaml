@@ -2,14 +2,11 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:fb="clr-namespace:DataFilter.PlatformShared.FilterBar;assembly=DataFilter.PlatformShared"
-             xmlns:converters="clr-namespace:DataFilter.Wpf.Converters"
              xmlns:loc="clr-namespace:DataFilter.Localization;assembly=DataFilter.Localization"
              x:Name="Root"
              AutomationProperties.AutomationId="df-filter-bar"
              Visibility="Collapsed">
     <UserControl.Resources>
-        <converters:BoolToVisibilityConverter x:Key="BoolToVis" />
-
         <DataTemplate DataType="{x:Type fb:FilterBarOrSeparatorItem}">
             <Border Margin="4,4,4,4"
                     Padding="8,4"
@@ -54,12 +51,6 @@
                             Background="Transparent"
                             BorderThickness="0"
                             Cursor="Hand" />
-                    <Button Content="+"
-                            Command="{Binding DataContext.AddAndCommand, ElementName=Root}"
-                            CommandParameter="{Binding NodeId}"
-                            AutomationProperties.AutomationId="{Binding NodeId, StringFormat=df-filter-bar-add-{0}}"
-                            Width="22"
-                            Visibility="{Binding CanAddAnd, Converter={StaticResource BoolToVis}}" />
                     <Button Content="×"
                             Command="{Binding DataContext.RemoveCommand, ElementName=Root}"
                             CommandParameter="{Binding NodeId}"
@@ -83,13 +74,6 @@
                     Drop="Cluster_Drop"
                     AutomationProperties.AutomationId="{Binding GroupNodeId, StringFormat=df-filter-bar-group-{0}}">
                 <WrapPanel Orientation="Horizontal">
-                    <Button Content="+"
-                            Command="{Binding DataContext.AddAndCommand, ElementName=Root}"
-                            CommandParameter="{Binding AddAndAnchorNodeId}"
-                            AutomationProperties.AutomationId="{Binding AddAndAnchorNodeId, StringFormat=df-filter-bar-group-add-{0}}"
-                            Width="24"
-                            Margin="0,0,6,0"
-                            Visibility="{Binding CanAddAnd, Converter={StaticResource BoolToVis}}" />
                     <ItemsControl ItemsSource="{Binding Chips}"
                                   ItemTemplate="{StaticResource ChipTemplate}">
                         <ItemsControl.ItemsPanel>

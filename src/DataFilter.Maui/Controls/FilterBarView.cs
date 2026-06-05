@@ -107,8 +107,6 @@ public sealed class FilterBarView : ScrollView
             else if (segment is FilterBarAndClusterItem cluster)
             {
                 var wrap = new HorizontalStackLayout { Spacing = 4 };
-                if (cluster.CanAddAnd && !string.IsNullOrEmpty(cluster.AddAndAnchorNodeId))
-                    wrap.Add(CreateAddButton(cluster.AddAndAnchorNodeId));
                 foreach (FilterBarChipItem chip in cluster.Chips)
                     wrap.Add(CreateChip(chip));
                 var border = new Border { Content = wrap, Stroke = Colors.LightGray, Padding = new Thickness(6) };
@@ -140,17 +138,8 @@ public sealed class FilterBarView : ScrollView
         var remove = new Button { Text = "×" };
         remove.Clicked += (_, _) => _viewModel?.RemoveCommand.Execute(chip.NodeId);
         row.Add(label);
-        if (chip.CanAddAnd)
-            row.Add(CreateAddButton(chip.NodeId));
         row.Add(remove);
         return row;
-    }
-
-    private Button CreateAddButton(string nodeId)
-    {
-        var btn = new Button { Text = "+", AutomationId = $"df-filter-bar-add-{nodeId}" };
-        btn.Clicked += (_, _) => _viewModel?.AddAndCommand.Execute(nodeId);
-        return btn;
     }
 
     private void WireClusterDrop(View target, string anchorNodeId)

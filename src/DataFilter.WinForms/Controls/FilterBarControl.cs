@@ -123,8 +123,6 @@ public sealed class FilterBarControl : Panel
                     Tag = cluster.AddAndAnchorNodeId
                 };
                 WireClusterDrop(clusterPanel);
-                if (cluster.CanAddAnd && !string.IsNullOrEmpty(cluster.AddAndAnchorNodeId))
-                    clusterPanel.Controls.Add(CreateAddButton(cluster.AddAndAnchorNodeId));
 
                 foreach (FilterBarChipItem chip in cluster.Chips)
                     clusterPanel.Controls.Add(CreateChipPanel(chip));
@@ -155,8 +153,6 @@ public sealed class FilterBarControl : Panel
         };
         WireChipDrag(panel);
         panel.Controls.Add(label);
-        if (chip.CanAddAnd)
-            panel.Controls.Add(CreateAddButton(chip.NodeId));
         var remove = new Button { Text = "×", Width = 24, FlatStyle = FlatStyle.Flat };
         remove.Click += (_, _) => _viewModel?.RemoveCommand.Execute(chip.NodeId);
         panel.Controls.Add(remove);
@@ -175,19 +171,6 @@ public sealed class FilterBarControl : Panel
         var toolTip = new ToolTip { ToolTipTitle = LocalizationManager.Instance["FilterBar_AddOrGroup"] };
         toolTip.SetToolTip(btn, LocalizationManager.Instance["FilterBar_AddOrGroup"]);
         btn.Click += (_, _) => _viewModel?.AddOrGroupCommand.Execute(null);
-        return btn;
-    }
-
-    private Button CreateAddButton(string nodeId)
-    {
-        var btn = new Button
-        {
-            Text = "+",
-            Width = 24,
-            FlatStyle = FlatStyle.Flat,
-            AccessibleName = $"df-filter-bar-add-{nodeId}"
-        };
-        btn.Click += (_, _) => _viewModel?.AddAndCommand.Execute(nodeId);
         return btn;
     }
 

@@ -27,14 +27,6 @@
                  @ondragover:preventDefault="true"
                  @ondragleave="OnDragLeave"
                  @ondrop="e => OnClusterDrop(e, cluster.AddAndAnchorNodeId)">
-                @if (cluster.CanAddAnd && !string.IsNullOrEmpty(cluster.AddAndAnchorNodeId))
-                {
-                    <button type="button"
-                            class="df-filter-bar-add"
-                            title="@LocalizationManager.Instance["FilterBar_AddAnd"]"
-                            data-testid="@($"df-filter-bar-group-add-{cluster.AddAndAnchorNodeId}")"
-                            @onclick="() => ViewModel.AddAndCommand.Execute(cluster.AddAndAnchorNodeId)">+</button>
-                }
                 @foreach (var chip in cluster.Chips)
                 {
                     <div class="df-filter-bar-chip @(chip.IsEnabled ? "" : "disabled")"
@@ -46,13 +38,6 @@
                                 @onclick="() => OnEditChip(chip)"
                                 @oncontextmenu="e => OnToggleChip(e, chip.NodeId)"
                                 @oncontextmenu:preventDefault="true">@chip.DisplayText</button>
-                        @if (chip.CanAddAnd)
-                        {
-                            <button type="button" class="df-filter-bar-add"
-                                    data-testid="@($"df-filter-bar-add-{chip.NodeId}")"
-                                    title="@LocalizationManager.Instance["FilterBar_AddAnd"]"
-                                    @onclick="() => ViewModel.AddAndCommand.Execute(chip.NodeId)">+</button>
-                        }
                         <button type="button" class="df-filter-bar-remove"
                                 @onclick="() => ViewModel.RemoveCommand.Execute(chip.NodeId)">×</button>
                     </div>

@@ -237,7 +237,7 @@ public class FilterPipelineTests
     }
 
     [Fact]
-    public void Editor_MoveCriterion_To_And_Group()
+    public void Editor_MoveCriterion_To_Different_Or_Group_Copies_Instead_Of_Moving()
     {
         var pipeline = new FilterPipeline { RootCombineOperator = LogicalOperator.Or };
         var g1 = new GroupPipelineNode { CombineOperator = LogicalOperator.And };
@@ -247,9 +247,18 @@ public class FilterPipelineTests
         pipeline.RootNodes.Add(g1);
         pipeline.RootNodes.Add(g2);
 
-        Assert.True(FilterPipelineEditor.MoveCriterionToCluster(pipeline, "b", g1.Id));
-        Assert.Equal(2, g1.Children.Count);
-        Assert.Single(pipeline.RootNodes);
+        Assert.True(FilterPipelineEditor.MoveCriterionToCluster(pipeline, "a", g2.Id));
+
+        Assert.Single(g1.Children);
+        Assert.Equal("a", g1.Children[0].Id);
+        Assert.Equal(2, g2.Children.Count);
+        Assert.Equal("b", g2.Children[0].Id);
+        var copied = Assert.IsType<CriterionPipelineNode>(g2.Children[1]);
+        Assert.NotEqual("a", copied.Id);
+        Assert.Equal("Department", copied.PropertyName);
+        Assert.Equal(nameof(FilterOperator.Equals), copied.Operator);
+        Assert.Equal("IT", copied.Value);
+        Assert.Equal(2, pipeline.RootNodes.Count);
     }
 
     [Fact]
