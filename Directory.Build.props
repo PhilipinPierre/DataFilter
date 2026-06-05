@@ -4,4 +4,10 @@
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
+
+  <!-- Skip PRI when unpackaged or WinUI libs: makepri.exe is not in the SDK BuildTools NuGet package (requires installed Windows SDK). -->
+  <PropertyGroup Condition="'$(UseWinUI)' == 'true' or '$(WindowsPackageType)' == 'None'">
+    <AppxGeneratePriEnabled>false</AppxGeneratePriEnabled>
+    <GenerateProjectPriFile>false</GenerateProjectPriFile>
+  </PropertyGroup>
 </Project>

@@ -7,14 +7,12 @@ namespace UIContracts.FlaUI.Tests;
 
 internal static class FlaUIWpfDemoHost
 {
-    public static string BuildAndGetExePath()
-    {
-        var root = FindRepoRoot();
-        var exe = Path.Combine(root, "demo", "DataFilter.Wpf.Demo", "bin", "Release", "net8.0-windows", "DataFilter.Wpf.Demo.exe");
-        if (!File.Exists(exe))
-            throw new FileNotFoundException($"WPF demo not built. Expected: {exe}. Run dotnet build first.");
-        return exe;
-    }
+    private static readonly DemoExeSpec WpfDemo = new(
+        "demo/DataFilter.Wpf.Demo/DataFilter.Wpf.Demo.csproj",
+        "DataFilter.Wpf.Demo.exe",
+        "net8.0-windows");
+
+    public static string BuildAndGetExePath() => DemoExePathResolver.ResolveOrBuild(WpfDemo);
 
     public static void NavigateToAttachTab(Window window) =>
         SelectTab(window, UIContracts.Common.DemoViewCatalog.Wpf.AttachTab);

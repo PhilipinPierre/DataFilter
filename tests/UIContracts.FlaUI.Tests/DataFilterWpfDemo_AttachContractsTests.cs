@@ -12,7 +12,7 @@ public sealed class DataFilterWpfDemo_AttachContractsTests
     [Fact]
     public void PopupOpenClose_AttachTab()
     {
-        var exe = BuildAndGetWpfDemoExePath();
+        var exe = FlaUIWpfDemoHost.BuildAndGetExePath();
 
         using var app = Application.Launch(exe);
         try
@@ -61,7 +61,7 @@ public sealed class DataFilterWpfDemo_AttachContractsTests
     [Fact]
     public void FilteringAffectsRows_DepartmentEqualsIT()
     {
-        var exe = BuildAndGetWpfDemoExePath();
+        var exe = FlaUIWpfDemoHost.BuildAndGetExePath();
 
         using var app = Application.Launch(exe);
         try
@@ -86,7 +86,7 @@ public sealed class DataFilterWpfDemo_AttachContractsTests
     [Fact]
     public void ClearFilter_Department_RestoresMixedDepartments()
     {
-        var exe = BuildAndGetWpfDemoExePath();
+        var exe = FlaUIWpfDemoHost.BuildAndGetExePath();
 
         using var app = Application.Launch(exe);
         try
@@ -122,7 +122,7 @@ public sealed class DataFilterWpfDemo_AttachContractsTests
     [Fact]
     public void SortDescending_Salary_DoesNotCrash()
     {
-        var exe = BuildAndGetWpfDemoExePath();
+        var exe = FlaUIWpfDemoHost.BuildAndGetExePath();
 
         using var app = Application.Launch(exe);
         try
@@ -337,28 +337,7 @@ public sealed class DataFilterWpfDemo_AttachContractsTests
         Assert.True(r.Bottom <= wa.Bottom + tolerancePx, $"Expected popup within working area (bottom). popup={r}, workArea={wa}");
     }
 
-    private static string BuildAndGetWpfDemoExePath()
-    {
-        var repoRoot = FindRepoRoot();
-
-        var exe = Path.Combine(repoRoot, "demo", "DataFilter.Wpf.Demo", "bin", "Release", "net8.0-windows", "DataFilter.Wpf.Demo.exe");
-        Assert.True(File.Exists(exe), $"Expected demo exe at '{exe}'. Build it first: dotnet build \"demo/DataFilter.Wpf.Demo/DataFilter.Wpf.Demo.csproj\" -c Release");
-        return exe;
-    }
-
     // NOTE: Avoid relying on ControlType==Button; some hosts surface custom elements.
-
-    private static string FindRepoRoot()
-    {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "DataFilter.slnx")))
-                return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("Could not find repo root (DataFilter.slnx).");
-    }
 
     private static void WaitUntil(Func<bool> predicate, TimeSpan timeout)
     {

@@ -8,19 +8,17 @@ namespace UIContracts.FlaUI.Tests;
 
 internal static class FlaUIWinFormsDemoHost
 {
-    public static string BuildAndGetExePath()
-    {
-        var root = FindRepoRoot();
-        var exe = Path.Combine(root, "demo", "DataFilter.WinForms.Demo", "bin", "Release", "net8.0-windows", "DataFilter.WinForms.Demo.exe");
-        if (!File.Exists(exe))
-            throw new FileNotFoundException($"WinForms demo not built. Expected: {exe}");
-        return exe;
-    }
+    private static readonly DemoExeSpec WinFormsDemo = new(
+        "demo/DataFilter.WinForms.Demo/DataFilter.WinForms.Demo.csproj",
+        "DataFilter.WinForms.Demo.exe",
+        "net8.0-windows");
+
+    public static string BuildAndGetExePath() => DemoExePathResolver.ResolveOrBuild(WinFormsDemo);
 
     public static void NavigateToAttachTab(Window window) =>
         SelectTab(window, UIContracts.Common.DemoViewCatalog.WinForms.AttachTab);
 
-    public static void OpenDepartmentFilterPopup(Window window, UIA3Automation automation)
+    public static bool OpenDepartmentFilterPopup(Window window, UIA3Automation automation)
     {
         FlaUIInputHelpers.Activate(window);
         var grid = window.FindFirstDescendant(cf =>
@@ -31,10 +29,22 @@ internal static class FlaUIWinFormsDemoHost
         var columnIndex = FindColumnIndex(grid, "Department");
         var headerRect = grid.BoundingRectangle;
         var colRect = GetColumnHeaderRect(grid, columnIndex, headerRect);
-        var clickPoint = new Point((int)(colRect.Right - 10), (int)(colRect.Top + 10));
-        global::FlaUI.Core.Input.Mouse.Click(clickPoint);
-        Thread.Sleep(400);
-        _ = automation;
+
+        // Match DataGridViewFilterAdapter painted glyph: Right-18, Top+4, 14x14.
+        var filterButton = new Rectangle(
+            (int)(colRect.Right - 18),
+            (int)(colRect.Top + 4),
+            14,
+            14);
+        var clickPoint = new Point(
+            filterButton.Left + filterButton.Width / 2,
+            filterButton.Top + filterButton.Height / 2);
+
+        if (!FlaUIInputHelpers.TryMouseClick(clickPoint))
+            return false;
+
+        return FlaUIWinFormsPopupHelpers.WaitForFilterPopup(
+            automation.GetDesktop(), window, knownHandles: null, TimeSpan.FromSeconds(15), out _);
     }
 
     public static void ApplyListFilterItInPopup(AutomationElement desktop, Window main)
@@ -83,7 +93,25 @@ internal static class FlaUIWinFormsDemoHost
     public static void TryCloseApp(global::FlaUI.Core.Application app)
     {
         try { app.Close(); } catch { }
-        try { if (!app.HasExited) app.Kill(); } catch { }
+        try
+        {
+            if (!app.HasExited)
+                app.Kill();
+        }
+        catch
+        {
+            // ignored
+        }
+
+        try
+        {
+            if (app.ProcessId > 0)
+                Process.GetProcessById(app.ProcessId).Kill(entireProcessTree: true);
+        }
+        catch
+        {
+            // ignored
+        }
     }
 
     private static int FindColumnIndex(AutomationElement grid, string propertyName)

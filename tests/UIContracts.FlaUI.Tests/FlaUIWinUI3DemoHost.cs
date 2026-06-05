@@ -7,24 +7,13 @@ namespace UIContracts.FlaUI.Tests;
 
 internal static class FlaUIWinUI3DemoHost
 {
-    public static string BuildAndGetExePath()
-    {
-        var root = FindRepoRoot();
-        var exe = Path.Combine(
-            root,
-            "demo",
-            "DataFilter.WinUI3.Demo",
-            "bin",
-            "x64",
-            "Release",
-            "net8.0-windows10.0.19041.0",
-            "DataFilter.WinUI3.Demo.exe");
+    private static readonly DemoExeSpec WinUI3Demo = new(
+        "demo/DataFilter.WinUI3.Demo/DataFilter.WinUI3.Demo.csproj",
+        "DataFilter.WinUI3.Demo.exe",
+        "net8.0-windows10.0.19041.0",
+        Platform: "x64");
 
-        if (!File.Exists(exe))
-            throw new FileNotFoundException($"WinUI3 demo not built. Expected: {exe}");
-
-        return exe;
-    }
+    public static string BuildAndGetExePath() => DemoExePathResolver.ResolveOrBuild(WinUI3Demo);
 
     public static bool IsWinAppRuntimeAvailable(string exe)
     {

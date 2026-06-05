@@ -12,9 +12,9 @@ public sealed class DataFilterWinUI3Demo_AttachContractsTests
     [Fact]
     public void PopupOpenClose_AttachPage()
     {
-        var exe = GetWinUI3DemoExePath();
+        var exe = FlaUIWinUI3DemoHost.BuildAndGetExePath();
 
-        if (!IsWinAppRuntimeAvailable(exe))
+        if (!FlaUIWinUI3DemoHost.IsWinAppRuntimeAvailable(exe))
         {
             // Typical on dev/CI machines without Windows App Runtime installed.
             // We keep the contract test in place but skip rather than hard-fail the whole suite.
@@ -97,9 +97,9 @@ public sealed class DataFilterWinUI3Demo_AttachContractsTests
     [Fact]
     public void FilteringAffectsItems_DepartmentEqualsIT()
     {
-        var exe = GetWinUI3DemoExePath();
+        var exe = FlaUIWinUI3DemoHost.BuildAndGetExePath();
 
-        if (!IsWinAppRuntimeAvailable(exe))
+        if (!FlaUIWinUI3DemoHost.IsWinAppRuntimeAvailable(exe))
             return;
 
         using var app = Application.Launch(exe);
@@ -182,8 +182,8 @@ public sealed class DataFilterWinUI3Demo_AttachContractsTests
     [Fact]
     public void SortDescending_Salary()
     {
-        var exe = GetWinUI3DemoExePath();
-        if (!IsWinAppRuntimeAvailable(exe))
+        var exe = FlaUIWinUI3DemoHost.BuildAndGetExePath();
+        if (!FlaUIWinUI3DemoHost.IsWinAppRuntimeAvailable(exe))
             return;
 
         using var app = Application.Launch(exe);
@@ -232,8 +232,8 @@ public sealed class DataFilterWinUI3Demo_AttachContractsTests
     [Fact]
     public void SortAscending_HireDate()
     {
-        var exe = GetWinUI3DemoExePath();
-        if (!IsWinAppRuntimeAvailable(exe))
+        var exe = FlaUIWinUI3DemoHost.BuildAndGetExePath();
+        if (!FlaUIWinUI3DemoHost.IsWinAppRuntimeAvailable(exe))
             return;
 
         using var app = Application.Launch(exe);
@@ -280,8 +280,8 @@ public sealed class DataFilterWinUI3Demo_AttachContractsTests
     [Fact]
     public void MultiSort_DepartmentThenName_NameSortedWithinDepartmentGroups()
     {
-        var exe = GetWinUI3DemoExePath();
-        if (!IsWinAppRuntimeAvailable(exe))
+        var exe = FlaUIWinUI3DemoHost.BuildAndGetExePath();
+        if (!FlaUIWinUI3DemoHost.IsWinAppRuntimeAvailable(exe))
             return;
 
         using var app = Application.Launch(exe);
@@ -364,8 +364,8 @@ public sealed class DataFilterWinUI3Demo_AttachContractsTests
     [Fact]
     public void ClearFilter_Department_RestoresMixedDepartments()
     {
-        var exe = GetWinUI3DemoExePath();
-        if (!IsWinAppRuntimeAvailable(exe))
+        var exe = FlaUIWinUI3DemoHost.BuildAndGetExePath();
+        if (!FlaUIWinUI3DemoHost.IsWinAppRuntimeAvailable(exe))
             return;
 
         using var app = Application.Launch(exe);
@@ -414,8 +414,8 @@ public sealed class DataFilterWinUI3Demo_AttachContractsTests
     [Fact]
     public void Filtering_MultiColumn_DeptItAndCountryUsa()
     {
-        var exe = GetWinUI3DemoExePath();
-        if (!IsWinAppRuntimeAvailable(exe))
+        var exe = FlaUIWinUI3DemoHost.BuildAndGetExePath();
+        if (!FlaUIWinUI3DemoHost.IsWinAppRuntimeAvailable(exe))
             return;
 
         using var app = Application.Launch(exe);
@@ -592,74 +592,6 @@ public sealed class DataFilterWinUI3Demo_AttachContractsTests
         Assert.True(r.Top >= wa.Top - tolerancePx, $"Expected popup within working area (top). popup={r}, workArea={wa}");
         Assert.True(r.Right <= wa.Right + tolerancePx, $"Expected popup within working area (right). popup={r}, workArea={wa}");
         Assert.True(r.Bottom <= wa.Bottom + tolerancePx, $"Expected popup within working area (bottom). popup={r}, workArea={wa}");
-    }
-
-    private static string GetWinUI3DemoExePath()
-    {
-        var repoRoot = FindRepoRoot();
-        var exe = Path.Combine(
-            repoRoot,
-            "demo",
-            "DataFilter.WinUI3.Demo",
-            "bin",
-            "x64",
-            "Release",
-            "net8.0-windows10.0.19041.0",
-            "DataFilter.WinUI3.Demo.exe");
-
-        if (!File.Exists(exe))
-        {
-            throw new FileNotFoundException(
-                $"Expected WinUI3 demo exe at '{exe}'. Build it first: dotnet build \"demo/DataFilter.WinUI3.Demo/DataFilter.WinUI3.Demo.csproj\" -c Release -p:Platform=x64");
-        }
-
-        return exe;
-    }
-
-    private static bool IsWinAppRuntimeAvailable(string exe)
-    {
-        try
-        {
-            var psi = new ProcessStartInfo
-            {
-                FileName = exe,
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                CreateNoWindow = true
-            };
-
-            using var p = Process.Start(psi);
-            if (p == null) return false;
-
-            // If WinAppRuntime is missing, the process typically exits immediately with REGDB_E_CLASSNOTREG.
-            if (!p.WaitForExit(2000))
-            {
-                try { p.Kill(entireProcessTree: true); } catch { }
-                return true;
-            }
-
-            var err = (p.StandardError.ReadToEnd() ?? "") + (p.StandardOutput.ReadToEnd() ?? "");
-            return !err.Contains("REGDB_E_CLASSNOTREG", StringComparison.OrdinalIgnoreCase)
-                   && !err.Contains("0x80040154", StringComparison.OrdinalIgnoreCase)
-                   && p.ExitCode == 0;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    private static string FindRepoRoot()
-    {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "DataFilter.slnx")))
-                return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("Could not find repo root (DataFilter.slnx).");
     }
 
     private static T? WaitFor<T>(Func<T?> get, TimeSpan timeout) where T : class

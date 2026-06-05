@@ -26,6 +26,8 @@ public sealed class DemoHostFixture : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
+        await PlaywrightBrowserBootstrap.EnsureChromiumAsync().ConfigureAwait(false);
+
         _repoRoot = FindRepoRoot();
 
         var httpPort = GetFreeTcpPort();

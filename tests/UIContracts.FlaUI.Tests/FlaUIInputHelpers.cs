@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Drawing;
 using global::FlaUI.Core.AutomationElements;
 using global::FlaUI.Core.Definitions;
@@ -19,6 +20,20 @@ internal static class FlaUIInputHelpers
     }
 
     public static void Activate(Window window) => Focus(window);
+
+    /// <summary>Returns false when SendInput is blocked (remote desktop, UIPI, etc.).</summary>
+    public static bool TryMouseClick(Point point)
+    {
+        try
+        {
+            global::FlaUI.Core.Input.Mouse.Click(point);
+            return true;
+        }
+        catch (Win32Exception)
+        {
+            return false;
+        }
+    }
 
     public static void InvokeOrClick(AutomationElement element)
     {
@@ -72,8 +87,15 @@ internal static class FlaUIInputHelpers
 
     public static void SetCheckBoxState(CheckBox checkbox, bool desiredChecked)
     {
-        if (checkbox.IsChecked == desiredChecked)
-            return;
+        try
+        {
+            if (checkbox.IsChecked == desiredChecked)
+                return;
+        }
+        catch
+        {
+            // WinForms ToolStrip-hosted checkboxes often lack a readable toggle state.
+        }
 
         try
         {

@@ -342,7 +342,12 @@ public static class FilterPipelineEditor
         if (pipeline.RootCombineOperator != LogicalOperator.Or)
             EnsureRootOrCombine(pipeline);
 
-        int index = Math.Clamp(orInsertIndex, 0, pipeline.RootNodes.Count);
+        int index = orInsertIndex;
+        if (index < 0)
+            index = 0;
+        else if (index > pipeline.RootNodes.Count)
+            index = pipeline.RootNodes.Count;
+
         var group = new GroupPipelineNode
         {
             CombineOperator = LogicalOperator.And,
