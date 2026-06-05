@@ -1,4 +1,5 @@
 using System.Text.Json;
+using DataFilter.Core.Abstractions;
 using DataFilter.Core.Enums;
 using DataFilter.Core.Models;
 using DataFilter.Core.Pipeline;
@@ -13,6 +14,11 @@ public static class FilterPipelineSnapshotMapper
     public const int CurrentSchemaVersion = 1;
 
     public static FilterPipelineSnapshot ToSnapshot(FilterPipeline pipeline)
+        => ToSnapshot(pipeline, sortEntries: null);
+
+    public static FilterPipelineSnapshot ToSnapshot(
+        FilterPipeline pipeline,
+        IReadOnlyList<SortSnapshotEntry>? sortEntries)
     {
         if (pipeline == null) throw new ArgumentNullException(nameof(pipeline));
 
@@ -20,8 +26,49 @@ public static class FilterPipelineSnapshotMapper
         {
             SchemaVersion = CurrentSchemaVersion,
             RootCombineOperator = pipeline.RootCombineOperator.ToString(),
-            Nodes = pipeline.RootNodes.Select(ToDto).ToList()
+            Nodes = pipeline.RootNodes.Select(ToDto).ToList(),
+            SortEntries = sortEntries?.Select(CloneSortEntry).ToList() ?? new List<SortSnapshotEntry>()
         };
+    }
+
+    public static FilterPipelineSnapshot ToSnapshot(IFilterSnapshot legacySnapshot)
+    {
+        if (legacySnapshot == null) throw new ArgumentNullException(nameof(legacySnapshot));
+
+        return ToSnapshot(
+            FilterPipelineInterop.FromLegacySnapshot(legacySnapshot),
+            legacySnapshot.SortEntries);
+    }
+
+    /// <param name="replaceSort">
+    /// When <see langword="true"/>, replaces the context sort (clears when <paramref name="sortEntries"/> is empty).
+    /// When <see langword="false"/>, leaves the current sort unchanged.
+    /// </param>
+    public static void ApplySortEntries(
+        IFilterContext context,
+        IEnumerable<SortSnapshotEntry>? sortEntries,
+        bool replaceSort = true)
+    {
+        if (context == null) throw new ArgumentNullException(nameof(context));
+        if (!replaceSort)
+            return;
+
+        if (context is not FilterContext concreteContext)
+        {
+            throw new ArgumentException(
+                $"ApplySortEntries requires a {nameof(FilterContext)} instance.", nameof(context));
+        }
+
+        concreteContext.ClearSort();
+        if (sortEntries == null)
+            return;
+
+        List<SortSnapshotEntry> sortList = sortEntries as List<SortSnapshotEntry> ?? sortEntries.ToList();
+        if (sortList.Count == 0)
+            return;
+
+        foreach (SortSnapshotEntry sortEntry in sortList)
+            concreteContext.AddSort(sortEntry.PropertyName, sortEntry.IsDescending);
     }
 
     public static FilterPipeline ToPipeline(FilterPipelineSnapshot snapshot)
@@ -105,6 +152,13 @@ public static class FilterPipelineSnapshotMapper
 
         throw new ArgumentException($"Unknown Kind '{dto.Kind}'.", nameof(dto));
     }
+
+    private static SortSnapshotEntry CloneSortEntry(SortSnapshotEntry entry)
+        => new()
+        {
+            PropertyName = entry.PropertyName,
+            IsDescending = entry.IsDescending
+        };
 
     private static LogicalOperator ParseLogical(string value)
     {

@@ -32,8 +32,9 @@ For applications that need an **ordered list** of criteria, **named groups**, **
 | `CriterionPipelineNode` | Leaf: property name, operator name (`FilterOperator`), and value (same shapes as `FilterSnapshotEntry`). |
 | `GroupPipelineNode` | Named group: `DisplayName`, `CombineOperator`, ordered `Children`. |
 | `FilterPipelineCompiler` | Walks enabled nodes and returns `IReadOnlyList<IFilterDescriptor>` (groups become `FilterGroup` with internal keys `__group_{id}`; multiple root OR branches compile to one `FilterGroup` with OR). |
-| `FilterPipelineSnapshot` / `FilterPipelineNodeDto` | Versioned DTO for `System.Text.Json` or other serializers. |
+| `FilterPipelineSnapshot` / `FilterPipelineNodeDto` | Versioned DTO for presets. **`Nodes`** and **`SortEntries`** are mutable lists — edit in memory and apply without JSON. |
 | `FilterPipelineSnapshotMapper` | Maps between the graph and the DTO; normalizes `JsonElement` values after deserialization. |
+| `FilterPipelineSnapshotEditor` | Client-side CRUD on snapshot criteria and sort (`AddRootCriterion`, `AddSort`, `RemoveNode`, `MoveSort`, `Clone`, …). |
 | `FilterPipelineInterop.FromLegacySnapshot` | Builds a `FilterPipeline` from an existing `IFilterSnapshot` (e.g. after using column filters). |
 
 Apply to runtime state with **`FilterContext.ReplaceDescriptors(FilterPipelineCompiler.Compile(pipeline))`** or **`FilterPipelineContextExtensions.ApplyToContext(pipeline, filterContext)`**. This replaces the entire descriptor list; it does **not** merge by property name (unlike `AddOrUpdateDescriptor`).

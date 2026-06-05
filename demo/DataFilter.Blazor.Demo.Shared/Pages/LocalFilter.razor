@@ -1,6 +1,8 @@
 @page "/demo/local"
 @using DataFilter.Blazor.Demo.Shared.State
+@using DataFilter.Core.Enums
 @using DataFilter.Core.Models
+@using DataFilter.Core.Services
 @using DataFilter.Demo.Shared.Services
 @inject DemoState State
 @inject NavigationManager Navigation
@@ -15,7 +17,7 @@
 <div class="card mb-3">
     <div class="card-body">
         <div class="d-flex align-items-center justify-content-between mb-2">
-            <strong>Filter pipeline (JSON preset)</strong>
+            <strong>Filter pipeline preset</strong>
         </div>
 
         <textarea class="form-control font-monospace" rows="8" data-testid="df-pipeline-json" @bind="_pipelineJson"></textarea>
@@ -25,9 +27,11 @@
             <div class="text-danger mt-2" data-testid="df-pipeline-error">@_jsonError</div>
         }
 
-        <div class="d-flex gap-2 mt-2">
+        <div class="d-flex gap-2 mt-2 flex-wrap">
             <button class="btn btn-outline-secondary" data-testid="df-pipeline-sync" @onclick="SyncPipelineFromGrid">Sync from grid</button>
             <button class="btn btn-primary" data-testid="df-pipeline-apply" @onclick="ApplyPipelineJson">Apply JSON</button>
+            <button class="btn btn-outline-primary" @onclick="ApplyWorkingSnapshot">Apply snapshot</button>
+            <button class="btn btn-outline-primary" @onclick="AddSampleSortToWorkingSnapshot">Add sample sort</button>
         </div>
     </div>
 </div>
@@ -57,6 +61,7 @@
   ]
 }";
     private string? _jsonError;
+    private FilterPipelineSnapshot _workingSnapshot = new();
 
     protected override void OnInitialized()
     {
@@ -79,8 +84,38 @@
         _jsonError = null;
         if (_grid == null) return;
 
-        var snapshot = _grid.CreatePipelineSnapshotFromCurrentGrid();
-        _pipelineJson = FilterPipelineJson.Serialize(snapshot);
+        _workingSnapshot = _grid.CreateFilterPipelineSnapshot();
+        _pipelineJson = FilterPipelineJson.Serialize(_workingSnapshot);
+    }
+
+    private async Task ApplyWorkingSnapshot()
+    {
+        _jsonError = null;
+        if (_grid == null) return;
+
+        try
+        {
+            await _grid.ApplyFilterPipelineSnapshotAsync(_workingSnapshot);
+        }
+        catch (Exception ex)
+        {
+            _jsonError = ex.Message;
+        }
+    }
+
+    private void AddSampleSortToWorkingSnapshot()
+    {
+        if (_workingSnapshot.Nodes.Count == 0)
+        {
+            FilterPipelineSnapshotEditor.AddRootCriterion(
+                _workingSnapshot,
+                "IsActive",
+                nameof(FilterOperator.Equals),
+                true);
+        }
+
+        FilterPipelineSnapshotEditor.AddSort(_workingSnapshot, "Name", isDescending: false);
+        FilterPipelineSnapshotEditor.AddSort(_workingSnapshot, "Department", isDescending: true);
     }
 
     private async Task ApplyPipelineJson()

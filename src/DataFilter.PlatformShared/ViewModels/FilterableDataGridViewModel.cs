@@ -76,6 +76,11 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
         FilterBar.RebuildDisplay();
     }
 
+    private void SyncSessionSortFromContext()
+    {
+        PipelineSession.ReplaceSortEntries(new FilterSnapshotBuilder().CreateSnapshot(Context).SortEntries);
+    }
+
     /// <summary>
     /// Initializes a new instance with the default <see cref="ExcelFilterEngine"/>.
     /// </summary>
@@ -222,6 +227,7 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
             ctx.Page = 1;
         }
         await RefreshDataAsync();
+        SyncSessionSortFromContext();
     }
 
     public async void AddSubSort(string propertyName, bool isDescending)
@@ -232,6 +238,7 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
             ctx.Page = 1;
         }
         await RefreshDataAsync();
+        SyncSessionSortFromContext();
     }
 
     public async void ClearSort()
@@ -242,6 +249,7 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
             ctx.Page = 1;
         }
         await RefreshDataAsync();
+        SyncSessionSortFromContext();
     }
 
     public Task<IEnumerable<object>> GetDistinctValuesAsync(string propertyName, string searchText)
@@ -292,7 +300,7 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
     {
         if (pipeline == null) throw new ArgumentNullException(nameof(pipeline));
         PipelineSession.ReplacePipeline(pipeline);
-        await ApplyPipelineSessionToContextAsync();
+        await ApplyPipelineSessionToContextAsync(replaceSort: false);
         OnFilterDescriptorsChanged(new FilterDescriptorsChangedEventArgs());
     }
 
@@ -303,12 +311,36 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
     }
 
     /// <inheritdoc />
+    public FilterPipelineSnapshot CreateFilterPipelineSnapshot()
+    {
+        PipelineSession.SyncFromContext(Context);
+        return FilterPipelineSnapshotEditor.Clone(PipelineSession.ToSnapshot());
+    }
+
+    /// <inheritdoc />
+    public async Task ApplyFilterPipelineSnapshotAsync(FilterPipelineSnapshot snapshot)
+    {
+        if (snapshot == null) throw new ArgumentNullException(nameof(snapshot));
+
+        PipelineSession.ReplaceFromSnapshot(snapshot);
+        await ApplyPipelineSessionToContextAsync(replaceSort: true);
+        OnFilterDescriptorsChanged(new FilterDescriptorsChangedEventArgs());
+    }
+
+    /// <inheritdoc />
+    public async Task ApplyPipelineSessionAsync()
+    {
+        await ApplyPipelineSessionToContextAsync(replaceSort: true);
+        OnFilterDescriptorsChanged(new FilterDescriptorsChangedEventArgs());
+    }
+
+    /// <inheritdoc />
     public async Task ApplyBarCriterionAsync(string nodeId, string propertyName, ExcelFilterState state)
     {
         if (PipelineSession.TryGetNode(nodeId, out FilterPipelineNode? node) && node is CriterionPipelineNode c)
             FilterBarCriterionMapper.ApplyStateToCriterion(c, propertyName, state);
 
-        await ApplyPipelineSessionToContextAsync();
+        await ApplyPipelineSessionToContextAsync(replaceSort: false);
         OnFilterDescriptorsChanged(new FilterDescriptorsChangedEventArgs { AffectedPropertyName = propertyName });
     }
 
@@ -316,7 +348,7 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
     public async Task RemoveBarNodeAsync(string nodeId)
     {
         PipelineSession.RemoveNode(nodeId);
-        await ApplyPipelineSessionToContextAsync();
+        await ApplyPipelineSessionToContextAsync(replaceSort: false);
         OnFilterDescriptorsChanged(new FilterDescriptorsChangedEventArgs());
     }
 
@@ -324,7 +356,7 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
     /// Applies enabled pipeline nodes to <see cref="Context"/> without rebuilding the session graph
     /// (preserves disabled nodes and bar structure).
     /// </summary>
-    private async Task ApplyPipelineSessionToContextAsync()
+    private async Task ApplyPipelineSessionToContextAsync(bool replaceSort)
     {
         if (Context is FilterContext ctx)
         {
@@ -332,6 +364,10 @@ public partial class FilterableDataGridViewModel : ObservableObject, IFilterable
             var excelDescriptors = FilterDescriptorToExcelConverter.ConvertCompiledPipeline(compiled);
             ctx.ReplaceDescriptors(excelDescriptors);
             ctx.Page = 1;
+            FilterPipelineSnapshotMapper.ApplySortEntries(
+                ctx,
+                PipelineSession.SortEntries,
+                replaceSort);
         }
 
         await RefreshDataAsync();

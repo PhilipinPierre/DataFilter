@@ -2,6 +2,7 @@ using System.Collections;
 using System.ComponentModel;
 using System.Globalization;
 using DataFilter.Core.Abstractions;
+using DataFilter.Core.Models;
 using DataFilter.Core.Pipeline;
 using DataFilter.Filtering.ExcelLike.Abstractions;
 using DataFilter.Filtering.ExcelLike.Models;
@@ -43,6 +44,18 @@ public interface IFilterableDataGridViewModel : INotifyPropertyChanged
     /// </summary>
     FilterPipeline CreatePipelineFromCurrentSnapshot();
     /// <summary>
+    /// Builds a JSON-friendly snapshot of the active pipeline and multi-column sort order.
+    /// </summary>
+    FilterPipelineSnapshot CreateFilterPipelineSnapshot();
+    /// <summary>
+    /// Applies a pipeline preset and restores <see cref="FilterPipelineSnapshot.SortEntries"/> when present.
+    /// </summary>
+    Task ApplyFilterPipelineSnapshotAsync(FilterPipelineSnapshot snapshot);
+    /// <summary>
+    /// Applies the live <see cref="PipelineSession"/> pipeline and sort entries (no JSON).
+    /// </summary>
+    Task ApplyPipelineSessionAsync();
+    /// <summary>
     /// Live pipeline used by the filter bar (stable node ids).
     /// </summary>
     FilterPipelineSession PipelineSession { get; }
@@ -77,4 +90,7 @@ public interface IFilterableDataGridViewModel<T> : IFilterableDataGridViewModel
     new Task RefreshDataAsync();
     new Task ApplyFilterPipelineAsync(FilterPipeline pipeline);
     new FilterPipeline CreatePipelineFromCurrentSnapshot();
+    new FilterPipelineSnapshot CreateFilterPipelineSnapshot();
+    new Task ApplyFilterPipelineSnapshotAsync(FilterPipelineSnapshot snapshot);
+    new Task ApplyPipelineSessionAsync();
 }

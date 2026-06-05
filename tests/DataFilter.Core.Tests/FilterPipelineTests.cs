@@ -58,6 +58,81 @@ public class FilterPipelineTests
     }
 
     [Fact]
+    public void SnapshotEditor_Mutates_Criteria_And_Sort_In_Memory()
+    {
+        var snapshot = new FilterPipelineSnapshot();
+        FilterPipelineSnapshotEditor.AddRootCriterion(
+            snapshot,
+            "IsActive",
+            nameof(FilterOperator.Equals),
+            true);
+        FilterPipelineSnapshotEditor.AddSort(snapshot, "Name", isDescending: false);
+        FilterPipelineSnapshotEditor.AddSort(snapshot, "Department", isDescending: true);
+
+        Assert.Single(snapshot.Nodes);
+        Assert.Equal(2, snapshot.SortEntries.Count);
+        Assert.True(FilterPipelineSnapshotEditor.RemoveSortAt(snapshot, 0));
+        Assert.Single(snapshot.SortEntries);
+        Assert.Equal("Department", snapshot.SortEntries[0].PropertyName);
+
+        var clone = FilterPipelineSnapshotEditor.Clone(snapshot);
+        Assert.NotSame(snapshot.Nodes, clone.Nodes);
+        Assert.Equal(snapshot.Nodes[0].Id, clone.Nodes[0].Id);
+    }
+
+    [Fact]
+    public void SnapshotMapper_RoundTrip_Preserves_Sort_Order()
+    {
+        var pipeline = new FilterPipeline();
+        pipeline.RootNodes.Add(new CriterionPipelineNode { PropertyName = "IsActive", Operator = nameof(FilterOperator.Equals), Value = true });
+        var sortEntries = new[]
+        {
+            new SortSnapshotEntry { PropertyName = "Name", IsDescending = false },
+            new SortSnapshotEntry { PropertyName = "Department", IsDescending = true }
+        };
+
+        var dto = FilterPipelineSnapshotMapper.ToSnapshot(pipeline, sortEntries);
+        var back = FilterPipelineSnapshotMapper.ToPipeline(dto);
+
+        Assert.Equal(2, dto.SortEntries.Count);
+        Assert.Equal("Name", dto.SortEntries[0].PropertyName);
+        Assert.False(dto.SortEntries[0].IsDescending);
+        Assert.Equal("Department", dto.SortEntries[1].PropertyName);
+        Assert.True(dto.SortEntries[1].IsDescending);
+        Assert.Single(back.RootNodes);
+
+        var ctx = new FilterContext();
+        FilterPipelineSnapshotMapper.ApplySortEntries(ctx, dto.SortEntries);
+
+        Assert.Equal(2, ctx.SortDescriptors.Count);
+        Assert.Equal("Name", ctx.SortDescriptors[0].PropertyName);
+        Assert.False(ctx.SortDescriptors[0].IsDescending);
+        Assert.Equal("Department", ctx.SortDescriptors[1].PropertyName);
+        Assert.True(ctx.SortDescriptors[1].IsDescending);
+    }
+
+    [Fact]
+    public void SnapshotMapper_FromLegacySnapshot_Includes_Sort()
+    {
+        var legacy = new FilterSnapshot(
+            new[]
+            {
+                new FilterSnapshotEntry { PropertyName = "Age", Operator = nameof(FilterOperator.GreaterThan), Value = 30 }
+            },
+            new[]
+            {
+                new SortSnapshotEntry { PropertyName = "Name", IsDescending = true }
+            });
+
+        var dto = FilterPipelineSnapshotMapper.ToSnapshot(legacy);
+
+        Assert.Single(dto.Nodes);
+        Assert.Single(dto.SortEntries);
+        Assert.Equal("Name", dto.SortEntries[0].PropertyName);
+        Assert.True(dto.SortEntries[0].IsDescending);
+    }
+
+    [Fact]
     public void SnapshotMapper_RoundTrip_Preserves_Structure()
     {
         var original = new FilterPipeline();

@@ -52,10 +52,9 @@ public sealed class FilterSnapshotBuilder : IFilterSnapshotBuilder
             concreteContext.AddOrUpdateDescriptor(descriptor);
         }
 
+        concreteContext.ClearSort();
         foreach (SortSnapshotEntry sortEntry in snapshot.SortEntries)
-        {
-            concreteContext.SetSort(sortEntry.PropertyName, sortEntry.IsDescending);
-        }
+            concreteContext.AddSort(sortEntry.PropertyName, sortEntry.IsDescending);
     }
 
     private static FilterSnapshotEntry DescriptorToEntry(IFilterDescriptor descriptor)

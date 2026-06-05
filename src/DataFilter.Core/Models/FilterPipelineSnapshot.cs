@@ -21,6 +21,11 @@ public sealed class FilterPipelineSnapshot
     /// Ordered root nodes.
     /// </summary>
     public List<FilterPipelineNodeDto> Nodes { get; set; } = new();
+
+    /// <summary>
+    /// Ordered multi-column sort (primary first). Omitted or empty in older presets means no sort change on apply.
+    /// </summary>
+    public List<SortSnapshotEntry> SortEntries { get; set; } = new();
 }
 
 /// <summary>

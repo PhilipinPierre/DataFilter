@@ -44,6 +44,26 @@ public class FilterSnapshotBuilderTests
     }
 
     [Fact]
+    public void RestoreSnapshot_MultiColumnSort_PreservesOrder()
+    {
+        FilterContext original = new();
+        original.AddSort("Name", isDescending: false);
+        original.AddSort("Department", isDescending: true);
+
+        FilterSnapshotBuilder builder = new();
+        IFilterSnapshot snapshot = builder.CreateSnapshot(original);
+
+        FilterContext restored = new();
+        builder.RestoreSnapshot(restored, snapshot);
+
+        Assert.Equal(2, restored.SortDescriptors.Count);
+        Assert.Equal("Name", restored.SortDescriptors[0].PropertyName);
+        Assert.False(restored.SortDescriptors[0].IsDescending);
+        Assert.Equal("Department", restored.SortDescriptors[1].PropertyName);
+        Assert.True(restored.SortDescriptors[1].IsDescending);
+    }
+
+    [Fact]
     public void RestoreSnapshot_RoundTrip_RebuildsIdenticalContext()
     {
         FilterContext original = new();

@@ -293,17 +293,29 @@ else
         await ApplyFiltersAsync();
     }
 
+    /// <summary>Live pipeline + sort session for direct client edits (no JSON).</summary>
+    public FilterPipelineSession PipelineSession => _pipelineSession;
+
     public FilterPipelineSnapshot CreatePipelineSnapshotFromCurrentGrid()
+        => CreateFilterPipelineSnapshot();
+
+    /// <summary>Clones the current grid state as a mutable snapshot.</summary>
+    public FilterPipelineSnapshot CreateFilterPipelineSnapshot()
     {
-        var legacySnapshot = new FilterSnapshotBuilder().CreateSnapshot(_context);
-        var pipeline = FilterPipelineInterop.FromLegacySnapshot(legacySnapshot);
-        return FilterPipelineSnapshotMapper.ToSnapshot(pipeline);
+        SyncSessionSortFromGrid();
+        _pipelineSession.SyncFromContext(_context);
+        return FilterPipelineSnapshotEditor.Clone(_pipelineSession.ToSnapshot());
     }
 
     public async Task ApplyPipelineSnapshotAsync(FilterPipelineSnapshot snapshot)
+        => await ApplyFilterPipelineSnapshotAsync(snapshot);
+
+    public async Task ApplyFilterPipelineSnapshotAsync(FilterPipelineSnapshot snapshot)
     {
-        var pipeline = FilterPipelineSnapshotMapper.ToPipeline(snapshot);
-        await ApplyFilterPipelineAsync(pipeline);
+        if (snapshot == null) throw new ArgumentNullException(nameof(snapshot));
+
+        _pipelineSession.ReplaceFromSnapshot(snapshot);
+        await ApplyFilterPipelineCoreAsync(_pipelineSession.Pipeline, replaceSort: true);
     }
 
     public async Task ApplyFilterPipelineAsync(FilterPipeline pipeline)
@@ -311,12 +323,26 @@ else
         if (pipeline == null) throw new ArgumentNullException(nameof(pipeline));
 
         _pipelineSession.ReplacePipeline(pipeline);
+        await ApplyFilterPipelineCoreAsync(pipeline, replaceSort: false);
+    }
+
+    /// <summary>Applies <see cref="PipelineSession"/> after in-memory edits to pipeline or sort lists.</summary>
+    public async Task ApplyPipelineSessionAsync()
+    {
+        await ApplyFilterPipelineCoreAsync(_pipelineSession.Pipeline, replaceSort: true);
+    }
+
+    private async Task ApplyFilterPipelineCoreAsync(FilterPipeline pipeline, bool replaceSort)
+    {
         var compiled = FilterPipelineCompiler.Compile(pipeline);
         var converted = FilterDescriptorToExcelConverter.ConvertCompiledPipeline(compiled);
 
         // Replace context so DataProvider / local engine run against the preset.
         _context.ReplaceDescriptors(converted);
         _context.Page = 1;
+        FilterPipelineSnapshotMapper.ApplySortEntries(_context, _pipelineSession.SortEntries, replaceSort);
+        if (replaceSort)
+            SyncGridSortFromSession();
 
         // Best-effort sync back to per-column popups (works for descriptors that can be represented as ExcelFilterState).
         var byProperty = converted
@@ -391,21 +417,24 @@ else
         if (_pipelineSession.TryGetNode(nodeId, out var node) && node is CriterionPipelineNode c)
             FilterBarCriterionMapper.ApplyStateToCriterion(c, propertyName, state);
 
-        await ApplyPipelineSessionToContextAsync();
+        await ApplyPipelineSessionToContextAsync(replaceSort: false);
     }
 
     private async Task RemoveBarNodeAsync(string nodeId)
     {
         _pipelineSession.RemoveNode(nodeId);
-        await ApplyPipelineSessionToContextAsync();
+        await ApplyPipelineSessionToContextAsync(replaceSort: false);
     }
 
-    private async Task ApplyPipelineSessionToContextAsync()
+    private async Task ApplyPipelineSessionToContextAsync(bool replaceSort)
     {
         var compiled = FilterPipelineCompiler.Compile(_pipelineSession.Pipeline);
         var converted = FilterDescriptorToExcelConverter.ConvertCompiledPipeline(compiled);
         _context.ReplaceDescriptors(converted);
         _context.Page = 1;
+        FilterPipelineSnapshotMapper.ApplySortEntries(_context, _pipelineSession.SortEntries, replaceSort);
+        if (replaceSort)
+            SyncGridSortFromSession();
 
         var byProperty = converted
             .OfType<ExcelFilterDescriptor>()
@@ -429,6 +458,7 @@ else
         if (string.IsNullOrWhiteSpace(propertyName)) return;
         _sortDescriptors.Clear();
         _sortDescriptors.Add((propertyName, isDescending));
+        SyncSessionSortFromGrid();
     }
 
     private void AddSubSortInternal(string propertyName, bool isDescending)
@@ -436,6 +466,23 @@ else
         if (string.IsNullOrWhiteSpace(propertyName)) return;
         _sortDescriptors.RemoveAll(s => string.Equals(s.PropertyName, propertyName, StringComparison.OrdinalIgnoreCase));
         _sortDescriptors.Add((propertyName, isDescending));
+        SyncSessionSortFromGrid();
+    }
+
+    private void SyncSessionSortFromGrid()
+    {
+        _pipelineSession.ReplaceSortEntries(_sortDescriptors.Select(s => new SortSnapshotEntry
+        {
+            PropertyName = s.PropertyName,
+            IsDescending = s.IsDescending
+        }));
+    }
+
+    private void SyncGridSortFromSession()
+    {
+        _sortDescriptors.Clear();
+        foreach (SortSnapshotEntry sort in _pipelineSession.SortEntries)
+            _sortDescriptors.Add((sort.PropertyName, sort.IsDescending));
     }
 
     public class ColumnDefinition<T>

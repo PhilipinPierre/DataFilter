@@ -26,40 +26,62 @@
                        Foreground="Gray" />
         </StackPanel>
 
-        <Border Grid.Row="1"
-                Margin="10,0,10,10"
-                Padding="10"
-                BorderBrush="LightGray"
-                BorderThickness="1"
-                CornerRadius="4">
-            <StackPanel VerticalAlignment="Stretch">
-                <TextBlock Text="Filter pipeline (JSON preset)"
-                           FontWeight="Bold"
-                           Margin="0,0,0,6" />
-                <TextBox Text="{Binding PipelineJson, UpdateSourceTrigger=PropertyChanged}"
-                         AutomationProperties.AutomationId="df-pipeline-json"
-                         AcceptsReturn="True"
-                         TextWrapping="Wrap"
-                         VerticalScrollBarVisibility="Auto"
-                         MinHeight="100"
-                         FontFamily="Consolas"
-                         FontSize="12" 
-                         MaxHeight="300"/>
-                <StackPanel Orientation="Horizontal"
-                            Margin="0,8,0,0"
-                            VerticalAlignment="Stretch">
-                    <Button Content="Sync from grid"
-                            AutomationProperties.AutomationId="df-pipeline-sync"
-                            Command="{Binding SyncPipelineFromGridCommand}"
-                            Margin="0,0,8,0"
-                            Padding="12,4" />
-                    <Button Content="Apply JSON"
-                            AutomationProperties.AutomationId="df-pipeline-apply"
-                            Command="{Binding ApplyPipelineJsonCommand}"
-                            Padding="12,4" />
-                </StackPanel>
-            </StackPanel>
-        </Border>
+        <Expander Grid.Row="1"
+                  Margin="10,0,10,10"
+                  Padding="10"
+                  BorderBrush="LightGray"
+                  BorderThickness="1">
+            <Expander.Header>
+                <TextBlock Text="Filter pipeline preset"
+                           FontWeight="Bold"/>
+            </Expander.Header>
+            <Expander.Content>
+                <Grid MaxHeight="350">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Sync loads a mutable snapshot (WorkingSnapshot). Edit criteria/sort in code or via JSON, then apply."
+                               TextWrapping="Wrap"
+                               Foreground="Gray"
+                               Margin="0,0,0,6"
+                               Grid.Row="0"/>
+                    <TextBox Text="{Binding PipelineJson, UpdateSourceTrigger=PropertyChanged}"
+                             AutomationProperties.AutomationId="df-pipeline-json"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             VerticalScrollBarVisibility="Auto"
+                             MinHeight="100"
+                             FontFamily="Consolas"
+                             FontSize="12"
+                             MaxHeight="300"
+                             Grid.Row="1" />
+                    <StackPanel Orientation="Horizontal"
+                                Margin="0,8,0,0"
+                                VerticalAlignment="Stretch"
+                                Grid.Row="2">
+                        <Button Content="Sync from grid"
+                                AutomationProperties.AutomationId="df-pipeline-sync"
+                                Command="{Binding SyncPipelineFromGridCommand}"
+                                Margin="0,0,8,0"
+                                Padding="12,4" />
+                        <Button Content="Apply JSON"
+                                AutomationProperties.AutomationId="df-pipeline-apply"
+                                Command="{Binding ApplyPipelineJsonCommand}"
+                                Margin="0,0,8,0"
+                                Padding="12,4" />
+                        <Button Content="Apply snapshot"
+                                Command="{Binding ApplyWorkingSnapshotCommand}"
+                                Margin="0,0,8,0"
+                                Padding="12,4" />
+                        <Button Content="Add sample sort"
+                                Command="{Binding AddSampleSortToWorkingSnapshotCommand}"
+                                Padding="12,4" />
+                    </StackPanel>
+                </Grid>
+            </Expander.Content>
+        </Expander>
 
         <wpf:FilterGridChrome x:Name="GridChrome"
                               Grid.Row="2"

@@ -116,6 +116,11 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
         FilterBar.RebuildDisplay();
     }
 
+    private void SyncSessionSortFromContext()
+    {
+        PipelineSession.ReplaceSortEntries(new FilterSnapshotBuilder().CreateSnapshot(Context).SortEntries);
+    }
+
     /// <inheritdoc />
     public Task RefreshDataAsync()
     {
@@ -194,6 +199,7 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
         
         // Refresh filter as well to ensure consistency
         RefreshDataAsync();
+        SyncSessionSortFromContext();
     }
 
     /// <inheritdoc />
@@ -214,6 +220,7 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
         CollectionView.SortDescriptions.Add(new SortDescription(propertyName, isDescending ? ListSortDirection.Descending : ListSortDirection.Ascending));
         
         RefreshDataAsync();
+        SyncSessionSortFromContext();
     }
 
     /// <inheritdoc />
@@ -225,6 +232,7 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
         }
         CollectionView.SortDescriptions.Clear();
         RefreshDataAsync();
+        SyncSessionSortFromContext();
     }
 
     /// <inheritdoc />
@@ -298,7 +306,7 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
         if (PipelineSession.TryGetNode(nodeId, out FilterPipelineNode? node) && node is CriterionPipelineNode c)
             FilterBarCriterionMapper.ApplyStateToCriterion(c, propertyName, state);
 
-        await ApplyPipelineSessionToContextAsync();
+        await ApplyPipelineSessionToContextAsync(replaceSort: false);
         OnFilterDescriptorsChanged(new FilterDescriptorsChangedEventArgs { AffectedPropertyName = propertyName });
     }
 
@@ -306,7 +314,7 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
     public async Task RemoveBarNodeAsync(string nodeId)
     {
         PipelineSession.RemoveNode(nodeId);
-        await ApplyPipelineSessionToContextAsync();
+        await ApplyPipelineSessionToContextAsync(replaceSort: false);
         OnFilterDescriptorsChanged();
     }
 
@@ -315,23 +323,61 @@ public partial class CollectionViewFilterAdapter<T> : ObservableObject, ICollect
     {
         if (pipeline == null) throw new ArgumentNullException(nameof(pipeline));
         PipelineSession.ReplacePipeline(pipeline);
-        await ApplyPipelineSessionToContextAsync();
+        await ApplyPipelineSessionToContextAsync(replaceSort: false);
         OnFilterDescriptorsChanged();
     }
 
-    private async Task ApplyPipelineSessionToContextAsync()
+    /// <inheritdoc />
+    public FilterPipelineSnapshot CreateFilterPipelineSnapshot()
+    {
+        PipelineSession.SyncFromContext(Context);
+        return FilterPipelineSnapshotEditor.Clone(PipelineSession.ToSnapshot());
+    }
+
+    /// <inheritdoc />
+    public async Task ApplyFilterPipelineSnapshotAsync(FilterPipelineSnapshot snapshot)
+    {
+        if (snapshot == null) throw new ArgumentNullException(nameof(snapshot));
+
+        PipelineSession.ReplaceFromSnapshot(snapshot);
+        await ApplyPipelineSessionToContextAsync(replaceSort: true);
+        OnFilterDescriptorsChanged();
+    }
+
+    /// <inheritdoc />
+    public async Task ApplyPipelineSessionAsync()
+    {
+        await ApplyPipelineSessionToContextAsync(replaceSort: true);
+        OnFilterDescriptorsChanged();
+    }
+
+    private async Task ApplyPipelineSessionToContextAsync(bool replaceSort)
     {
         if (Context is FilterContext ctx)
         {
             var compiled = FilterPipelineCompiler.Compile(PipelineSession.Pipeline);
             var excelDescriptors = FilterDescriptorToExcelConverter.ConvertCompiledPipeline(compiled);
             ctx.ReplaceDescriptors(excelDescriptors);
+            FilterPipelineSnapshotMapper.ApplySortEntries(ctx, PipelineSession.SortEntries, replaceSort);
+            if (replaceSort)
+                SyncCollectionViewSortFromSession();
             _columnFilterStates.Clear();
             SyncColumnFilterStatesFromContext();
         }
 
         await RefreshDataAsync();
         FilterBar.RebuildDisplay();
+    }
+
+    private void SyncCollectionViewSortFromSession()
+    {
+        CollectionView.SortDescriptions.Clear();
+        foreach (SortSnapshotEntry sort in PipelineSession.SortEntries)
+        {
+            CollectionView.SortDescriptions.Add(new SortDescription(
+                sort.PropertyName,
+                sort.IsDescending ? ListSortDirection.Descending : ListSortDirection.Ascending));
+        }
     }
 
     private string? ResolveDefaultFilterBarPropertyName()

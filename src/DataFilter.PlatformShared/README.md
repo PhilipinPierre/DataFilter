@@ -24,6 +24,21 @@ from **`DataFilter.Localization.LocalizationManager`** so language switching wor
 
 - **`Task ApplyFilterPipelineAsync(FilterPipeline pipeline)`** — compiles the pipeline, calls **`FilterContext.ReplaceDescriptors`**, resets page to 1, and refreshes data. Use this after loading a preset from JSON or editing the pipeline in your UI.
 - **`FilterPipeline CreatePipelineFromCurrentSnapshot()`** — builds a mutable **`FilterPipeline`** from the current filters via **`FilterPipelineInterop.FromLegacySnapshot(ExtractSnapshot())`**, suitable for displaying or serializing the active state.
+- **`FilterPipelineSnapshot CreateFilterPipelineSnapshot()`** / **`ApplyFilterPipelineSnapshotAsync`** — in-memory preset round-trip (filters + ordered **`SortEntries`**). JSON is optional via your own serializer.
+- **`Task ApplyPipelineSessionAsync()`** — applies live edits on **`PipelineSession.Pipeline`** and **`PipelineSession.SortEntries`** without building a snapshot.
+- **`FilterPipelineSnapshotEditor`** (Core) — helpers to mutate a snapshot before apply (`AddRootCriterion`, `AddSort`, `RemoveNode`, …).
+
+```csharp
+// Direct list edits (no JSON)
+var snapshot = grid.CreateFilterPipelineSnapshot();
+FilterPipelineSnapshotEditor.AddSort(snapshot, "Name");
+FilterPipelineSnapshotEditor.AddRootCriterion(snapshot, "Department", nameof(FilterOperator.Equals), "IT");
+await grid.ApplyFilterPipelineSnapshotAsync(snapshot);
+
+// Or mutate session lists, then apply
+grid.PipelineSession.SortEntries.Add(new SortSnapshotEntry { PropertyName = "Name" });
+await grid.ApplyPipelineSessionAsync();
+```
 
 Excel-style column filters continue to use **`ApplyColumnFilter`** / **`ClearColumnFilter`** (`AddOrUpdateDescriptor` under the hood). Mixing both approaches is possible but you should treat one path as the source of truth for a given screen, or sync explicitly.
 
@@ -74,6 +89,10 @@ Example JSON (two OR groups):
         { "kind": "criterion", "propertyName": "Name", "operator": "StartsWith", "value": "Bob" }
       ]
     }
+  ],
+  "sortEntries": [
+    { "propertyName": "Name", "isDescending": false },
+    { "propertyName": "Department", "isDescending": true }
   ]
 }
 ```
