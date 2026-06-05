@@ -53,15 +53,24 @@ The solution is divided into several main projects:
 ### 🔗 Filter pipeline (ordered criteria, groups, presets)
 - **Structured graph**: Model filters as an ordered tree of **criterion** and **named group** nodes with stable IDs, per-node **enable/disable**, and **AND/OR** at the root and inside groups (`FilterPipeline`, `CriterionPipelineNode`, `GroupPipelineNode` in **DataFilter.Core**).
 - **Compilation**: `FilterPipelineCompiler` produces `IFilterDescriptor` instances for the existing engine; root-level **OR** is represented as a single logical group so behavior stays consistent with `FilterExpressionBuilder`.
-- **Persistence**: Serialize **`FilterPipelineSnapshot`** (schema-versioned DTO) to JSON or your store; map with `FilterPipelineSnapshotMapper`. Import from legacy UI state via **`FilterPipelineInterop.FromLegacySnapshot(IFilterSnapshot)`**.
+- **Persistence**: **`FilterPipelineSnapshot`** (schema-versioned DTO) holds mutable **`Nodes`** and **`SortEntries`** lists — edit in memory, serialize to JSON when needed, or apply directly. Map with `FilterPipelineSnapshotMapper`; import from legacy UI state via **`FilterPipelineInterop.FromLegacySnapshot(IFilterSnapshot)`**.
+- **In-memory editing**: **`FilterPipelineSnapshotEditor`** (Core) adds/removes/moves criteria and sort entries without a JSON round-trip (`AddRootCriterion`, `AddSort`, `RemoveNode`, `Clone`, …).
 - **Context**: `IFilterContext.ReplaceDescriptors` applies the compiled list in order and allows **multiple criteria on the same property** when needed.
-- **ViewModels**: `FilterableDataGridViewModel` exposes **`ApplyFilterPipelineAsync`** and **`CreatePipelineFromCurrentSnapshot`** (see **DataFilter.PlatformShared**). The WPF demo **Local filter** scenario includes a JSON panel (sync from grid / apply preset).
+- **ViewModels**: `IFilterableDataGridViewModel` exposes **`ApplyFilterPipelineAsync`**, **`CreateFilterPipelineSnapshot`**, **`ApplyFilterPipelineSnapshotAsync`**, **`ApplyPipelineSessionAsync`**, and **`CreatePipelineFromCurrentSnapshot`** (see **DataFilter.PlatformShared**). Demos **Local filter** (WPF / Blazor) include JSON sync/apply and direct snapshot editing.
+- **Active filters bar**: Optional chip bar with AND/OR layout, enable/disable, drag-and-drop between clusters, and column-popup edits (`ShowFilterBar="True"` on `FilterGridChrome`, `DataFilterGrid`, `FilterGridChromeControl`, …). See **DataFilter.PlatformShared** README.
 
 ## Quick Start (WPF)
 
+Install packages (see [DataFilter.Wpf](src/DataFilter.Wpf/README.md) for details):
+
+```bash
+dotnet add package DataFilter.Wpf
+dotnet add package DataFilter.Wpf.PopupHost
+```
+
 ```xml
-<controls:FilterableDataGrid ItemsSource="{Binding FilteredItems}" 
-                             FilterContext="{Binding GridViewModel.Context}" />
+<wpf:FilterGridChrome GridViewModel="{Binding GridViewModel}"
+                      ShowFilterBar="True" />
 ```
 
 ```csharp
@@ -75,11 +84,12 @@ public class MyViewModel : ObservableObject
         {
             LocalDataSource = _myFullCollection
         };
-        // Initialization
         _ = GridViewModel.RefreshDataAsync();
     }
 }
 ```
+
+Host a `FilterableDataGrid` inside the chrome at runtime (see WPF demo `LocalFilterView`) or bind a standalone grid — see [DataFilter.Wpf README](src/DataFilter.Wpf/README.md).
 
 ### 2. Manual Integration (e.g. into GridView)
 
@@ -93,10 +103,13 @@ public class MyViewModel : ObservableObject
 
 For more in-depth examples and configuration options, please refer to the project-specific documentation:
 
-- [**DataFilter.Wpf**](src/DataFilter.Wpf/README.md): Detailed UI setup, theming, and behaviors for WPF.
-- [**DataFilter.Blazor**](src/DataFilter.Blazor/README.md): Component usage, styling, and host configuration for Blazor.
-- [**DataFilter.Core**](src/DataFilter.Core/README.md): Extending the filtering engine and understanding abstractions.
-- [**DataFilter.Expressions.Server**](src/DataFilter.Expressions.Server/README.md): Integrating server-side filtering with LINQ.
+- [**DataFilter.Core**](src/DataFilter.Core/README.md): Abstractions, filter pipeline, and `FilterPipelineSnapshotEditor`.
+- [**DataFilter.PlatformShared**](src/DataFilter.PlatformShared/README.md): Shared ViewModels, filter bar, pipeline apply APIs.
+- [**DataFilter.Filtering.ExcelLike**](src/DataFilter.Filtering.ExcelLike/README.md): Excel-style descriptors and selection reconciliation.
+- [**DataFilter.Wpf**](src/DataFilter.Wpf/README.md): WPF controls, themes, filter bar chrome, and behaviors.
+- [**DataFilter.Blazor**](src/DataFilter.Blazor/README.md): `DataFilterGrid`, styling, and host configuration for Blazor.
+- [**DataFilter.Expressions.Server**](src/DataFilter.Expressions.Server/README.md): Server-side LINQ from snapshots.
+- [**DataFilter.Localization**](src/DataFilter.Localization/README.md): Shared popup strings and runtime culture switching.
 
 ## Visual Customization
 

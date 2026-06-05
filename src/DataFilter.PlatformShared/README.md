@@ -1,29 +1,65 @@
 # DataFilter.PlatformShared
 
-Shared view-model logic for DataFilter UI specializations (WinForms, MAUI, WinUI 3, Uno/UWP XAML).
+Shared view-model logic for DataFilter UI specializations (WinForms, MAUI, WinUI 3, WPF adapters, Blazor grid).
+
+## NuGet integration
+
+### Install the package
+
+```bash
+dotnet add package DataFilter.PlatformShared
+```
+
+### Target frameworks
+
+`net8.0`, `net9.0`
+
+### Dependencies
+
+- `DataFilter.Core`
+- `DataFilter.Filtering.ExcelLike`
+- `DataFilter.Localization`
+- `CommunityToolkit.Mvvm`
+
+Add a UI package (`DataFilter.Wpf`, `DataFilter.Blazor`, …) for controls; use **PlatformShared** alone when wiring your own grid.
+
+### Quick start
+
+```csharp
+using DataFilter.Core.Enums;
+using DataFilter.Core.Models;
+using DataFilter.Core.Services;
+using DataFilter.PlatformShared.ViewModels;
+
+var grid = new FilterableDataGridViewModel<Employee>
+{
+    LocalDataSource = employees
+};
+await grid.RefreshDataAsync();
+
+// Apply a pipeline preset (filters + sort) edited in memory
+var snapshot = grid.CreateFilterPipelineSnapshot();
+FilterPipelineSnapshotEditor.AddRootCriterion(snapshot, "Department", nameof(FilterOperator.Equals), "IT");
+await grid.ApplyFilterPipelineSnapshotAsync(snapshot);
+```
 
 ## Localization
 
-All popup UI stacks should source their user-facing strings (buttons, section headers, operator names, etc.)
-from **`DataFilter.Localization.LocalizationManager`** so language switching works at runtime.
+All popup UI stacks source user-facing strings from **`DataFilter.Localization.LocalizationManager`**.
 
 ### Per-grid culture override
 
-`IFilterableDataGridViewModel` exposes:
+`IFilterableDataGridViewModel` exposes **`CultureInfo? CultureOverride`**. Constructors:
 
-- **`CultureInfo? CultureOverride`**: optional UI override culture used by integrations when showing popups.
-
-`FilterableDataGridViewModel` provides constructors:
-
-- `new FilterableDataGridViewModel(CultureInfo? cultureOverride)`
-- `new FilterableDataGridViewModel<T>(CultureInfo? cultureOverride)`
+- `new FilterableDataGridViewModel(cultureOverride)`
+- `new FilterableDataGridViewModel<T>(cultureOverride)`
 
 ## Filter pipeline integration
 
-`IFilterableDataGridViewModel` (implemented by `FilterableDataGridViewModel` and WPF’s `CollectionViewFilterAdapter`) includes:
+`IFilterableDataGridViewModel` includes:
 
-- **`Task ApplyFilterPipelineAsync(FilterPipeline pipeline)`** — compiles the pipeline, calls **`FilterContext.ReplaceDescriptors`**, resets page to 1, and refreshes data. Use this after loading a preset from JSON or editing the pipeline in your UI.
-- **`FilterPipeline CreatePipelineFromCurrentSnapshot()`** — builds a mutable **`FilterPipeline`** from the current filters via **`FilterPipelineInterop.FromLegacySnapshot(ExtractSnapshot())`**, suitable for displaying or serializing the active state.
+- **`Task ApplyFilterPipelineAsync(FilterPipeline pipeline)`** — compiles the pipeline, calls **`FilterContext.ReplaceDescriptors`**, resets page to 1, and refreshes data.
+- **`FilterPipeline CreatePipelineFromCurrentSnapshot()`** — mutable pipeline from current filters via **`FilterPipelineInterop.FromLegacySnapshot(ExtractSnapshot())`**.
 - **`FilterPipelineSnapshot CreateFilterPipelineSnapshot()`** / **`ApplyFilterPipelineSnapshotAsync`** — in-memory preset round-trip (filters + ordered **`SortEntries`**). JSON is optional via your own serializer.
 - **`Task ApplyPipelineSessionAsync()`** — applies live edits on **`PipelineSession.Pipeline`** and **`PipelineSession.SortEntries`** without building a snapshot.
 - **`FilterPipelineSnapshotEditor`** (Core) — helpers to mutate a snapshot before apply (`AddRootCriterion`, `AddSort`, `RemoveNode`, …).
@@ -40,7 +76,7 @@ grid.PipelineSession.SortEntries.Add(new SortSnapshotEntry { PropertyName = "Nam
 await grid.ApplyPipelineSessionAsync();
 ```
 
-Excel-style column filters continue to use **`ApplyColumnFilter`** / **`ClearColumnFilter`** (`AddOrUpdateDescriptor` under the hood). Mixing both approaches is possible but you should treat one path as the source of truth for a given screen, or sync explicitly.
+Excel-style column filters continue to use **`ApplyColumnFilter`** / **`ClearColumnFilter`** (`AddOrUpdateDescriptor` under the hood). Mixing both approaches is possible but treat one path as the source of truth per screen, or sync explicitly.
 
 ## Active filters bar (optional UI)
 
@@ -50,11 +86,11 @@ Excel-style column filters continue to use **`ApplyColumnFilter`** / **`ClearCol
 - **`FilterBarViewModel FilterBar`** — chips, AND/OR layout, enable/disable, remove, **+** (add AND criterion on the same cluster), and **OR+** (add a new OR group).
 - **`ApplyBarCriterionAsync` / `RemoveBarNodeAsync`** — targeted edits from the bar popup.
 
-Each UI package provides a default bar control (hidden by default). Enable it with **`ShowFilterBar="True"`**:
+Each UI package provides a default bar control (hidden by default). Enable with **`ShowFilterBar="True"`**:
 
 | Stack | Chrome host (bar + popup wiring) | Bar control alone |
 |-------|----------------------------------|-------------------|
-| WPF | `FilterGridChrome` | `FilterBar` (popup built-in) |
+| WPF | `FilterGridChrome` | `FilterBar` |
 | Blazor | `DataFilterGrid` | `FilterBar` |
 | WinForms | `FilterGridChromeControl` | `FilterBarControl` |
 | WinUI 3 | `FilterGridChrome` | `FilterBarControl` |
@@ -62,11 +98,11 @@ Each UI package provides a default bar control (hidden by default). Enable it wi
 
 Prefer the **chrome** host so bar edits open the column popup with pipeline apply/remove semantics.
 
-Interactions: left-click chip → column popup (single criterion); right-click → toggle enabled; **×** or Clear → remove node; **+** → add AND sibling on the same cluster; **OR+** → add a new AND group (e.g. `(Department = IT AND Name starts with Alice) OR (Department = RH AND Name starts with Bob)`). Set **`FilterPipeline.RootCombineOperator`** to **`Or`** automatically when a second group is added.
+Interactions: left-click chip → column popup (single criterion); right-click → toggle enabled; **×** or Clear → remove node; **+** → add AND sibling; **OR+** → add a new AND group. Set **`FilterPipeline.RootCombineOperator`** to **`Or`** when a second group is added.
 
-**Drag and drop**: drag a chip onto another **cluster** (bordered AND group) to move the criterion into that group; drag onto an **OR** separator to detach it into its own OR branch at that position. Uses **`FilterPipelineEditor.MoveCriterionToCluster`** / **`MoveCriterionToOrGap`** and reapplies the pipeline to the grid.
+**Drag and drop**: drag a chip onto another **cluster** to move the criterion; drag onto an **OR** separator to detach into its own OR branch. Uses **`FilterPipelineEditor.MoveCriterionToCluster`** / **`MoveCriterionToOrGap`**.
 
-Example JSON (two OR groups):
+Example JSON (two OR groups + sort):
 
 ```json
 {
@@ -99,6 +135,6 @@ Example JSON (two OR groups):
 
 ## `FilterableDataGridViewModel` and column popup sync
 
-- **`IFilterableDataGridViewModel.FilterDescriptorsChanged`**: Raised when the pipeline is applied/restored, when a column is cleared, and—on the **local** data path—when **`LocalDataSource`** **reference** changes after **`RefreshDataAsync`** (so column headers can refetch distinct values and **`LoadStateAsync`** into the popup).
-- **`RefreshDataAsync`**: Reconciles **`ExcelFilterDescriptor.State.SelectedValues`** against distincts from the current source, then applies filters. **Assign a new `LocalDataSource` then call `RefreshDataAsync`** so reconciliation and the event above run in order.
-- **`ColumnFilterViewModel`**: Applies **`ExcelFilterSelectionReconciler`** in **`InitializeAsync`** with **`dropSelectionsNotInDistinct: false`** to preserve selections not in the current narrow distinct list. **`LoadStateAsync`** restores list selection or, for **custom** filters, **`UpdateSelectionFromCustomFilter`** (including **all** stacked **`AdditionalCustomCriteria`**) so the popup matches **`ExcelFilterDescriptor`**. For persistence, the Excel-like state can also express **OR-combined search intent** (`OrSearchPatterns`, `OrSelectedValues`) to avoid materializing `In(list)` when reapplying presets on evolving data.
+- **`IFilterableDataGridViewModel.FilterDescriptorsChanged`**: Raised when the pipeline is applied/restored, when a column is cleared, and—on the **local** data path—when **`LocalDataSource`** **reference** changes after **`RefreshDataAsync`**.
+- **`RefreshDataAsync`**: Reconciles **`ExcelFilterDescriptor.State.SelectedValues`** against distincts from the current source. **Assign a new `LocalDataSource` then call `RefreshDataAsync`**.
+- **`ColumnFilterViewModel`**: Applies **`ExcelFilterSelectionReconciler`** in **`InitializeAsync`** with **`dropSelectionsNotInDistinct: false`**. **`LoadStateAsync`** restores list selection or, for **custom** filters, **`UpdateSelectionFromCustomFilter`** (including stacked **`AdditionalCustomCriteria`**).

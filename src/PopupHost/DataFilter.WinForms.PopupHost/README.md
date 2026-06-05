@@ -1,6 +1,51 @@
 # DataFilter.WinForms.PopupHost
 
-Hosts and positions the WinForms filter popup (open/close lifecycle, LTR/RTL anchoring, screen clamping).
+Hosts and positions the WinForms filter popup, and provides `FilterableDataGrid` plus attach adapters.
 
-This package contains only the popup hosting logic. UI controls remain in `DataFilter.WinForms`.
+## NuGet integration
 
+### Install the packages
+
+```bash
+dotnet add package DataFilter.WinForms
+dotnet add package DataFilter.WinForms.PopupHost
+```
+
+### Target frameworks
+
+`net8.0-windows`, `net9.0-windows`
+
+### Dependencies
+
+- `DataFilter.WinForms` (transitive: Core, ExcelLike, PlatformShared, Localization)
+
+### Quick start — FilterableDataGrid
+
+```csharp
+using DataFilter.PlatformShared.ViewModels;
+using DataFilter.WinForms.PopupHost;
+
+var vm = new FilterableDataGridViewModel<Employee> { LocalDataSource = items };
+await vm.RefreshDataAsync();
+
+var grid = new FilterableDataGrid
+{
+    Dock = DockStyle.Fill,
+    ViewModel = vm,
+    AutoGenerateColumns = true
+};
+grid.DataSource = vm.FilteredItems.Cast<Employee>().ToList();
+```
+
+### Quick start — attach to existing DataGridView
+
+```csharp
+var adapter = DataGridViewFilterAdapter.Attach(existingGrid, viewModel);
+```
+
+## What this package contains
+
+- **`FilterableDataGrid`**, **`DataGridViewFilterAdapter`**, **`FilterableDataGridViewComponent`** (designer extender).
+- Popup hosting: open/close lifecycle, LTR/RTL anchoring, screen clamping.
+
+Filter bar and popup **content** remain in **`DataFilter.WinForms`**.

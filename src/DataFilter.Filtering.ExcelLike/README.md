@@ -2,7 +2,46 @@
 
 High-performance engine for advanced, Excel-like filtering logic.
 
+## NuGet integration
+
+### Install the package
+
+```bash
+dotnet add package DataFilter.Filtering.ExcelLike
+```
+
+### Target frameworks
+
+`net8.0`, `net9.0`
+
+### Dependencies
+
+- `DataFilter.Core` (transitive when referenced from UI packages)
+
+Typically consumed indirectly via `DataFilter.Wpf`, `DataFilter.Blazor`, or `DataFilter.PlatformShared`. Add this package directly when building a custom UI on top of Core.
+
+### Quick start
+
+```csharp
+using DataFilter.Core.Abstractions;
+using DataFilter.Filtering.ExcelLike.Models;
+using DataFilter.Filtering.ExcelLike.Services;
+
+var state = new ExcelFilterState
+{
+    SelectedValues = new HashSet<object?> { "Alice", "Bob" },
+    SelectAll = false
+};
+
+var descriptor = new ExcelFilterDescriptor("Name", state);
+context.AddOrUpdateDescriptor(descriptor);
+
+// After replacing the data source, reconcile selections against new distincts
+ExcelFilterSelectionReconciler.Reconcile(state, distinctValues, dropSelectionsNotInDistinct: true);
+```
+
 ## Logic Overview
+
 - **Hierarchical Distinct Values**: Grouping dates by Year/Month/Day.
 - **Custom Filters**: Combining primitive selection with operator-based rules.
 - **Accumulation Modes**:
@@ -12,16 +51,20 @@ High-performance engine for advanced, Excel-like filtering logic.
 ## Key Services
 
 ### `ExcelFilterEngine`
+
 The central hub for data analysis and filter creation.
 
 ### `ExcelFilterDescriptor` / `ExcelFilterState`
+
 - **`Descriptors`** builds filter rules from the column state. A **custom** filter (`CustomOperator`) adds one rule; **`AdditionalCustomCriteria`** adds further **AND**-combined rules on the **same** property (same semantics as the popup’s stacked custom filters).
 - **`SelectedValues`** holds the distinct values used for list/In selection; the UI reconciles these when the backing data is replaced.
-- **`OrSearchPatterns`** persists *Union (OR)* of full search results without materializing distinct lists (e.g., `StartsWith(\"Alice\") OR StartsWith(\"Henry\")`).
-- **`OrSelectedValues`** persists *Union (OR)* when the user selects only a subset of a searched group (e.g., `StartsWith(\"Alice\") OR In([\"Henry 124\",\"Henry 146\"])`).
+- **`OrSearchPatterns`** persists *Union (OR)* of full search results without materializing distinct lists (e.g., `StartsWith("Alice") OR StartsWith("Henry")`).
+- **`OrSelectedValues`** persists *Union (OR)* when the user selects only a subset of a searched group (e.g., `StartsWith("Alice") OR In(["Henry 124","Henry 146"])`).
 
 ### `ExcelFilterSelectionReconciler`
+
 Keeps **`ExcelFilterState.SelectedValues`** aligned with **current** distinct value instances (e.g. after **`ItemSource` / `LocalDataSource`** replacement). Uses reference equality where possible, then value equality. The **`dropSelectionsNotInDistinct`** flag distinguishes **strict** reconciliation (grid refresh) from **popup** **InitializeAsync** (preserve off-list selections during search narrowing).
 
 ### `WildcardMatcher`
-Performance-optimized utility for text pattern matching (supporting `*` and `?`).
+
+Performance-optimized utility for text pattern matching (supporting `*` and `?`). Core evaluation also supports wildcards via `FilterEvaluator` / `FilterExpressionBuilder`.

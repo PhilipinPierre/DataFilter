@@ -1,44 +1,90 @@
 # DataFilter.Blazor
 
-Modern Blazor UI components for the DataFilter library, providing Excel-like filtering capabilities for your applications.
+Modern Blazor UI components for the DataFilter library, providing Excel-like filtering, filter pipeline presets, and an optional active-filters bar.
 
 ## Support
+
 - **Blazor Server**
 - **Blazor WebAssembly (Wasm)**
 - **Blazor Hybrid (MAUI)**
 
+## NuGet integration
+
+### Install the package
+
+```bash
+dotnet add package DataFilter.Blazor
+```
+
+`DataFilter.Blazor.PopupHost` is referenced transitively (popup positioning interop).
+
+### Target framework
+
+`net8.0` (browser-compatible Razor class library)
+
+### Dependencies (transitive)
+
+`DataFilter.Core`, `DataFilter.Filtering.ExcelLike`, `DataFilter.PlatformShared`, `DataFilter.Localization`, `DataFilter.Blazor.PopupHost`
+
+### Quick start
+
+1. Register static assets in `App.razor`, `index.html`, or `_Host.cshtml`:
+
+```html
+<link href="_content/DataFilter.Blazor/DataFilter.css" rel="stylesheet" />
+<script src="_content/DataFilter.Blazor/DataFilterInterops.js"></script>
+```
+
+2. Add imports in `_Imports.razor`:
+
+```razor
+@using DataFilter.Blazor.Components
+@using DataFilter.Core.Models
+@using DataFilter.Core.Services
+```
+
+3. Use **`DataFilterGrid`** (includes column popups; set **`ShowFilterBar="true"`** for the active-filters bar):
+
+```razor
+<DataFilterGrid @ref="_grid"
+                Items="@employees"
+                Columns="@columns"
+                ShowFilterBar="true" />
+```
+
+```csharp
+@code {
+    private DataFilterGrid<Employee>? _grid;
+
+    private async Task ApplyPreset(FilterPipelineSnapshot snapshot)
+        => await _grid!.ApplyFilterPipelineSnapshotAsync(snapshot);
+
+    private FilterPipelineSnapshot SyncFromGrid()
+        => _grid!.CreateFilterPipelineSnapshot();
+}
+```
+
+4. Headless integration — keep your own `<table>` and use **`Headless="true"`** with **`ChildContent`** (see demo `/demo/attach`).
+
 ## Key Components
 
+### `DataFilterGrid`
+
+All-in-one grid with filter headers, pipeline apply APIs (`ApplyFilterPipelineSnapshotAsync`, `CreateFilterPipelineSnapshot`, `ClearFilters`), and optional filter bar.
+
 ### `ColumnFilterButton`
-The entry point for filtering. Typically placed in a table header. It manages the filter state and toggles the popup.
+
+Entry point for filtering in custom table headers.
 
 ### `FilterPopup`
-The core UI for selection and advanced filtering. Supports:
-- Search-as-you-type.
-- Multi-select value list with hierarchical grouping (Dates).
-- Advanced operators (Equals, Contains, Greater Than, etc.).
-- Accumulation modes (Union / Intersection).
-- Blazor uses **`DataFilter.PlatformShared.ViewModels.ColumnFilterViewModel`** as the single source of truth for Excel-like behavior: reconciliation of **`SelectedValues`** when distincts change, `LoadStateAsync` vs custom-filter preview, **AND**-combined stacked custom criteria, and persistence of search intent in Union mode via `OrSearchPatterns` / `OrSelectedValues` (so presets don’t materialize huge `In(list)` snapshots).
 
-## Usage
+Search, multi-select list, advanced operators, Union / Intersection modes. Uses **`DataFilter.PlatformShared.ViewModels.ColumnFilterViewModel`** for Excel-like behavior (selection reconciliation, stacked custom criteria, search-intent persistence via `OrSearchPatterns` / `OrSelectedValues`).
 
-1. Add the project reference to `DataFilter.Blazor`.
-2. Add the following to your `_Imports.razor`:
-   ```razor
-   @using DataFilter.Blazor.Components
-   @using DataFilter.PlatformShared.ViewModels
-   ```
-3. Register the required JS and CSS in your `App.razor` or `index.html`:
-   ```html
-   <link href="_content/DataFilter.Blazor/DataFilter.css" rel="stylesheet" />
-   <script src="_content/DataFilter.Blazor/DataFilterInterops.js"></script>
-   ```
+### `FilterBar`
+
+Active-filters chip bar; enabled automatically when **`ShowFilterBar="true"`** on **`DataFilterGrid`**.
 
 ## Localization
-
-Popup UI texts are provided by `DataFilter.Localization`.
-
-To switch language at runtime:
 
 ```csharp
 using System.Globalization;
@@ -49,14 +95,4 @@ LocalizationManager.Instance.SetCulture(new CultureInfo("fr"));
 
 ## Customization
 
-All components use CSS classes prefixed with `df-`. You can easily override these in your application CSS:
-
-```css
-/* Example: Customizing the popup header */
-.df-popup-header {
-    background-color: #0078d4;
-    color: white;
-}
-```
-
-Refer to [DataFilter.css](wwwroot/DataFilter.css) for the list of available classes.
+Components use CSS classes prefixed with `df-`. Override in your app stylesheet. See [DataFilter.css](wwwroot/DataFilter.css) and [CUSTOMIZATION.md](../../CUSTOMIZATION.md).

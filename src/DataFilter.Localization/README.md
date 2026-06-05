@@ -2,12 +2,46 @@
 
 Shared localization resources and runtime culture switching helpers used by DataFilter UI integrations.
 
+## NuGet integration
+
+### Install the package
+
+```bash
+dotnet add package DataFilter.Localization
+```
+
+### Target frameworks
+
+`netstandard2.0`, `net8.0`, `net9.0`
+
+### Dependencies
+
+None. Referenced transitively by all UI packages (`DataFilter.Wpf`, `DataFilter.Blazor`, `DataFilter.WinForms`, etc.).
+
+### Quick start
+
+```csharp
+using System.Globalization;
+using DataFilter.Localization;
+
+// Switch popup language at runtime (all UI stacks)
+LocalizationManager.Instance.SetCulture(new CultureInfo("fr"));
+
+// Read a string
+var okLabel = LocalizationManager.Instance["Ok"];
+
+// Revert to process UI culture
+LocalizationManager.Instance.SetCulture(null);
+```
+
+Per-grid culture override is available on `IFilterableDataGridViewModel.CultureOverride` (see **DataFilter.PlatformShared**).
+
 ## What this project contains
 
 - **Shared RESX resources** for popup UI texts (buttons, section headers, operator names, etc.).
 - A single runtime entry point: **`DataFilter.Localization.LocalizationManager`**.
 
-This is used by the UI integrations:
+Used by the UI integrations:
 
 - `DataFilter.Wpf`
 - `DataFilter.WinForms`
@@ -68,4 +102,3 @@ Some frequently used keys:
 - `LoadingText`
 - `ModeUnion`, `ModeIntersection`
 - `SearchPlaceholder`
-
