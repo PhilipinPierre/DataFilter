@@ -36,7 +36,7 @@
                            FontWeight="Bold"/>
             </Expander.Header>
             <Expander.Content>
-                <Grid MaxHeight="350">
+                <Grid MaxHeight="325">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
