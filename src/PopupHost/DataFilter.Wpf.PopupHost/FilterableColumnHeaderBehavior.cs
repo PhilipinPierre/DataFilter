@@ -368,18 +368,20 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
 
         if (existingContent is UIElement element)
         {
-            // Move existing element to dockpanel
             header.Content = null;
             dockPanel.Children.Add(element);
         }
         else
         {
-            var textBlock = new TextBlock
+            var contentPresenter = new ContentPresenter
             {
-                Text = existingContent?.ToString() ?? string.Empty,
-                VerticalAlignment = VerticalAlignment.Center
+                Content = existingContent,
+                ContentTemplate = header.ContentTemplate,
+                ContentTemplateSelector = header.ContentTemplateSelector,
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
             };
-            dockPanel.Children.Add(textBlock);
+            dockPanel.Children.Add(contentPresenter);
         }
 
         header.Content = dockPanel;

@@ -1,6 +1,7 @@
 ﻿using DataFilter.Core.Abstractions;
 using DataFilter.Wpf.Behaviors;
 using DataFilter.Wpf.ViewModels;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -13,12 +14,80 @@ namespace DataFilter.Wpf.Controls;
 /// </summary>
 public class FilterableDataGrid : DataGrid
 {
+    private bool _applyingFilterableHeaderStyle;
+
+    static FilterableDataGrid()
+    {
+        ColumnHeaderStyleProperty.OverrideMetadata(
+            typeof(FilterableDataGrid),
+            new FrameworkPropertyMetadata(null, OnColumnHeaderStylePropertyChanged));
+    }
+
     public FilterableDataGrid()
     {
-        var style = new Style(typeof(DataGridColumnHeader));
+        Loaded += (_, _) => EnsureFilterableColumnHeaderStyle();
+        EnsureFilterableColumnHeaderStyle();
+    }
+
+    private static void OnColumnHeaderStylePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is not FilterableDataGrid grid || grid._applyingFilterableHeaderStyle)
+            return;
+
+        grid.EnsureFilterableColumnHeaderStyle();
+    }
+
+    /// <summary>
+    /// Merges filterable header behavior into the existing column header style
+    /// (e.g. Material Design) instead of replacing it.
+    /// </summary>
+    public void EnsureFilterableColumnHeaderStyle()
+    {
+        var baseStyle = ResolveUserColumnHeaderBaseStyle(ColumnHeaderStyle);
+        if (baseStyle != null && baseStyle.TargetType != typeof(DataGridColumnHeader))
+            baseStyle = null;
+
+        if (ColumnHeaderStyle is Style current
+            && HasFilterableSetter(current)
+            && (baseStyle == null ? current.BasedOn == null : ReferenceEquals(current.BasedOn, baseStyle)))
+        {
+            return;
+        }
+
+        if (baseStyle != null && HasFilterableSetter(baseStyle) && ReferenceEquals(ColumnHeaderStyle, baseStyle))
+            return;
+
+        var style = new Style(typeof(DataGridColumnHeader), baseStyle);
         style.Setters.Add(new Setter(FilterableColumnHeaderBehavior.IsFilterableProperty, true));
 
-        this.ColumnHeaderStyle = style;
+        _applyingFilterableHeaderStyle = true;
+        try
+        {
+            ColumnHeaderStyle = style;
+        }
+        finally
+        {
+            _applyingFilterableHeaderStyle = false;
+        }
+    }
+
+    private static bool HasFilterableSetter(Style style) =>
+        style.Setters.OfType<Setter>().Any(s =>
+            s.Property == FilterableColumnHeaderBehavior.IsFilterableProperty && s.Value is true);
+
+    private static Style? ResolveUserColumnHeaderBaseStyle(Style? style)
+    {
+        if (style == null)
+            return null;
+
+        if (!HasFilterableSetter(style))
+            return style;
+
+        // Our wrapper only adds IsFilterable=true on top of the user style.
+        if (style.Setters.Count == 1)
+            return style.BasedOn;
+
+        return style;
     }
 
     public static readonly DependencyProperty ViewModelProperty =
