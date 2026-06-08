@@ -29,6 +29,8 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
     private GridFilterVm? _filterParentSubscriptions;
     private System.Globalization.CultureInfo? _cultureBeforePopup;
     private object? _trackedColumn;
+    private int _columnResolveAttempts;
+    private int _initResolveAttempts;
     private DataTemplate? _savedHeaderContentTemplate;
     private DataTemplateSelector? _savedHeaderContentTemplateSelector;
 
@@ -111,6 +113,11 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         base.OnAttached();
         AssociatedObject.Loaded += OnAssociatedObjectLoaded;
         AssociatedObject.DataContextChanged += OnDataContextChanged;
+
+        // IsFilterable is often applied via ColumnHeaderStyle after the header has already Loaded
+        // (e.g. auto-generated columns before FilterableDataGrid.Loaded in the Local demo).
+        if (AssociatedObject.IsLoaded)
+            _ = HandleColumnContextChangedAsync();
     }
 
     protected override void OnDetaching()
@@ -147,7 +154,18 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
     {
         var column = GetAssociatedColumn();
         if (column == null)
+        {
+            if (_columnResolveAttempts++ < 12)
+            {
+                AssociatedObject.Dispatcher.BeginInvoke(
+                    () => _ = HandleColumnContextChangedAsync(),
+                    System.Windows.Threading.DispatcherPriority.Loaded);
+            }
+
             return;
+        }
+
+        _columnResolveAttempts = 0;
 
         if (ReferenceEquals(column, _trackedColumn) && _viewModel != null)
             return;
@@ -173,6 +191,17 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         TryResolvePropertyName();
         TryResolveParentViewModel();
         await TryInitializeAsync();
+
+        if (_viewModel == null && !string.IsNullOrEmpty(PropertyName) && _initResolveAttempts++ < 12)
+        {
+            AssociatedObject.Dispatcher.BeginInvoke(
+                () => _ = HandleColumnContextChangedAsync(),
+                System.Windows.Threading.DispatcherPriority.DataBind);
+            return;
+        }
+
+        if (_viewModel != null)
+            _initResolveAttempts = 0;
 
         if (_contentInjected && AssociatedObject is ContentControl header && header.Content is DockPanel dock)
             UpdateDockPanelForCurrentColumn(dock);

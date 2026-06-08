@@ -27,6 +27,14 @@ public class FilterableDataGrid : DataGrid
     {
         CanUserReorderColumns = false;
         Loaded += OnFilterableDataGridLoaded;
+        Columns.CollectionChanged += (_, _) =>
+        {
+            if (!IsLoaded)
+                return;
+
+            EnsureFilterableColumnHeaderStyle();
+            PreserveColumnDisplayOrder();
+        };
     }
 
     private void OnFilterableDataGridLoaded(object sender, RoutedEventArgs e)
@@ -34,6 +42,13 @@ public class FilterableDataGrid : DataGrid
         EnsureFilterableColumnHeaderStyle();
         PreserveColumnDisplayOrder();
         DataGridScrollViewerFix.Apply(this);
+
+        // Auto-generated columns may appear after the first Loaded pass (code-behind / late bindings).
+        Dispatcher.BeginInvoke(() =>
+        {
+            EnsureFilterableColumnHeaderStyle();
+            PreserveColumnDisplayOrder();
+        }, System.Windows.Threading.DispatcherPriority.Loaded);
     }
 
     /// <summary>
@@ -102,8 +117,9 @@ public class FilterableDataGrid : DataGrid
         var value = ReadLocalValue(ColumnHeaderStyleProperty);
         if (value == DependencyProperty.UnsetValue)
         {
+            // No user style (demo / default grid): still apply the filterable header wrapper.
             style = null;
-            return false;
+            return true;
         }
 
         style = value as Style;
