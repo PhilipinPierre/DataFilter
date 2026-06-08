@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Linq;
 using DataFilter.Localization;
 using DataFilter.Wpf.Controls;
 using DataFilter.Wpf.ViewModels;
@@ -27,6 +28,9 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
     private bool _contentInjected;
     private GridFilterVm? _filterParentSubscriptions;
     private System.Globalization.CultureInfo? _cultureBeforePopup;
+    private object? _trackedColumn;
+    private DataTemplate? _savedHeaderContentTemplate;
+    private DataTemplateSelector? _savedHeaderContentTemplateSelector;
 
     #region IsFilterable Attached Property
 
@@ -131,24 +135,51 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
 
     }
 
-    private async void OnAssociatedObjectLoaded(object sender, RoutedEventArgs e)
-    {
-        TryResolvePropertyName();
-        TryResolveParentViewModel();
-        await TryInitializeAsync();
-    }
+    private async void OnAssociatedObjectLoaded(object sender, RoutedEventArgs e) =>
+        await HandleColumnContextChangedAsync();
 
     private async void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
+        await HandleColumnContextChangedAsync();
+    }
+
+    private async Task HandleColumnContextChangedAsync()
+    {
+        var column = GetAssociatedColumn();
+        if (column == null)
+            return;
+
+        if (ReferenceEquals(column, _trackedColumn) && _viewModel != null)
+            return;
+
+        _trackedColumn = column;
+        await ResetAndInitializeForColumnAsync();
+    }
+
+    private object? GetAssociatedColumn() =>
+        AssociatedObject switch
+        {
+            DataGridColumnHeader dgHeader => dgHeader.Column,
+            GridViewColumnHeader gvHeader => gvHeader.Column,
+            _ => null
+        };
+
+    private async Task ResetAndInitializeForColumnAsync()
+    {
+        UnsubscribeParentFilterEvents();
+        _viewModel = null;
+        PropertyName = null;
+
         TryResolvePropertyName();
         TryResolveParentViewModel();
         await TryInitializeAsync();
+
+        if (_contentInjected && AssociatedObject is ContentControl header && header.Content is DockPanel dock)
+            UpdateDockPanelForCurrentColumn(dock);
     }
 
     private void TryResolvePropertyName()
     {
-        if (!string.IsNullOrEmpty(PropertyName)) return;
-
         // Implementation for DataGrid
         if (AssociatedObject is DataGridColumnHeader dgHeader && dgHeader.Column != null)
         {
@@ -335,13 +366,24 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
 
     private void BuildHeaderContent()
     {
-        if (_contentInjected || _viewModel == null) return;
+        if (_viewModel == null) return;
+
+        if (_contentInjected && AssociatedObject is ContentControl existingHeader && existingHeader.Content is DockPanel existingDock)
+        {
+            UpdateDockPanelForCurrentColumn(existingDock);
+            return;
+        }
+
+        if (_contentInjected) return;
         _contentInjected = true;
 
         ContentControl? header = AssociatedObject as ContentControl;
         if (header == null) return;
 
-        var existingContent = header.Content;
+        _savedHeaderContentTemplate = header.ContentTemplate;
+        _savedHeaderContentTemplateSelector = header.ContentTemplateSelector;
+        _trackedColumn = GetAssociatedColumn();
+
         var dockPanel = new DockPanel
         {
             LastChildFill = true,
@@ -351,6 +393,8 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         _filterButton = new ColumnFilterButton
         {
             Margin = new Thickness(4, 0, 0, 0),
+            MinWidth = 14,
+            MinHeight = 14,
             VerticalAlignment = VerticalAlignment.Center,
             Cursor = Cursors.Hand
         };
@@ -366,25 +410,78 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         DockPanel.SetDock(_filterButton, Dock.Right);
         dockPanel.Children.Add(_filterButton);
 
-        if (existingContent is UIElement element)
+        var contentPresenter = CreateHeaderContentPresenter();
+        dockPanel.Children.Add(contentPresenter);
+
+        // Prevent the column header ContentTemplate from binding to the DockPanel (shows type name).
+        header.ContentTemplate = null;
+        header.ContentTemplateSelector = null;
+        header.Content = dockPanel;
+    }
+
+    private ContentPresenter CreateHeaderContentPresenter()
+    {
+        var contentPresenter = new ContentPresenter
         {
-            header.Content = null;
-            dockPanel.Children.Add(element);
-        }
-        else
+            ContentTemplate = _savedHeaderContentTemplate,
+            ContentTemplateSelector = _savedHeaderContentTemplateSelector,
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+        };
+        ApplyHeaderContentBinding(contentPresenter);
+        return contentPresenter;
+    }
+
+    private void ApplyHeaderContentBinding(ContentPresenter contentPresenter)
+    {
+        BindingOperations.ClearBinding(contentPresenter, ContentPresenter.ContentProperty);
+
+        if (AssociatedObject is DataGridColumnHeader)
         {
-            var contentPresenter = new ContentPresenter
-            {
-                Content = existingContent,
-                ContentTemplate = header.ContentTemplate,
-                ContentTemplateSelector = header.ContentTemplateSelector,
-                VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-            };
-            dockPanel.Children.Add(contentPresenter);
+            BindingOperations.SetBinding(
+                contentPresenter,
+                ContentPresenter.ContentProperty,
+                new Binding
+                {
+                    RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor, typeof(DataGridColumnHeader), 1),
+                    Path = new PropertyPath("Column.Header"),
+                    Mode = BindingMode.OneWay,
+                });
+            return;
         }
 
-        header.Content = dockPanel;
+        if (AssociatedObject is GridViewColumnHeader)
+        {
+            BindingOperations.SetBinding(
+                contentPresenter,
+                ContentPresenter.ContentProperty,
+                new Binding
+                {
+                    RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor, typeof(GridViewColumnHeader), 1),
+                    Path = new PropertyPath("Column.Header"),
+                    Mode = BindingMode.OneWay,
+                });
+        }
+    }
+
+    private void UpdateDockPanelForCurrentColumn(DockPanel dockPanel)
+    {
+        if (_viewModel == null)
+            return;
+
+        var contentPresenter = dockPanel.Children.OfType<ContentPresenter>().FirstOrDefault();
+        if (contentPresenter != null)
+            ApplyHeaderContentBinding(contentPresenter);
+
+        if (_filterButton == null)
+            return;
+
+        _filterButton.SetBinding(
+            ColumnFilterButton.IsActiveProperty,
+            new Binding(nameof(ColumnFilterVm.IsFilterActive)) { Source = _viewModel });
+
+        if (!string.IsNullOrWhiteSpace(PropertyName))
+            AutomationProperties.SetAutomationId(_filterButton, $"df-filter-btn-{PropertyName}");
     }
 
     /// <summary>

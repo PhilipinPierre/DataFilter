@@ -7,10 +7,15 @@
     </ResourceDictionary.MergedDictionaries>
 
     <!-- Default Template for ColumnFilterButton -->
-    <Style TargetType="{x:Type controls:ColumnFilterButton}">
+    <Style x:Key="ColumnFilterButtonBase"
+           TargetType="{x:Type controls:ColumnFilterButton}">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Padding" Value="4" />
+        <Setter Property="MinWidth" Value="14" />
+        <Setter Property="MinHeight" Value="14" />
+        <Setter Property="ActiveBrush" Value="{DynamicResource FilterButtonActiveColor}" />
+        <Setter Property="InactiveBrush" Value="{DynamicResource FilterButtonInactiveColor}" />
         <Setter Property="HorizontalAlignment"
                 Value="Right" />
         <Setter Property="Template">
@@ -57,5 +62,8 @@
             </Trigger>
         </Style.Triggers>
     </Style>
+
+    <Style TargetType="{x:Type controls:ColumnFilterButton}"
+           BasedOn="{StaticResource ColumnFilterButtonBase}" />
 
 </ResourceDictionary>

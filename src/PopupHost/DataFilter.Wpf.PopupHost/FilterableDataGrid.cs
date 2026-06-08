@@ -25,13 +25,32 @@ public class FilterableDataGrid : DataGrid
 
     public FilterableDataGrid()
     {
-        Loaded += (_, _) => EnsureFilterableColumnHeaderStyle();
+        CanUserReorderColumns = false;
+        Loaded += OnFilterableDataGridLoaded;
+    }
+
+    private void OnFilterableDataGridLoaded(object sender, RoutedEventArgs e)
+    {
         EnsureFilterableColumnHeaderStyle();
+        PreserveColumnDisplayOrder();
+        DataGridScrollViewerFix.Apply(this);
+    }
+
+    /// <summary>
+    /// Keeps columns in XAML declaration order (WPF default allows drag-reorder via header).
+    /// </summary>
+    public void PreserveColumnDisplayOrder()
+    {
+        for (var i = 0; i < Columns.Count; i++)
+            Columns[i].DisplayIndex = i;
     }
 
     private static void OnColumnHeaderStylePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is not FilterableDataGrid grid || grid._applyingFilterableHeaderStyle)
+            return;
+
+        if (e.NewValue == DependencyProperty.UnsetValue)
             return;
 
         grid.EnsureFilterableColumnHeaderStyle();
@@ -43,18 +62,21 @@ public class FilterableDataGrid : DataGrid
     /// </summary>
     public void EnsureFilterableColumnHeaderStyle()
     {
-        var baseStyle = ResolveUserColumnHeaderBaseStyle(ColumnHeaderStyle);
+        if (!TryGetColumnHeaderStyle(out var columnHeaderStyle))
+            return;
+
+        var baseStyle = ResolveUserColumnHeaderBaseStyle(columnHeaderStyle);
         if (baseStyle != null && baseStyle.TargetType != typeof(DataGridColumnHeader))
             baseStyle = null;
 
-        if (ColumnHeaderStyle is Style current
+        if (columnHeaderStyle is Style current
             && HasFilterableSetter(current)
             && (baseStyle == null ? current.BasedOn == null : ReferenceEquals(current.BasedOn, baseStyle)))
         {
             return;
         }
 
-        if (baseStyle != null && HasFilterableSetter(baseStyle) && ReferenceEquals(ColumnHeaderStyle, baseStyle))
+        if (baseStyle != null && HasFilterableSetter(baseStyle) && ReferenceEquals(columnHeaderStyle, baseStyle))
             return;
 
         var style = new Style(typeof(DataGridColumnHeader), baseStyle);
@@ -74,6 +96,19 @@ public class FilterableDataGrid : DataGrid
     private static bool HasFilterableSetter(Style style) =>
         style.Setters.OfType<Setter>().Any(s =>
             s.Property == FilterableColumnHeaderBehavior.IsFilterableProperty && s.Value is true);
+
+    private bool TryGetColumnHeaderStyle(out Style? style)
+    {
+        var value = ReadLocalValue(ColumnHeaderStyleProperty);
+        if (value == DependencyProperty.UnsetValue)
+        {
+            style = null;
+            return false;
+        }
+
+        style = value as Style;
+        return true;
+    }
 
     private static Style? ResolveUserColumnHeaderBaseStyle(Style? style)
     {
