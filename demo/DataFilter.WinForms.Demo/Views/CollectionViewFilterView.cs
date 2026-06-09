@@ -1,11 +1,13 @@
 using System.ComponentModel;
-using DataFilter.WinForms.Controls;
-using DataFilter.WinForms.Demo.ViewModels;
 using DataFilter.Demo.Shared.Models;
+using DataFilter.Demo.Shared.Services;
+using DataFilter.WinForms.Controls;
+using DataFilter.WinForms.Demo.Services;
+using DataFilter.WinForms.Demo.ViewModels;
 
 namespace DataFilter.WinForms.Demo.Views;
 
-public partial class CollectionViewFilterView : UserControl
+public partial class CollectionViewFilterView : UserControl, IDemoHeaderSettingsView
 {
     private readonly FilterableDataGrid _grid;
 
@@ -57,5 +59,13 @@ public partial class CollectionViewFilterView : UserControl
                 if (IsHandleCreated) BeginInvoke(() => _grid.DataSource = viewModel.GridViewModel.FilteredItems.ToList());
             }
         };
+
+        ApplyHeaderSettings(viewModel.HeaderSettings);
+    }
+
+    public void ApplyHeaderSettings(DemoHeaderSettings settings)
+    {
+        _grid.AreColumnFiltersEnabled = settings.AreColumnFiltersEnabled;
+        _grid.ColumnFilterTriggerMode = settings.ColumnFilterTriggerMode;
     }
 }

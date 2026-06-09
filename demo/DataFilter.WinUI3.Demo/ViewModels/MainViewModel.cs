@@ -9,6 +9,8 @@ public partial class MainViewModel : ObservableObject
 {
     public double RowCount { get; set; } = 1000;
 
+    public DemoHeaderSettings HeaderSettings { get; }
+
     public LocalFilterScenarioViewModel LocalFilterScenario { get; }
     public AsyncFilterScenarioViewModel AsyncFilterScenario { get; }
     public HybridFilterScenarioViewModel HybridFilterScenario { get; }
@@ -17,6 +19,7 @@ public partial class MainViewModel : ObservableObject
     public CollectionViewScenarioViewModel CollectionViewScenario { get; }
 
     public MainViewModel(
+        DemoHeaderSettings headerSettings,
         LocalFilterScenarioViewModel localFilterScenario,
         AsyncFilterScenarioViewModel asyncFilterScenario,
         HybridFilterScenarioViewModel hybridFilterScenario,
@@ -24,6 +27,7 @@ public partial class MainViewModel : ObservableObject
         ListViewScenarioViewModel listViewScenario,
         CollectionViewScenarioViewModel collectionViewScenario)
     {
+        HeaderSettings = headerSettings;
         LocalFilterScenario = localFilterScenario;
         AsyncFilterScenario = asyncFilterScenario;
         HybridFilterScenario = hybridFilterScenario;

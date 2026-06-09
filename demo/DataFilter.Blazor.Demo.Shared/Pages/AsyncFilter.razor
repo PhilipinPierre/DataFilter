@@ -12,7 +12,11 @@
 </div>
 
 <div class="grid-container">
-    <DataFilterGrid @ref="_grid" DataProvider="@ApiService" Columns="@_columns" />
+    <DataFilterGrid @ref="_grid"
+                    DataProvider="@ApiService"
+                    Columns="@_columns"
+                    AreColumnFiltersEnabled="@State.AreColumnFiltersEnabled"
+                    ColumnFilterTriggerMode="@State.ColumnFilterTriggerMode" />
 </div>
 
 @code {

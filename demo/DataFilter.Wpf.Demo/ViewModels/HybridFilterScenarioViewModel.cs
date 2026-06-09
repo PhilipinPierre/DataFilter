@@ -5,17 +5,20 @@ using DataFilter.Wpf.ViewModels;
 
 namespace DataFilter.Wpf.Demo.ViewModels;
 
-public sealed partial class HybridFilterScenarioViewModel : ObservableObject, IDemoItem
+public sealed partial class HybridFilterScenarioViewModel : ObservableObject, IDemoItem, IDemoHeaderSettingsHost
 {
     private readonly IMockEmployeeApiService _mockService;
+
+    public DemoHeaderSettings HeaderSettings { get; }
 
     [ObservableProperty]
     private IFilterableDataGridViewModel<Employee> _gridViewModel;
     [ObservableProperty]
     private IEnumerable<Employee> _employees;
 
-    public HybridFilterScenarioViewModel(IMockEmployeeApiService mockService)
+    public HybridFilterScenarioViewModel(IMockEmployeeApiService mockService, DemoHeaderSettings headerSettings)
     {
+        HeaderSettings = headerSettings;
         _mockService = mockService;
         Regenerate(1000);
     }

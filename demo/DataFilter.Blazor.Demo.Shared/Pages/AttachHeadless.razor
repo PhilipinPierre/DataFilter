@@ -14,7 +14,9 @@
     <DataFilterGrid @ref="_grid"
                     Headless="true"
                     Items="@_data"
-                    Columns="@_columns">
+                    Columns="@_columns"
+                    AreColumnFiltersEnabled="@State.AreColumnFiltersEnabled"
+                    ColumnFilterTriggerMode="@State.ColumnFilterTriggerMode">
         <ChildContent Context="ctx">
             <table class="table table-striped table-hover align-middle">
                 <thead>
@@ -23,9 +25,16 @@
                         {
                             <th>
                                 <div class="d-flex align-items-center gap-2">
-                                    <span>@col.Title</span>
+                                    @if (ctx.GetEffectiveTriggerMode(col) == DataFilter.PlatformShared.ColumnFilter.ColumnFilterTriggerMode.FilterButton)
+                                    {
+                                        <span>@col.Title</span>
+                                    }
                                     <ColumnFilterButton ViewModel="@ctx.GetColumnFilterViewModel(col.Id)"
-                                                        ColumnKey="@(string.IsNullOrWhiteSpace(col.PropertyName) ? col.Id : col.PropertyName)">
+                                                        ColumnKey="@(string.IsNullOrWhiteSpace(col.PropertyName) ? col.Id : col.PropertyName)"
+                                                        Title="@(ctx.GetEffectiveTriggerMode(col) == DataFilter.PlatformShared.ColumnFilter.ColumnFilterTriggerMode.FilterButton ? null : col.Title)"
+                                                        AreColumnFiltersEnabled="@ctx.AreColumnFiltersEnabled"
+                                                        IsFilterable="@col.IsFilterable"
+                                                        TriggerMode="@ctx.GetEffectiveTriggerMode(col)">
                                         <PopupContent Context="popup">
                                             <FilterPopup ViewModel="@ctx.GetColumnFilterViewModel(col.Id)"
                                                          Visible="popup.Visible"

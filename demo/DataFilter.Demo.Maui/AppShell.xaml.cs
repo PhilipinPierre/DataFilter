@@ -1,3 +1,4 @@
+using DataFilter.Demo.Shared.Services;
 using DataFilter.Maui.Demo.ViewModels;
 using DataFilter.Localization;
 using System.Globalization;
@@ -33,6 +34,22 @@ namespace DataFilter.Maui
                 if (LanguagePicker.SelectedItem is LanguageOption opt)
                     LocalizationManager.Instance.SetCulture(opt.Culture);
             };
+
+            var settings = viewModel.HeaderSettings;
+            ColumnFiltersCheck.SetBinding(
+                CheckBox.IsCheckedProperty,
+                new Binding(
+                    nameof(DemoHeaderSettings.AreColumnFiltersEnabled),
+                    source: settings,
+                    mode: BindingMode.TwoWay));
+
+            TriggerModePicker.ItemsSource = DemoHeaderSettings.GridTriggerModes.ToList();
+            TriggerModePicker.SetBinding(
+                Picker.SelectedItemProperty,
+                new Binding(
+                    nameof(DemoHeaderSettings.ColumnFilterTriggerMode),
+                    source: settings,
+                    mode: BindingMode.TwoWay));
         }
 
         private sealed class LanguageOption

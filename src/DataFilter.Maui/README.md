@@ -23,6 +23,7 @@ dotnet add package DataFilter.Maui.PopupHost
 
 ```csharp
 using DataFilter.Maui.Controls;
+using DataFilter.PlatformShared.ColumnFilter;
 using DataFilter.PlatformShared.ViewModels;
 
 var vm = new FilterableDataGridViewModel<Employee>
@@ -34,9 +35,13 @@ await vm.RefreshDataAsync();
 var grid = new FilterableDataGrid
 {
     ViewModel = vm,
-    ItemsSource = vm.FilteredItems
+    ItemsSource = vm.FilteredItems,
+    AreColumnFiltersEnabled = true,
+    ColumnFilterTriggerMode = ColumnFilterTriggerMode.FilterButton,
 };
 ```
+
+Set **`AreColumnFiltersEnabled`** / **`ColumnFilterTriggerMode`** on **`FilterableDataGrid`** or **`ListViewFilterHeaderAdapter`** (see **`DataFilter.PlatformShared.ColumnFilter`**).
 
 Optional active-filters bar — use **`FilterGridChromeView`** with **`ShowFilterBar="True"`** (see **DataFilter.PlatformShared** README).
 

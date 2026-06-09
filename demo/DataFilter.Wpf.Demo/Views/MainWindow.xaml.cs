@@ -1,6 +1,9 @@
 using System.Globalization;
 using System.Windows;
+using System.Windows.Data;
+using DataFilter.Demo.Shared.Services;
 using DataFilter.Localization;
+using DataFilter.Wpf.Demo.ViewModels;
 
 namespace DataFilter.Wpf.Demo.Views;
 
@@ -9,6 +12,8 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+
+        Loaded += OnLoaded;
 
         DirectionCombo.ItemsSource = new[] { "LTR", "RTL" };
         DirectionCombo.SelectedIndex = FlowDirection == FlowDirection.RightToLeft ? 1 : 0;
@@ -30,6 +35,30 @@ public partial class MainWindow : Window
             if (LanguageCombo.SelectedValue is CultureInfo culture)
                 LocalizationManager.Instance.SetCulture(culture);
         };
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel mainVm)
+            return;
+
+        var settings = mainVm.HeaderSettings;
+        ColumnFiltersCheck.SetBinding(
+            System.Windows.Controls.Primitives.ToggleButton.IsCheckedProperty,
+            new Binding(nameof(DemoHeaderSettings.AreColumnFiltersEnabled))
+            {
+                Source = settings,
+                Mode = BindingMode.TwoWay,
+            });
+
+        TriggerModeCombo.ItemsSource = DemoHeaderSettings.GridTriggerModes;
+        TriggerModeCombo.SetBinding(
+            System.Windows.Controls.Primitives.Selector.SelectedItemProperty,
+            new Binding(nameof(DemoHeaderSettings.ColumnFilterTriggerMode))
+            {
+                Source = settings,
+                Mode = BindingMode.TwoWay,
+            });
     }
 
     private sealed class LanguageOption

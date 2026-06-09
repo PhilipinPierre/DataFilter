@@ -34,7 +34,17 @@
                       AutomationProperties.AutomationId="df-language"
                       Width="220"
                       VerticalAlignment="Center"
-                      Margin="0,0,0,0"/>
+                      Margin="0,0,10,0"/>
+            <CheckBox x:Name="ColumnFiltersCheck"
+                      Content="Column filters"
+                      AutomationProperties.AutomationId="df-column-filters-enabled"
+                      VerticalAlignment="Center"
+                      Margin="10,0,10,0"/>
+            <TextBlock Text="Header trigger:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+            <ComboBox x:Name="TriggerModeCombo"
+                      AutomationProperties.AutomationId="df-column-filter-trigger-mode"
+                      Width="200"
+                      VerticalAlignment="Center"/>
         </StackPanel>
         
         <TabControl Grid.Row="1" Margin="10" SelectedItem="{Binding SelectedTabControl, Mode=TwoWay}">

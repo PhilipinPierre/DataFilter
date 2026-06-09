@@ -133,6 +133,21 @@ Example JSON (two OR groups + sort):
 }
 ```
 
+## Column filter header settings (`ColumnFilter` namespace)
+
+Shared types in **`DataFilter.PlatformShared.ColumnFilter`**:
+
+| Type | Role |
+|------|------|
+| **`ColumnFilterTriggerMode`** | How the column popup opens (`FilterButton`, `HeaderRightClick`, `HeaderLeftClick`, `HeaderDoubleClick`, `HeaderMiddleClick`, `None`, `ContextMenuFilter`, `HeaderLongPress`, `KeyboardShortcut`, `HoverRevealButton`, `ShiftClick`, `CtrlClick`, `Inherit`) |
+| **`ColumnFilterHeaderOptions`** | Resolves grid/column settings; **`ShowsFilterStateOnHeaderBorder`** is `true` for every mode except **`FilterButton`** |
+| **`ColumnFilterHeaderChrome`** | Shared constants (long-press duration, `Alt+Down`, Blazor CSS class names) |
+| **`ExcelFilterActiveState`** | Whether an **`ExcelFilterState`** counts as “filtered” for header chrome |
+
+**`HeaderLeftClick`** disables native column sorting on that column (WPF `CanUserSort=false`, WinForms `SortMode=NotSortable`).
+
+UI stacks expose grid-level **`AreColumnFiltersEnabled`** and **`ColumnFilterTriggerMode`** on their filterable grid / attach APIs (WPF `FilterableDataGrid`, Blazor `DataFilterGrid`, WinForms `FilterableDataGrid` / `DataGridViewFilterAdapter`, WinUI 3 `FilterableDataGrid`, MAUI `FilterableDataGrid`, list header adapters).
+
 ## `FilterableDataGridViewModel` and column popup sync
 
 - **`IFilterableDataGridViewModel.FilterDescriptorsChanged`**: Raised when the pipeline is applied/restored, when a column is cleared, and—on the **local** data path—when **`LocalDataSource`** **reference** changes after **`RefreshDataAsync`**.

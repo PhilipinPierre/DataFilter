@@ -2,8 +2,10 @@ using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
 using System.Globalization;
+using DataFilter.Demo.Shared.Services;
 using DataFilter.Localization;
 
 namespace DataFilter.WinUI3
@@ -43,6 +45,26 @@ namespace DataFilter.WinUI3
                 if (LanguageCombo.SelectedValue is CultureInfo culture)
                     LocalizationManager.Instance.SetCulture(culture);
             };
+
+            var settings = ViewModel.HeaderSettings;
+            ColumnFiltersCheck.SetBinding(
+                CheckBox.IsCheckedProperty,
+                new Binding
+                {
+                    Source = settings,
+                    Path = new PropertyPath(nameof(DemoHeaderSettings.AreColumnFiltersEnabled)),
+                    Mode = BindingMode.TwoWay,
+                });
+
+            TriggerModeCombo.ItemsSource = DemoHeaderSettings.GridTriggerModes;
+            TriggerModeCombo.SetBinding(
+                ComboBox.SelectedItemProperty,
+                new Binding
+                {
+                    Source = settings,
+                    Path = new PropertyPath(nameof(DemoHeaderSettings.ColumnFilterTriggerMode)),
+                    Mode = BindingMode.TwoWay,
+                });
             
             this.Activated += (s, e) => {
                 if (NavView.SelectedItem == null)
@@ -69,7 +91,7 @@ namespace DataFilter.WinUI3
                 switch (item.Tag?.ToString())
                 {
                     case "Local": ContentFrame.Navigate(typeof(DataFilter.WinUI3.Demo.Pages.LocalFilterPage), ViewModel.LocalFilterScenario); break;
-                    case "Attach": ContentFrame.Navigate(typeof(DataFilter.WinUI3.Demo.Pages.AttachFilterPage)); break;
+                    case "Attach": ContentFrame.Navigate(typeof(DataFilter.WinUI3.Demo.Pages.AttachFilterPage), ViewModel.LocalFilterScenario); break;
                     case "Async": ContentFrame.Navigate(typeof(DataFilter.WinUI3.Demo.Pages.AsyncFilterPage), ViewModel.AsyncFilterScenario); break;
                     case "Hybrid": ContentFrame.Navigate(typeof(DataFilter.WinUI3.Demo.Pages.HybridFilterPage), ViewModel.HybridFilterScenario); break;
                     case "Customization": ContentFrame.Navigate(typeof(DataFilter.WinUI3.Demo.Pages.CustomizationPage), ViewModel.CustomizationScenario); break;

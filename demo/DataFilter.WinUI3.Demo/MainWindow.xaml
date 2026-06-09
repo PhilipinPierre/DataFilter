@@ -36,6 +36,16 @@
                       automation:AutomationProperties.AutomationId="df-language"
                       Width="220"
                       VerticalAlignment="Center"/>
+            <CheckBox x:Name="ColumnFiltersCheck"
+                      Content="Column filters"
+                      automation:AutomationProperties.AutomationId="df-column-filters-enabled"
+                      VerticalAlignment="Center"
+                      Margin="10,0,0,0"/>
+            <TextBlock Text="Header trigger:" VerticalAlignment="Center" Margin="10,0,5,0"/>
+            <ComboBox x:Name="TriggerModeCombo"
+                      automation:AutomationProperties.AutomationId="df-column-filter-trigger-mode"
+                      Width="200"
+                      VerticalAlignment="Center"/>
         </StackPanel>
 
         <!-- Navigation View -->

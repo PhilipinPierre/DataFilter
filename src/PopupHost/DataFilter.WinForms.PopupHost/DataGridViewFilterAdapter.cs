@@ -1,7 +1,7 @@
+using DataFilter.PlatformShared.ColumnFilter;
 using DataFilter.PlatformShared.ViewModels;
-using DataFilter.WinForms.Behaviors;
+using DataFilter.WinForms.Attach;
 using System.ComponentModel;
-using System.Drawing;
 using System.Windows.Forms;
 
 namespace DataFilter.WinForms.Attach;
@@ -11,133 +11,46 @@ namespace DataFilter.WinForms.Attach;
 /// </summary>
 public sealed class DataGridViewFilterAdapter : IDisposable
 {
-    private readonly DataGridView _grid;
-    private readonly ContextMenuStrip _popupHost = new();
+    private readonly DataGridViewFilterHeaderEventHandler _headerEvents;
     private bool _isDisposed;
 
     public DataGridViewFilterAdapter(DataGridView grid, IFilterableDataGridViewModel viewModel)
     {
-        _grid = grid ?? throw new ArgumentNullException(nameof(grid));
+        Grid = grid ?? throw new ArgumentNullException(nameof(grid));
         ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
-
-        _grid.CellPainting += OnCellPainting;
-        _grid.CellMouseClick += OnCellMouseClick;
-        _grid.DataBindingComplete += OnDataBindingComplete;
+        _headerEvents = new DataGridViewFilterHeaderEventHandler(grid, () => ViewModel, () => InteractionSettings);
     }
 
     public static DataGridViewFilterAdapter Attach(DataGridView grid, IFilterableDataGridViewModel viewModel)
         => new(grid, viewModel);
 
+    public DataGridView Grid { get; }
+
     [Browsable(false)]
     public IFilterableDataGridViewModel ViewModel { get; }
 
-    /// <summary>
-    /// If true, appends a ▼ glyph to the header text after binding.
-    /// </summary>
+    public bool AreColumnFiltersEnabled { get; set; } = true;
+
+    public ColumnFilterTriggerMode ColumnFilterTriggerMode { get; set; } = ColumnFilterTriggerMode.FilterButton;
+
     public bool AppendHeaderGlyph { get; set; } = true;
 
-    /// <summary>
-    /// Width reserved on the right side of the header for the filter button hit target.
-    /// </summary>
     public int HeaderButtonHitWidth { get; set; } = 20;
 
-    private void OnCellPainting(object? sender, DataGridViewCellPaintingEventArgs e)
-    {
-        if (_isDisposed) return;
-        if (e.RowIndex != -1 || e.ColumnIndex < 0) return;
-        if (e.Graphics == null) return;
-
-        e.Paint(e.CellBounds, DataGridViewPaintParts.All);
-        var rect = new Rectangle(e.CellBounds.Right - 18, e.CellBounds.Top + 4, 14, 14);
-        ControlPaint.DrawButton(e.Graphics, rect, ButtonState.Flat);
-        using var font = new Font("Segoe UI", 8f, FontStyle.Regular);
-        TextRenderer.DrawText(e.Graphics, "▼", font, rect, Color.Black, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
-        e.Handled = true;
-    }
-
-    private void OnDataBindingComplete(object? sender, DataGridViewBindingCompleteEventArgs e)
-    {
-        if (_isDisposed) return;
-        if (!AppendHeaderGlyph) return;
-
-        foreach (DataGridViewColumn column in _grid.Columns)
+    private DataGridViewFilterHeaderInteractions.Settings InteractionSettings =>
+        new()
         {
-            if (!column.HeaderText.EndsWith(" \u25BE", StringComparison.Ordinal))
-            {
-                column.HeaderText += " \u25BE";
-            }
-        }
-    }
-
-    private async void OnCellMouseClick(object? sender, DataGridViewCellMouseEventArgs e)
-    {
-        if (_isDisposed) return;
-        if (e.RowIndex != -1 || e.ColumnIndex < 0) return;
-
-        var headerRect = _grid.GetCellDisplayRectangle(e.ColumnIndex, -1, true);
-        if (e.X < headerRect.Width - HeaderButtonHitWidth) return;
-
-        var column = _grid.Columns[e.ColumnIndex];
-        var propertyName = !string.IsNullOrWhiteSpace(column.DataPropertyName) ? column.DataPropertyName : column.Name;
-        if (string.IsNullOrWhiteSpace(propertyName)) return;
-
-        var popup = await FilterHeaderBehavior.CreatePopupAsync(ViewModel, propertyName);
-
-        // Best-effort theme inference (keeps parity with the existing FilterableDataGrid control).
-        bool isDark = _grid.BackgroundColor.R < 128;
-        popup.ApplyTheme(isDark);
-
-        popup.Width = 320;
-        popup.Height = 420;
-        popup.RequestClose += () =>
-        {
-            if (_popupHost.Visible) _popupHost.Close();
+            AreColumnFiltersEnabled = AreColumnFiltersEnabled,
+            ColumnFilterTriggerMode = ColumnFilterTriggerMode,
+            AppendHeaderGlyph = AppendHeaderGlyph,
+            HeaderButtonHitWidth = HeaderButtonHitWidth,
         };
-
-        _popupHost.Items.Clear();
-        var host = new ToolStripControlHost(popup) { AutoSize = false, Width = popup.Width, Height = popup.Height };
-        _popupHost.Items.Add(host);
-
-        bool isRtl = _grid.RightToLeft == RightToLeft.Yes;
-        var desiredScreen = _grid.PointToScreen(new Point(isRtl ? headerRect.Left : headerRect.Right, headerRect.Bottom));
-        var work = Screen.FromControl(_grid).WorkingArea;
-        const int margin = 8;
-
-        // Cap popup size to the current working area (ToolStripDropDown adds its own non-client padding).
-        // This keeps UI-contract tests stable on small CI desktops (e.g. 1024x720).
-        int maxPopupWidth = Math.Max(200, work.Width - (margin * 2));
-        int maxPopupHeight = Math.Max(200, work.Height - (margin * 2));
-        popup.Width = Math.Min(popup.Width, maxPopupWidth);
-        popup.Height = Math.Min(popup.Height, maxPopupHeight);
-        host.Width = popup.Width;
-        host.Height = popup.Height;
-
-        int left = isRtl ? desiredScreen.X - popup.Width : desiredScreen.X;
-        int top = desiredScreen.Y;
-
-        int minX = work.Left + margin;
-        int maxX = Math.Max(minX, work.Right - popup.Width - margin);
-        int minY = work.Top + margin;
-        int maxY = Math.Max(minY, work.Bottom - popup.Height - margin);
-
-        left = Math.Min(Math.Max(left, minX), maxX);
-        top = Math.Min(Math.Max(top, minY), maxY);
-
-        var showPointClient = _grid.PointToClient(new Point(left, top));
-        _popupHost.Show(_grid, showPointClient);
-    }
 
     public void Dispose()
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
         _isDisposed = true;
-
-        _grid.CellPainting -= OnCellPainting;
-        _grid.CellMouseClick -= OnCellMouseClick;
-        _grid.DataBindingComplete -= OnDataBindingComplete;
-
-        _popupHost.Close();
-        _popupHost.Dispose();
+        _headerEvents.Dispose();
     }
 }
-

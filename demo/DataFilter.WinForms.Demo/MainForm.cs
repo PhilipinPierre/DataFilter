@@ -1,4 +1,6 @@
 ﻿using DataFilter.Demo.Shared.Services;
+using DataFilter.PlatformShared.ColumnFilter;
+using DataFilter.WinForms.Demo.Services;
 using DataFilter.WinForms.Demo.ViewModels;
 using DataFilter.WinForms.Demo.Views;
 using DataFilter.Localization;
@@ -13,6 +15,9 @@ public sealed class MainForm : Form
     private readonly Button _clearFiltersBtn;
     private readonly ComboBox _directionCombo;
     private readonly ComboBox _languageCombo;
+    private readonly CheckBox _columnFiltersCheck;
+    private readonly ComboBox _triggerModeCombo;
+    private readonly DemoHeaderSettings _headerSettings;
     private readonly TabControl _tabControl;
 
     private readonly LocalFilterScenarioViewModel _localVm;
@@ -44,8 +49,10 @@ public sealed class MainForm : Form
         HybridFilterView hybridView,
         CustomizationView customizationView,
         ListViewFilterView listViewView,
-        CollectionViewFilterView collectionViewView)
+        CollectionViewFilterView collectionViewView,
+        DemoHeaderSettings headerSettings)
     {
+        _headerSettings = headerSettings;
         _localVm = localVm;
         _asyncVm = asyncVm;
         _hybridVm = hybridVm;
@@ -96,7 +103,32 @@ public sealed class MainForm : Form
         _languageCombo.ValueMember = nameof(LanguageOption.Culture);
         _languageCombo.SelectedValue = LocalizationManager.Instance.Culture;
 
-        flowLayout.Controls.AddRange(new Control[] { lblRowCount, _rowCountInput, _regenerateBtn, _clearFiltersBtn, lblDirection, _directionCombo, lblLanguage, _languageCombo });
+        var lblColumnFilters = new Label { Text = "Column filters:", AutoSize = true, Margin = new Padding(15, 7, 5, 0) };
+        _columnFiltersCheck = new CheckBox
+        {
+            Checked = _headerSettings.AreColumnFiltersEnabled,
+            AutoSize = true,
+            Margin = new Padding(0, 5, 10, 0),
+            AccessibleName = "df-column-filters-enabled",
+        };
+
+        var lblTriggerMode = new Label { Text = "Header trigger:", AutoSize = true, Margin = new Padding(0, 7, 5, 0) };
+        _triggerModeCombo = new ComboBox
+        {
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Width = 200,
+            Margin = new Padding(0, 3, 10, 0),
+            AccessibleName = "df-column-filter-trigger-mode",
+        };
+        _triggerModeCombo.DataSource = DemoHeaderSettings.GridTriggerModes.ToList();
+        _triggerModeCombo.SelectedItem = _headerSettings.ColumnFilterTriggerMode;
+
+        flowLayout.Controls.AddRange(new Control[]
+        {
+            lblRowCount, _rowCountInput, _regenerateBtn, _clearFiltersBtn,
+            lblDirection, _directionCombo, lblLanguage, _languageCombo,
+            lblColumnFilters, _columnFiltersCheck, lblTriggerMode, _triggerModeCombo,
+        });
 
         // --- Tabs ---
         _tabControl = new TabControl { Dock = DockStyle.Fill };
@@ -137,6 +169,32 @@ public sealed class MainForm : Form
             if (_languageCombo.SelectedValue is CultureInfo culture)
                 LocalizationManager.Instance.SetCulture(culture);
         };
+        _columnFiltersCheck.CheckedChanged += (_, __) =>
+        {
+            _headerSettings.AreColumnFiltersEnabled = _columnFiltersCheck.Checked;
+            ApplyHeaderSettingsToViews();
+        };
+        _triggerModeCombo.SelectedValueChanged += (_, __) =>
+        {
+            if (_triggerModeCombo.SelectedItem is ColumnFilterTriggerMode mode)
+            {
+                _headerSettings.ColumnFilterTriggerMode = mode;
+                ApplyHeaderSettingsToViews();
+            }
+        };
+        _headerSettings.PropertyChanged += (_, __) => ApplyHeaderSettingsToViews();
+        ApplyHeaderSettingsToViews();
+    }
+
+    private void ApplyHeaderSettingsToViews()
+    {
+        foreach (var view in new IDemoHeaderSettingsView[]
+        {
+            _localView, _attachView, _asyncView, _hybridView, _customizationView, _collectionViewView,
+        })
+        {
+            view.ApplyHeaderSettings(_headerSettings);
+        }
     }
 
     private sealed class LanguageOption

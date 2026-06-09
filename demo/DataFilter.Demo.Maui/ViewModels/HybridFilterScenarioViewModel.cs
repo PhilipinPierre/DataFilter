@@ -5,15 +5,18 @@ using DataFilter.PlatformShared.ViewModels;
 
 namespace DataFilter.Maui.Demo.ViewModels;
 
-public partial class HybridFilterScenarioViewModel : ObservableObject
+public partial class HybridFilterScenarioViewModel : ObservableObject, IDemoHeaderSettingsHost
 {
     private readonly IMockEmployeeApiService _apiService;
+
+    public DemoHeaderSettings HeaderSettings { get; }
 
     [ObservableProperty]
     private FilterableDataGridViewModel<Employee> _gridViewModel = new();
 
-    public HybridFilterScenarioViewModel(IMockEmployeeApiService apiService)
+    public HybridFilterScenarioViewModel(IMockEmployeeApiService apiService, DemoHeaderSettings headerSettings)
     {
+        HeaderSettings = headerSettings;
         _apiService = apiService;
         GridViewModel.LocalDataSource = EmployeeDataGenerator.Employees;
         GridViewModel.AsyncDataProvider = _apiService;

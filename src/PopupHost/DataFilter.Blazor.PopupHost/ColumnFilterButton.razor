@@ -1,81 +1,263 @@
 @using DataFilter.PlatformShared.ViewModels
+@using DataFilter.PlatformShared.ColumnFilter
+@using DataFilter.Localization
 @using Microsoft.JSInterop
 @implements IAsyncDisposable
 @inject IJSRuntime JSRuntime
 
-<div class="df-column-header-container" style="display: inline-block; position: relative;">
-    <button type="button"
-            id="@_toggleButtonId"
-            data-testid="@_toggleButtonTestId"
-            class="df-column-header-button @(ViewModel.IsFilterActive ? "active" : "")"
-            @onclick="TogglePopup">
-        <span class="df-icon">@((ViewModel.IsFilterActive ? "▼" : "▽"))</span>
-    </button>
+@if (_isEnabled && (_hasHeaderTrigger || _showsBorderChrome))
+{
+    <div class="df-column-header-container @GetContainerCssClass()"
+         style="display: inline-block; position: relative;"
+         id="@_anchorElementId"
+         data-testid="@_anchorTestId"
+         tabindex="@(_keyboardFocusable ? 0 : -1)"
+         @onclick="OnContainerClick"
+         @ondblclick="OnContainerDoubleClick"
+         @onauxclick="OnContainerAuxClick"
+         @oncontextmenu="OnContainerRightClick"
+         @oncontextmenu:preventDefault="@_preventDefaultContextMenu"
+         @onkeydown="OnContainerKeyDown"
+         @onpointerdown="OnPointerDown"
+         @onpointerup="OnPointerUp"
+         @onpointercancel="OnPointerUp"
+         @onmouseenter="OnMouseEnter"
+         @onmouseleave="OnMouseLeave">
 
-    @if (_showPopup)
+        @if (!string.IsNullOrEmpty(Title) && !_showFilterButton)
+        {
+            <span class="df-column-header-title">@Title</span>
+        }
+
+        @if (_showFilterButton && (!_hoverReveal || _hoverVisible))
+        {
+            <button type="button"
+                    id="@_toggleButtonId"
+                    data-testid="@_toggleButtonTestId"
+                    class="df-column-header-button @(ViewModel.IsFilterActive ? "active" : "")"
+                    @onclick="TogglePopup"
+                    @onclick:stopPropagation="true">
+                <span class="df-icon">@((ViewModel.IsFilterActive ? "▼" : "▽"))</span>
+            </button>
+        }
+
+        @if (_showPopup)
+        {
+            <div style="position: fixed; inset: 0; z-index: 1999;" @onclick="ClosePopup"></div>
+
+            <div style="position: absolute; z-index: 2000; top: calc(100% + 6px); left: 0;"
+                 data-testid="@_popupContainerTestId"
+                 @onclick:stopPropagation="true">
+                @PopupContent?.Invoke(new PopupContext(
+                    Visible: _showPopup,
+                    VisibleChanged: EventCallback.Factory.Create<bool>(this, OnVisibilityChanged),
+                    ToggleButtonId: _anchorElementId,
+                    PopupElementId: _popupElementId,
+                    PopupStyle: _popupStyle))
+            </div>
+        }
+    </div>
+
+    @if (_showContextMenu)
     {
-        <div style="position: fixed; inset: 0; z-index: 1999;" @onclick="ClosePopup"></div>
-
-        <div style="position: absolute; z-index: 2000; top: calc(100% + 6px); left: 0;"
-             data-testid="@_popupContainerTestId"
+        <div style="position: fixed; inset: 0; z-index: 2100;" @onclick="CloseContextMenu"></div>
+        <div class="df-column-header-context-menu"
+             style="position: fixed; top: @_contextMenuYpx; left: @_contextMenuXpx; z-index: 2101;"
              @onclick:stopPropagation="true">
-            @PopupContent?.Invoke(new PopupContext(
-                Visible: _showPopup,
-                VisibleChanged: EventCallback.Factory.Create<bool>(this, OnVisibilityChanged),
-                ToggleButtonId: _toggleButtonId,
-                PopupElementId: _popupElementId,
-                PopupStyle: _popupStyle))
+            <button type="button" class="df-column-header-context-menu-item" @onclick="OpenFromContextMenu">
+                @LocalizationManager.Instance["OpenColumnFilter"]
+            </button>
         </div>
     }
-</div>
+}
 
 @code {
     [Parameter] public IColumnFilterViewModel ViewModel { get; set; } = default!;
     [Parameter] public RenderFragment<PopupContext>? PopupContent { get; set; }
     [Parameter] public string? ColumnKey { get; set; }
-    
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public bool AreColumnFiltersEnabled { get; set; } = true;
+    [Parameter] public bool IsFilterable { get; set; } = true;
+    [Parameter] public ColumnFilterTriggerMode TriggerMode { get; set; } = ColumnFilterTriggerMode.FilterButton;
+
     private bool _showPopup;
+    private bool _showContextMenu;
+    private bool _hoverVisible;
+    private double _contextMenuXpx;
+    private double _contextMenuYpx;
+    private long? _longPressPointerId;
+    private CancellationTokenSource? _longPressCts;
+    private string _anchorElementId = "df-filter-anchor-" + Guid.NewGuid().ToString("N");
     private string _toggleButtonId = "df-filter-btn-" + Guid.NewGuid().ToString("N");
     private string _popupElementId = "df-filter-popup-" + Guid.NewGuid().ToString("N");
+    private string _anchorTestId = "df-filter-anchor";
     private string _toggleButtonTestId = "df-filter-btn";
     private string _popupContainerTestId = "df-filter-popup";
     private string _popupStyle = "";
     private DotNetObjectReference<ColumnFilterButton>? _dotNetRef;
     private bool _autoUpdateStarted;
 
+    private bool _isEnabled => ColumnFilterHeaderOptions.IsFilteringEnabled(AreColumnFiltersEnabled, IsFilterable);
+    private bool _hasHeaderTrigger => ColumnFilterHeaderOptions.HasHeaderFilterTrigger(TriggerMode);
+    private bool _showsBorderChrome => ColumnFilterHeaderOptions.ShowsFilterStateOnHeaderBorder(TriggerMode);
+    private bool _showFilterButton => ColumnFilterHeaderOptions.UsesFilterButtonChrome(TriggerMode);
+    private bool _hoverReveal => TriggerMode == ColumnFilterTriggerMode.HoverRevealButton;
+    private bool _preventDefaultContextMenu => TriggerMode is ColumnFilterTriggerMode.HeaderRightClick or ColumnFilterTriggerMode.ContextMenuFilter;
+    private bool _keyboardFocusable => TriggerMode == ColumnFilterTriggerMode.KeyboardShortcut;
+
     protected override void OnInitialized()
     {
         var key = SanitizeForId(ColumnKey);
         if (!string.IsNullOrWhiteSpace(key))
         {
+            _anchorElementId = $"df-filter-anchor-{key}";
             _toggleButtonId = $"df-filter-btn-{key}";
             _popupElementId = $"df-filter-popup-{key}";
+            _anchorTestId = _anchorElementId;
             _toggleButtonTestId = _toggleButtonId;
             _popupContainerTestId = _popupElementId;
         }
         else
         {
+            _anchorTestId = _anchorElementId;
             _toggleButtonTestId = _toggleButtonId;
             _popupContainerTestId = _popupElementId;
         }
+    }
+
+    private string GetContainerCssClass()
+    {
+        var classes = TriggerMode switch
+        {
+            ColumnFilterTriggerMode.HeaderLeftClick => "df-header-trigger-left",
+            ColumnFilterTriggerMode.HeaderRightClick => "df-header-trigger-right",
+            ColumnFilterTriggerMode.HeaderDoubleClick => "df-header-trigger-double",
+            ColumnFilterTriggerMode.HeaderMiddleClick => "df-header-trigger-middle",
+            ColumnFilterTriggerMode.HeaderLongPress => "df-header-trigger-long-press",
+            ColumnFilterTriggerMode.HoverRevealButton => "df-header-trigger-hover",
+            _ => string.Empty
+        };
+
+        if (_showsBorderChrome && ViewModel.IsFilterActive)
+            classes += " " + ColumnFilterHeaderChrome.BlazorFilteredIndicatorClass;
+
+        return classes.Trim();
     }
 
     private void TogglePopup()
     {
         _showPopup = !_showPopup;
         if (!_showPopup)
-        {
             _ = StopAutoUpdateAsync();
+    }
+
+    private void OnContainerClick(MouseEventArgs e)
+    {
+        if (TriggerMode == ColumnFilterTriggerMode.HeaderLeftClick)
+            TogglePopup();
+        else if (TriggerMode == ColumnFilterTriggerMode.ShiftClick && e.ShiftKey)
+            TogglePopup();
+        else if (TriggerMode == ColumnFilterTriggerMode.CtrlClick && e.CtrlKey)
+            TogglePopup();
+    }
+
+    private void OnContainerDoubleClick(MouseEventArgs e)
+    {
+        if (TriggerMode == ColumnFilterTriggerMode.HeaderDoubleClick)
+            TogglePopup();
+    }
+
+    private void OnContainerAuxClick(MouseEventArgs e)
+    {
+        if (TriggerMode == ColumnFilterTriggerMode.HeaderMiddleClick && e.Button == 1)
+            TogglePopup();
+    }
+
+    private void OnContainerRightClick(MouseEventArgs e)
+    {
+        if (TriggerMode == ColumnFilterTriggerMode.HeaderRightClick)
+        {
+            TogglePopup();
+            return;
+        }
+
+        if (TriggerMode == ColumnFilterTriggerMode.ContextMenuFilter)
+        {
+            _contextMenuXpx = e.ClientX;
+            _contextMenuYpx = e.ClientY;
+            _showContextMenu = true;
         }
     }
+
+    private void OnContainerKeyDown(KeyboardEventArgs e)
+    {
+        if (TriggerMode != ColumnFilterTriggerMode.KeyboardShortcut)
+            return;
+
+        if (e.AltKey && string.Equals(e.Key, "ArrowDown", StringComparison.OrdinalIgnoreCase))
+            TogglePopup();
+    }
+
+    private void OnPointerDown(PointerEventArgs e)
+    {
+        if (TriggerMode != ColumnFilterTriggerMode.HeaderLongPress)
+            return;
+
+        _longPressPointerId = e.PointerId;
+        _longPressCts?.Cancel();
+        _longPressCts = new CancellationTokenSource();
+        var token = _longPressCts.Token;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(ColumnFilterHeaderChrome.LongPressDurationMs, token);
+                await InvokeAsync(() =>
+                {
+                    if (!token.IsCancellationRequested)
+                        TogglePopup();
+                });
+            }
+            catch (TaskCanceledException)
+            {
+            }
+        }, token);
+    }
+
+    private void OnPointerUp(PointerEventArgs e)
+    {
+        if (_longPressPointerId == e.PointerId)
+        {
+            _longPressCts?.Cancel();
+            _longPressPointerId = null;
+        }
+    }
+
+    private void OnMouseEnter()
+    {
+        if (_hoverReveal)
+            _hoverVisible = true;
+    }
+
+    private void OnMouseLeave()
+    {
+        if (_hoverReveal && !_showPopup)
+            _hoverVisible = false;
+    }
+
+    private void OpenFromContextMenu()
+    {
+        _showContextMenu = false;
+        TogglePopup();
+    }
+
+    private void CloseContextMenu() => _showContextMenu = false;
 
     private void OnVisibilityChanged(bool visible)
     {
         _showPopup = visible;
         if (!_showPopup)
-        {
             _ = StopAutoUpdateAsync();
-        }
         StateHasChanged();
     }
 
@@ -98,33 +280,23 @@
 
         try
         {
-            // If a stale/cached interops script is loaded, these functions might be missing.
-            // In that case we fall back to a one-time .NET-computed style (below) without breaking rendering.
-            await JSRuntime.InvokeVoidAsync("DataFilterInterops.setAnchoredPopupPosition", _toggleButtonId, _popupElementId, 8);
-            await JSRuntime.InvokeVoidAsync("DataFilterInterops.startAnchoredPopupAutoUpdate", _toggleButtonId, _popupElementId, 8);
+            await JSRuntime.InvokeVoidAsync("DataFilterInterops.setAnchoredPopupPosition", _anchorElementId, _popupElementId, 8);
+            await JSRuntime.InvokeVoidAsync("DataFilterInterops.startAnchoredPopupAutoUpdate", _anchorElementId, _popupElementId, 8);
             _autoUpdateStarted = true;
-
-            await JSRuntime.InvokeVoidAsync("DataFilterInterops.addOutsideClickListener", _dotNetRef, _popupElementId, _toggleButtonId, "ClosePopupFromJs");
+            await JSRuntime.InvokeVoidAsync("DataFilterInterops.addOutsideClickListener", _dotNetRef, _popupElementId, _anchorElementId, "ClosePopupFromJs");
         }
         catch (JSException)
         {
-            // Ignore and rely on the fallback positioning below.
         }
 
-        // Also keep a CSS style string in case the consumer binds PopupStyle (first paint / SSR-like scenarios).
         try
         {
-            var pos = await JSRuntime.InvokeAsync<AnchoredPosition?>("DataFilterInterops.getAnchoredPopupPosition", _toggleButtonId, _popupElementId, 8);
+            var pos = await JSRuntime.InvokeAsync<AnchoredPosition?>("DataFilterInterops.getAnchoredPopupPosition", _anchorElementId, _popupElementId, 8);
             if (pos != null)
-            {
                 _popupStyle = $"top: {pos.Top}px; left: {pos.Left}px;";
-                // no StateHasChanged here: the JS already positioned the popup for this render;
-                // the next normal render (VM changes) will carry the updated style.
-            }
         }
         catch (JSException)
         {
-            // ignored: can happen with stale/cached scripts or during startup
         }
     }
 
@@ -140,16 +312,15 @@
         }
         catch (JSException)
         {
-            // ignored: can happen with stale/cached scripts
         }
         catch
         {
-            // ignored: can happen during disposal/navigation
         }
     }
 
     public async ValueTask DisposeAsync()
     {
+        _longPressCts?.Cancel();
         await StopAutoUpdateAsync();
         _dotNetRef?.Dispose();
     }
@@ -168,7 +339,6 @@
         if (string.IsNullOrWhiteSpace(raw))
             return null;
 
-        // Keep it deterministic and HTML-id safe.
         var cleaned = new string(raw
             .Trim()
             .Select(ch => char.IsLetterOrDigit(ch) ? ch : '_')

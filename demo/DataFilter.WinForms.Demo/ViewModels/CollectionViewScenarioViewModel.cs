@@ -5,13 +5,16 @@ using DataFilter.PlatformShared.ViewModels;
 
 namespace DataFilter.WinForms.Demo.ViewModels;
 
-public class CollectionViewScenarioViewModel
+public class CollectionViewScenarioViewModel : IDemoHeaderSettingsHost
 {
+    public DemoHeaderSettings HeaderSettings { get; }
+
     public FilterableDataGridViewModel<Employee> GridViewModel { get; }
     public BindingSource BindingSource { get; }
 
-    public CollectionViewScenarioViewModel()
+    public CollectionViewScenarioViewModel(DemoHeaderSettings headerSettings)
     {
+        HeaderSettings = headerSettings;
         BindingSource = new BindingSource();
         GridViewModel = new FilterableDataGridViewModel<Employee>();
         Regenerate(1000);

@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using DataFilter.Demo.Shared.Services;
 using DataFilter.Maui.Attach;
 using DataFilter.Maui.Demo.ViewModels;
 
@@ -20,6 +22,27 @@ public partial class AttachFilterPage : ContentPage
             new ListViewFilterHeaderAdapter.Column("Name", "Name", new GridLength(150)),
             new ListViewFilterHeaderAdapter.Column("Dept", "Department", new GridLength(120)),
             new ListViewFilterHeaderAdapter.Column("Country", "Country", new GridLength(120)));
+
+        viewModel.HeaderSettings.PropertyChanged += OnHeaderSettingsChanged;
+        ApplyHeaderSettings(viewModel.HeaderSettings);
+    }
+
+    private void OnHeaderSettingsChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (sender is not DemoHeaderSettings settings)
+            return;
+
+        if (e.PropertyName is nameof(DemoHeaderSettings.AreColumnFiltersEnabled)
+            or nameof(DemoHeaderSettings.ColumnFilterTriggerMode))
+        {
+            ApplyHeaderSettings(settings);
+        }
+    }
+
+    private void ApplyHeaderSettings(DemoHeaderSettings settings)
+    {
+        _adapter.ApplyHeaderSettings(
+            settings.AreColumnFiltersEnabled,
+            settings.ColumnFilterTriggerMode);
     }
 }
-

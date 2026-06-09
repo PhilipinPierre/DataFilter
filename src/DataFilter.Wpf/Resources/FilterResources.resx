@@ -43,6 +43,7 @@
   <data name="AddSubSortDescending" xml:space="preserve"><value>Add Sort Z to A</value></data>
   <data name="AddToFilter" xml:space="preserve"><value>Add current selection to filter</value></data>
   <data name="AdvancedFilter" xml:space="preserve"><value>Advanced Filter</value></data>
+  <data name="OpenColumnFilter" xml:space="preserve"><value>Filter...</value></data>
   <data name="Blanks" xml:space="preserve"><value>(Blanks)</value></data>
   <data name="Cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="Clear" xml:space="preserve"><value>Clear</value></data>

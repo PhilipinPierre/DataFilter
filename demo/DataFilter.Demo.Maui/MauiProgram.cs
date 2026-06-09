@@ -36,6 +36,7 @@ namespace DataFilter.Maui
 
             // MAUI Pages
             builder.Services.AddTransient<LocalFilterPage>();
+            builder.Services.AddTransient<AttachFilterPage>();
             builder.Services.AddTransient<AsyncFilterPage>();
             builder.Services.AddTransient<HybridFilterPage>();
             builder.Services.AddTransient<CustomizationPage>();

@@ -4,8 +4,10 @@ using DataFilter.PlatformShared.ViewModels;
 
 namespace DataFilter.WinForms.Demo.ViewModels;
 
-public class CustomizationScenarioViewModel
+public class CustomizationScenarioViewModel : IDemoHeaderSettingsHost
 {
+    public DemoHeaderSettings HeaderSettings { get; }
+
     public FilterableDataGridViewModel<Employee> GridViewModel { get; }
     
     // In WinForms, we can just trigger an event or property change that the View listens to.
@@ -25,8 +27,9 @@ public class CustomizationScenarioViewModel
     
     public event EventHandler? IsDarkThemeChanged;
 
-    public CustomizationScenarioViewModel()
+    public CustomizationScenarioViewModel(DemoHeaderSettings headerSettings)
     {
+        HeaderSettings = headerSettings;
         GridViewModel = new FilterableDataGridViewModel<Employee>();
         Regenerate(1000);
     }

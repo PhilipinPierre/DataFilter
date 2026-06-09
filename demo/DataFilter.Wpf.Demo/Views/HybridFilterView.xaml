@@ -27,6 +27,8 @@
                                      VirtualizingPanel.IsVirtualizing="True"
                                      EnableAsyncFetch="False"
                                      AsyncDataProvider="{Binding GridViewModel.AsyncDataProvider}"
-                                     FilterContext="{Binding GridViewModel.Context}" />
+                                     FilterContext="{Binding GridViewModel.Context}"
+                                     AreColumnFiltersEnabled="{Binding HeaderSettings.AreColumnFiltersEnabled}"
+                                     ColumnFilterTriggerMode="{Binding HeaderSettings.ColumnFilterTriggerMode}" />
     </Grid>
 </UserControl>

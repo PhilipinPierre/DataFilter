@@ -24,6 +24,8 @@ public static class ServiceCollectionExtensions
         
         // Mock API
         services.AddSingleton<IMockEmployeeApiService, MockEmployeeApiService>();
+
+        services.AddSingleton<DemoHeaderSettings>();
         
         return services;
     }

@@ -13,6 +13,8 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _rowCountText = "1000";
 
+    public DemoHeaderSettings HeaderSettings { get; }
+
     partial void OnRowCountChanged(int value)
     {
         var normalized = value <= 0 ? 1 : value;
@@ -54,6 +56,7 @@ public partial class MainViewModel : ObservableObject
     public CollectionViewScenarioViewModel CollectionViewScenario { get; }
 
     public MainViewModel(
+        DemoHeaderSettings headerSettings,
         LocalFilterScenarioViewModel localFilterScenario,
         AsyncFilterScenarioViewModel asyncFilterScenario,
         HybridFilterScenarioViewModel hybridFilterScenario,
@@ -61,6 +64,7 @@ public partial class MainViewModel : ObservableObject
         ListViewScenarioViewModel listViewScenario,
         CollectionViewScenarioViewModel collectionViewScenario)
     {
+        HeaderSettings = headerSettings;
         LocalFilterScenario = localFilterScenario;
         AsyncFilterScenario = asyncFilterScenario;
         HybridFilterScenario = hybridFilterScenario;

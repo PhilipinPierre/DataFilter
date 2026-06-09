@@ -79,6 +79,7 @@ Any change to **serializable models** or **contracts** (`IFilterContext`, snapsh
 4. **`ReflectionFilterEngine` / `FilterExpressionBuilder`**: In-memory or client-side expression evaluation and building.
 5. **`IAsyncDataProvider<T>`**: Async loading, paging, distinct values for popups — central pattern for “remote data” scenarios.
 6. **ExcelLike**: Specialized descriptors (text, numeric, date) and domain logic separate from the generic Core engine. Column popups still use **`AddOrUpdateDescriptor`** by property name; advanced UIs can drive **`ApplyFilterPipelineAsync`** (see PlatformShared) after editing a pipeline or preset.
+7. **Column filter header chrome** (`DataFilter.PlatformShared.ColumnFilter`): Grid-level **`AreColumnFiltersEnabled`** and **`ColumnFilterTriggerMode`** control whether/how column popups open. Per-column overrides: **`IsFilterable`**, **`TriggerMode`** (`Inherit` or specific mode). When **`ColumnFilterTriggerMode` ≠ `FilterButton`** and the column is filtered, an **inner inset indicator** is drawn on the header (default header chrome is left unchanged when not filtered) via **`ColumnFilterHeaderOptions.ShowsFilteredColumnInnerIndicator`**. **`HeaderLeftClick`** suppresses native sort on that column. **`KeyboardShortcut`** convention: **`Alt+↓`** with header focus. All UI stacks (WPF, Blazor, WinForms, WinUI 3, MAUI) implement the full **`ColumnFilterTriggerMode`** enum; see per-package README tables.
 
 ## Excel column filter state, popup UI, and item source changes
 
@@ -101,6 +102,10 @@ Wildcards (`*`, `?`) are supported in **Core** text operators (expression builde
 | **`CollectionViewFilterAdapter.RefreshDataAsync`** | Same idea when **`CollectionView.SourceCollection`** reference changes; raises **`FilterDescriptorsChanged`** when descriptors exist. |
 | **`ColumnFilterViewModel` / `BlazorColumnFilterViewModel`** | After **`InitializeAsync`**, if **`FilterState.CustomOperator`** is set, sync observable fields and call **`UpdateSelectionFromCustomFilter()`** so checkbox preview matches operators on **new** distincts. **`LoadStateAsync`**: for **list-only** filters, **`ApplySelectionStateToItemsRecursive`**; for **custom** filters, **`UpdateSelectionFromCustomFilter`** after **`_internalUpdate`** is cleared (In-list semantics must not overwrite operator-driven preview). |
 | **Stacked custom criteria on one column** | **`ExcelFilterDescriptor.Descriptors`** emits **`CustomOperator`** + **`AdditionalCustomCriteria`** as **AND**-combined rules. **`UpdateSelectionFromCustomFilter`** uses **`ValueMatchesAllStackedCustomColumnFilters`** (primary operator + each **`ExcelFilterAdditionalCriterion`**) so the popup matches grid filtering. |
+
+### Demo shell: header settings
+
+All demos expose **`AreColumnFiltersEnabled`** (checkbox) and **`ColumnFilterTriggerMode`** (combo) in the shared shell (`DemoShell` in Blazor, top bar in WPF/WinForms/WinUI 3, `AppShell` title in MAUI). State lives in **`DemoHeaderSettings`** (`demo/DataFilter.Demo.Shared`), registered via **`AddDataFilterDemoServices()`**. Scenario view models implement **`IDemoHeaderSettingsHost`** and bind grids/adapters to the same singleton instance.
 
 ## Tests
 

@@ -24,6 +24,7 @@ Use **`DataFilter.WinForms.PopupHost`** for `FilterableDataGrid` or **`DataGridV
 ### Quick start
 
 ```csharp
+using DataFilter.PlatformShared.ColumnFilter;
 using DataFilter.PlatformShared.ViewModels;
 using DataFilter.WinForms.PopupHost;
 
@@ -37,7 +38,9 @@ var grid = new FilterableDataGrid
 {
     Dock = DockStyle.Fill,
     AutoGenerateColumns = true,
-    ViewModel = vm
+    ViewModel = vm,
+    AreColumnFiltersEnabled = true,
+    ColumnFilterTriggerMode = ColumnFilterTriggerMode.HeaderRightClick,
 };
 grid.DataSource = vm.FilteredItems.Cast<Employee>().ToList();
 

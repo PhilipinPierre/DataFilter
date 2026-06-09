@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using DataFilter.PlatformShared.ColumnFilter;
 
 namespace DataFilter.Wpf.Behaviors;
 
@@ -63,6 +64,37 @@ public static class FilterableGridAttach
         style.Setters.Add(new Setter(FilterableColumnHeaderBehavior.IsFilterableProperty, true));
         gv.ColumnHeaderContainerStyle = style;
     }
+
+    #endregion
+
+    #region AreColumnFiltersEnabled attached property
+
+    public static readonly DependencyProperty AreColumnFiltersEnabledProperty =
+        DependencyProperty.RegisterAttached(
+            "AreColumnFiltersEnabled",
+            typeof(bool),
+            typeof(FilterableGridAttach),
+            new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.Inherits));
+
+    public static bool GetAreColumnFiltersEnabled(DependencyObject obj) => (bool)obj.GetValue(AreColumnFiltersEnabledProperty);
+    public static void SetAreColumnFiltersEnabled(DependencyObject obj, bool value) => obj.SetValue(AreColumnFiltersEnabledProperty, value);
+
+    #endregion
+
+    #region ColumnFilterTriggerMode attached property
+
+    public static readonly DependencyProperty ColumnFilterTriggerModeProperty =
+        DependencyProperty.RegisterAttached(
+            "ColumnFilterTriggerMode",
+            typeof(ColumnFilterTriggerMode),
+            typeof(FilterableGridAttach),
+            new FrameworkPropertyMetadata(ColumnFilterTriggerMode.FilterButton, FrameworkPropertyMetadataOptions.Inherits));
+
+    public static ColumnFilterTriggerMode GetColumnFilterTriggerMode(DependencyObject obj) =>
+        (ColumnFilterTriggerMode)obj.GetValue(ColumnFilterTriggerModeProperty);
+
+    public static void SetColumnFilterTriggerMode(DependencyObject obj, ColumnFilterTriggerMode value) =>
+        obj.SetValue(ColumnFilterTriggerModeProperty, value);
 
     #endregion
 

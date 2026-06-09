@@ -9,16 +9,19 @@ using DataFilter.Wpf.ViewModels;
 
 namespace DataFilter.Wpf.Demo.ViewModels;
 
-public sealed partial class CollectionViewScenarioViewModel : ObservableObject, IDemoItem
+public sealed partial class CollectionViewScenarioViewModel : ObservableObject, IDemoItem, IDemoHeaderSettingsHost
 {
+    public DemoHeaderSettings HeaderSettings { get; }
+
     [ObservableProperty]
     private ICollectionView _collectionView;
 
     [ObservableProperty]
     private IFilterableDataGridViewModel<Employee> _gridViewModel;
 
-    public CollectionViewScenarioViewModel()
+    public CollectionViewScenarioViewModel(DemoHeaderSettings headerSettings)
     {
+        HeaderSettings = headerSettings;
         var employees = EmployeeDataGenerator.Employees;
         _collectionView = CollectionViewSource.GetDefaultView(employees);
         _gridViewModel = new CollectionViewFilterAdapter<Employee>(_collectionView);

@@ -13,6 +13,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\src\DataFilter.PlatformShared\DataFilter.PlatformShared.csproj" />
     <ProjectReference Include="..\..\src\DataFilter.WinForms\DataFilter.WinForms.csproj" />
     <ProjectReference Include="..\..\src\PopupHost\DataFilter.WinForms.PopupHost\DataFilter.WinForms.PopupHost.csproj" />
     <ProjectReference Include="..\DataFilter.Demo.Shared\DataFilter.Demo.Shared.csproj" />

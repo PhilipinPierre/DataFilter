@@ -49,8 +49,16 @@ dotnet add package DataFilter.Blazor
 <DataFilterGrid @ref="_grid"
                 Items="@employees"
                 Columns="@columns"
-                ShowFilterBar="true" />
+                ShowFilterBar="true"
+                AreColumnFiltersEnabled="true"
+                ColumnFilterTriggerMode="ColumnFilterTriggerMode.FilterButton" />
 ```
+
+Grid-level header settings (see **`DataFilter.PlatformShared.ColumnFilter`**):
+
+- **`AreColumnFiltersEnabled`** — when `false`, no filter UI on any column.
+- **`ColumnFilterTriggerMode`** — how the popup opens (`FilterButton`, `HeaderRightClick`, `HeaderLeftClick`, …). When not `FilterButton` and the column is filtered, an inner inset indicator is drawn via CSS class `df-column-header-filter-active` (`::after` pseudo-element).
+- Per-column: **`ColumnDefinition.IsFilterable`**, **`ColumnDefinition.TriggerMode`** (`Inherit` or override).
 
 ```csharp
 @code {

@@ -9,8 +9,10 @@ using DataFilter.Wpf.ViewModels;
 
 namespace DataFilter.Wpf.Demo.ViewModels;
 
-public partial class LocalFilterScenarioViewModel : ObservableObject, IDemoItem
+public partial class LocalFilterScenarioViewModel : ObservableObject, IDemoItem, IDemoHeaderSettingsHost
 {
+    public DemoHeaderSettings HeaderSettings { get; }
+
     private const string DefaultPipelineJson =
         """
         {
@@ -42,8 +44,9 @@ public partial class LocalFilterScenarioViewModel : ObservableObject, IDemoItem
     [ObservableProperty]
     private FilterPipelineSnapshot _workingSnapshot = new();
 
-    public LocalFilterScenarioViewModel()
+    public LocalFilterScenarioViewModel(DemoHeaderSettings headerSettings)
     {
+        HeaderSettings = headerSettings;
         Regenerate(1000);
     }
 

@@ -52,6 +52,15 @@ Every demo app **must** expose the following shell-level controls and behaviors:
   - A button/command labeled similarly to “Clear filters”.
   - Clears all active filter descriptors for the **current scenario** (or for all scenarios if no “current” concept exists).
   - Triggers a refresh so the full dataset is visible again.
+- **Column filters enabled** (`AreColumnFiltersEnabled`)
+  - A checkbox in the shell labeled similarly to “Column filters”.
+  - When unchecked, column filter UI is hidden/disabled on filterable grids.
+  - Automation/test id: `df-column-filters-enabled` where the platform supports it.
+- **Column filter trigger mode** (`ColumnFilterTriggerMode`)
+  - A dropdown listing all grid-level modes from **`ColumnFilterTriggerMode`** (except `Inherit`).
+  - Changing the value updates header chrome and open-popup gestures on all scenarios.
+  - Automation/test id: `df-column-filter-trigger-mode` where supported.
+  - Shared state: **`DemoHeaderSettings`** in `DataFilter.Demo.Shared` (registered via **`AddDataFilterDemoServices()`**).
 
 ## Required scenario set
 

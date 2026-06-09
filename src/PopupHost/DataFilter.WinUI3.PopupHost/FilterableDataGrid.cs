@@ -1,19 +1,41 @@
+using DataFilter.PlatformShared.ColumnFilter;
 using DataFilter.PlatformShared.ViewModels;
+using DataFilter.WinUI3.Attach;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Windows.Foundation;
 
 namespace DataFilter.WinUI3.Controls;
 
 public sealed partial class FilterableDataGrid : ListView
 {
+    private static readonly ListViewFilterHeaderAdapter.Column[] DefaultColumns =
+    [
+        new("Id", "Id", 80),
+        new("Name", "Name", 150),
+        new("Department", "Department", 150),
+        new("Country", "Country", 150),
+    ];
+
     public static readonly DependencyProperty ViewModelProperty =
         DependencyProperty.Register(
             nameof(ViewModel),
             typeof(IFilterableDataGridViewModel),
             typeof(FilterableDataGrid),
-            new PropertyMetadata(null));
+            new PropertyMetadata(null, OnHeaderSettingsChanged));
+
+    public static readonly DependencyProperty AreColumnFiltersEnabledProperty =
+        DependencyProperty.Register(
+            nameof(AreColumnFiltersEnabled),
+            typeof(bool),
+            typeof(FilterableDataGrid),
+            new PropertyMetadata(true, OnHeaderSettingsChanged));
+
+    public static readonly DependencyProperty ColumnFilterTriggerModeProperty =
+        DependencyProperty.Register(
+            nameof(ColumnFilterTriggerMode),
+            typeof(ColumnFilterTriggerMode),
+            typeof(FilterableDataGrid),
+            new PropertyMetadata(ColumnFilterTriggerMode.FilterButton, OnHeaderSettingsChanged));
 
     public IFilterableDataGridViewModel? ViewModel
     {
@@ -21,53 +43,53 @@ public sealed partial class FilterableDataGrid : ListView
         set => SetValue(ViewModelProperty, value);
     }
 
-    public FilterableDataGrid()
+    public bool AreColumnFiltersEnabled
     {
-        var headerScroll = new ScrollViewer { HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, VerticalScrollBarVisibility = ScrollBarVisibility.Disabled };
-        var headerGrid = new Grid { Padding = new Thickness(10, 0, 10, 10) };
-        headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(80) });
-        headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) });
-        headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) });
-        headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) });
-        
-        headerGrid.Children.Add(CreateHeaderButton("Id", 0));
-        headerGrid.Children.Add(CreateHeaderButton("Name", 1));
-        headerGrid.Children.Add(CreateHeaderButton("Department", 2));
-        headerGrid.Children.Add(CreateHeaderButton("Country", 3));
-
-        headerScroll.Content = headerGrid;
-        Header = headerScroll;
+        get => (bool)GetValue(AreColumnFiltersEnabledProperty);
+        set => SetValue(AreColumnFiltersEnabledProperty, value);
     }
 
-    private Button CreateHeaderButton(string text, int col)
+    public ColumnFilterTriggerMode ColumnFilterTriggerMode
     {
-        var btn = new Button { 
-            Content = text + " 🔍", 
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent),
-            Padding = new Thickness(5)
-        };
-        Grid.SetColumn(btn, col);
-        btn.Click += (s, e) => {
-            if (ViewModel != null) 
+        get => (ColumnFilterTriggerMode)GetValue(ColumnFilterTriggerModeProperty);
+        set => SetValue(ColumnFilterTriggerModeProperty, value);
+    }
+
+    public FilterableDataGrid()
+    {
+        RebuildHeader();
+    }
+
+    private static void OnHeaderSettingsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is FilterableDataGrid grid)
+            grid.RebuildHeader();
+    }
+
+    private void RebuildHeader()
+    {
+        if (ViewModel == null)
+        {
+            Header = null;
+            return;
+        }
+
+        var specs = DefaultColumns.Select(c => new ListViewFilterHeaderInteractions.ColumnSpec
+        {
+            Title = c.Title,
+            PropertyName = c.PropertyName,
+            Width = c.Width,
+            IsFilterable = c.IsFilterable,
+            TriggerMode = c.TriggerMode,
+        }).ToList();
+
+        Header = ListViewFilterHeaderInteractions.BuildHeader(
+            ViewModel,
+            specs,
+            new ListViewFilterHeaderInteractions.Settings
             {
-                var popup = DataFilter.WinUI3.Behaviors.FilterHeaderBehavior.CreatePopup(ViewModel, text);
-                var flyout = new Flyout { Content = popup };
-                if (popup.ViewModel != null)
-                {
-                    popup.ViewModel.OnApply += (_, __) => flyout.Hide();
-                    popup.ViewModel.OnClear += (_, __) => flyout.Hide();
-                    popup.CancelRequested += (_, __) => flyout.Hide();
-                }
-                bool isRtl = btn.FlowDirection == FlowDirection.RightToLeft;
-                var desired = new Point(isRtl ? -popup.Width : btn.ActualWidth, btn.ActualHeight);
-                flyout.ShowAt(btn, new FlyoutShowOptions
-                {
-                    Placement = FlyoutPlacementMode.Bottom,
-                    Position = desired
-                });
-            }
-        };
-        return btn;
+                AreColumnFiltersEnabled = AreColumnFiltersEnabled,
+                ColumnFilterTriggerMode = ColumnFilterTriggerMode,
+            });
     }
 }

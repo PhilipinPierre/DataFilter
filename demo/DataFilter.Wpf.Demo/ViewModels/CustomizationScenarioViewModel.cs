@@ -5,8 +5,10 @@ using DataFilter.Wpf.ViewModels;
 
 namespace DataFilter.Wpf.Demo.ViewModels;
 
-public sealed partial class CustomizationScenarioViewModel : ObservableObject, IDemoItem
+public sealed partial class CustomizationScenarioViewModel : ObservableObject, IDemoItem, IDemoHeaderSettingsHost
 {
+    public DemoHeaderSettings HeaderSettings { get; }
+
     [ObservableProperty]
     private IFilterableDataGridViewModel<Employee> _gridViewModel;
 
@@ -17,8 +19,9 @@ public sealed partial class CustomizationScenarioViewModel : ObservableObject, I
     [ObservableProperty]
     private bool _isDarkTheme;
 
-    public CustomizationScenarioViewModel()
+    public CustomizationScenarioViewModel(DemoHeaderSettings headerSettings)
     {
+        HeaderSettings = headerSettings;
         Regenerate(1000);
     }
 

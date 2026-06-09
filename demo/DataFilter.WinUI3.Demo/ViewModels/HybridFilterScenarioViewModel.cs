@@ -5,15 +5,18 @@ using DataFilter.PlatformShared.ViewModels;
 
 namespace DataFilter.WinUI3.Demo.ViewModels;
 
-public partial class HybridFilterScenarioViewModel : ObservableObject
+public partial class HybridFilterScenarioViewModel : ObservableObject, IDemoHeaderSettingsHost
 {
     private readonly IMockEmployeeApiService _mockService;
+
+    public DemoHeaderSettings HeaderSettings { get; }
 
     [ObservableProperty]
     private FilterableDataGridViewModel<Employee> _gridViewModel;
 
-    public HybridFilterScenarioViewModel(IMockEmployeeApiService mockService)
+    public HybridFilterScenarioViewModel(IMockEmployeeApiService mockService, DemoHeaderSettings headerSettings)
     {
+        HeaderSettings = headerSettings;
         _mockService = mockService;
         GridViewModel = new FilterableDataGridViewModel<Employee>
         {

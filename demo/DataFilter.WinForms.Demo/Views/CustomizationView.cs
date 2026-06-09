@@ -1,10 +1,12 @@
+using DataFilter.Demo.Shared.Services;
 using DataFilter.WinForms.Controls;
+using DataFilter.WinForms.Demo.Services;
 using DataFilter.WinForms.Demo.ViewModels;
 using System.Drawing;
 
 namespace DataFilter.WinForms.Demo.Views;
 
-public partial class CustomizationView : UserControl
+public partial class CustomizationView : UserControl, IDemoHeaderSettingsView
 {
     private readonly FilterableDataGrid _grid;
     private readonly CheckBox _themeToggle;
@@ -48,6 +50,13 @@ public partial class CustomizationView : UserControl
         
         viewModel.IsDarkThemeChanged += (s, e) => ApplyTheme(viewModel.IsDarkTheme);
         ApplyTheme(viewModel.IsDarkTheme);
+        ApplyHeaderSettings(viewModel.HeaderSettings);
+    }
+
+    public void ApplyHeaderSettings(DemoHeaderSettings settings)
+    {
+        _grid.AreColumnFiltersEnabled = settings.AreColumnFiltersEnabled;
+        _grid.ColumnFilterTriggerMode = settings.ColumnFilterTriggerMode;
     }
 
     private void ApplyTheme(bool isDark)

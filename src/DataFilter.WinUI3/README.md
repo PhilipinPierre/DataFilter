@@ -25,8 +25,12 @@ xmlns:controls="using:DataFilter.WinUI3.Controls"
 
 ```xml
 <controls:FilterableDataGrid x:Name="Grid"
-                             ViewModel="{x:Bind ViewModel.GridViewModel, Mode=OneWay}" />
+                             ViewModel="{x:Bind ViewModel.GridViewModel, Mode=OneWay}"
+                             AreColumnFiltersEnabled="True"
+                             ColumnFilterTriggerMode="FilterButton" />
 ```
+
+Grid-level **`AreColumnFiltersEnabled`** and **`ColumnFilterTriggerMode`** (see **`DataFilter.PlatformShared.ColumnFilter`**) control popup triggers and header border chrome. ListView attach: **`ListViewFilterHeaderAdapter`**.
 
 ```csharp
 ViewModel.GridViewModel = new FilterableDataGridViewModel<Employee>

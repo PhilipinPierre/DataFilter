@@ -27,7 +27,9 @@
                   AutoGenerateColumns="True"
                   ItemsSource="{Binding GridViewModel.FilteredItems}"
                   behaviors:FilterableGridAttach.Attach="True"
-                  behaviors:FilterableGridAttach.ViewModel="{Binding GridViewModel}" />
+                  behaviors:FilterableGridAttach.ViewModel="{Binding GridViewModel}"
+                  behaviors:FilterableGridAttach.AreColumnFiltersEnabled="{Binding HeaderSettings.AreColumnFiltersEnabled}"
+                  behaviors:FilterableGridAttach.ColumnFilterTriggerMode="{Binding HeaderSettings.ColumnFilterTriggerMode}" />
     </Grid>
 </UserControl>
 

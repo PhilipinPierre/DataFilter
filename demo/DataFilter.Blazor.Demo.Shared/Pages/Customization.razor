@@ -20,7 +20,11 @@
 </div>
 
 <div class="grid-container @(_isDark ? "df-theme-dark" : "df-theme-light")">
-    <DataFilterGrid @ref="_grid" Items="@_data" Columns="@_columns" />
+    <DataFilterGrid @ref="_grid"
+                    Items="@_data"
+                    Columns="@_columns"
+                    AreColumnFiltersEnabled="@State.AreColumnFiltersEnabled"
+                    ColumnFilterTriggerMode="@State.ColumnFilterTriggerMode" />
 </div>
 
 <style>

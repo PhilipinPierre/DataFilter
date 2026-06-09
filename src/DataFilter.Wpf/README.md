@@ -98,11 +98,43 @@ Header button that toggles the filter popup. Used by behaviors and custom header
 Make any `GridViewColumn` or `DataGridColumn` filterable:
 
 ```xml
-xmlns:behaviors="clr-namespace:DataFilter.Wpf;assembly=DataFilter.Wpf.PopupHost"
+xmlns:behaviors="clr-namespace:DataFilter.Wpf.Behaviors;assembly=DataFilter.Wpf.PopupHost"
+xmlns:df="clr-namespace:DataFilter.PlatformShared.ColumnFilter;assembly=DataFilter.PlatformShared"
+
+<controls:FilterableDataGrid AreColumnFiltersEnabled="{Binding ShowColumnFilters}"
+                             ColumnFilterTriggerMode="HeaderRightClick"
+                             ViewModel="{Binding}" />
 
 <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}"
-                behaviors:FilterableColumnHeaderBehavior.IsFilterable="True" />
+                behaviors:FilterableColumnHeaderBehavior.IsFilterable="True"
+                behaviors:FilterableColumnHeaderBehavior.ColumnFilterTriggerMode="FilterButton" />
 ```
+
+Grid-level settings:
+
+- **`AreColumnFiltersEnabled`** — bindable; when `false`, no filter UI on any column.
+- **`ColumnFilterTriggerMode`** — see table below.
+
+Per-column overrides: **`IsFilterable`** (disable one column), **`ColumnFilterTriggerMode`** (`Inherit` or a specific mode).
+
+| Mode | Opens popup via | Filter indicator (when active) | Native column sort |
+|------|-----------------|------------------------------|-------------------|
+| `FilterButton` | Dedicated ▼ button | Button chrome | Unchanged |
+| `HeaderRightClick` | Right-click header | Inner inset border | Unchanged |
+| `HeaderLeftClick` | Left-click header | Inner inset border | **Disabled** on that column |
+| `HeaderDoubleClick` | Double-click header | Inner inset border | Unchanged (single-click can still sort) |
+| `HeaderMiddleClick` | Middle mouse button | Inner inset border | Unchanged |
+| `None` | No header trigger (filter bar / API only) | Inner inset border | Unchanged |
+| `ContextMenuFilter` | Right-click → “Filter…” menu | Inner inset border | Unchanged |
+| `HeaderLongPress` | Long press (~500 ms) | Inner inset border | Unchanged |
+| `KeyboardShortcut` | `Alt+↓` when header focused | Inner inset border | Unchanged |
+| `HoverRevealButton` | ▼ button on hover only | Inner inset border | Unchanged |
+| `ShiftClick` | Shift + left-click | Inner inset border | Unchanged |
+| `CtrlClick` | Ctrl + left-click | Inner inset border | Unchanged |
+
+When **`ColumnFilterTriggerMode` ≠ `FilterButton`** and the column is filtered, an **inner inset border** is drawn on the header (default header chrome is unchanged otherwise). With **`FilterButton`**, state is shown on the button instead.
+
+For existing `DataGrid` / `GridView` hosts, use **`FilterableGridAttach.AreColumnFiltersEnabled`** and **`FilterableGridAttach.ColumnFilterTriggerMode`**.
 
 Subscribes to **`IFilterableDataGridViewModel.FilterDescriptorsChanged`** and item-source changes. Opening the popup runs **`SearchCommand`** then **`LoadStateAsync`** from **`GetColumnFilterState`**.
 

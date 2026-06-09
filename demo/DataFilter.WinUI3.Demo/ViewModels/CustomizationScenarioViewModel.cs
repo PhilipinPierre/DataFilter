@@ -5,13 +5,25 @@ using DataFilter.PlatformShared.ViewModels;
 
 namespace DataFilter.WinUI3.Demo.ViewModels;
 
-public partial class CustomizationScenarioViewModel : ObservableObject
+public partial class CustomizationScenarioViewModel : ObservableObject, IDemoHeaderSettingsHost
 {
+    public DemoHeaderSettings HeaderSettings { get; }
+
     [ObservableProperty]
     private FilterableDataGridViewModel<Employee> _gridViewModel;
 
     [ObservableProperty]
     private bool _isDarkTheme;
+
+    public CustomizationScenarioViewModel(DemoHeaderSettings headerSettings)
+    {
+        HeaderSettings = headerSettings;
+        GridViewModel = new FilterableDataGridViewModel<Employee>
+        {
+            LocalDataSource = EmployeeDataGenerator.Employees
+        };
+        _ = GridViewModel.RefreshDataAsync();
+    }
 
     public void Regenerate(int count)
     {

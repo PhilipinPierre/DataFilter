@@ -13,6 +13,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Automation;
+using DataFilter.PlatformShared.ColumnFilter;
 
 namespace DataFilter.Wpf.Behaviors;
 
@@ -20,10 +21,12 @@ namespace DataFilter.Wpf.Behaviors;
 /// Attaches a filter button to a ColumnHeader and manages the filter popup lifecycle.
 /// Works with both DataGrid and GridView (ListView).
 /// </summary>
-public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
+public partial class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
 {
     private ColumnFilterButton? _filterButton;
     private Popup? _filterPopup;
+    private ContextMenu? _headerContextMenu;
+    private System.Windows.Threading.DispatcherTimer? _longPressTimer;
     private ColumnFilterVm? _viewModel;
     private bool _contentInjected;
     private GridFilterVm? _filterParentSubscriptions;
@@ -33,6 +36,7 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
     private int _initResolveAttempts;
     private DataTemplate? _savedHeaderContentTemplate;
     private DataTemplateSelector? _savedHeaderContentTemplateSelector;
+    private FilterStateIndicatorAdorner? _filterStateIndicatorAdorner;
 
     #region IsFilterable Attached Property
 
@@ -57,6 +61,23 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
             }
         }
     }
+
+    #endregion
+
+    #region ColumnFilterTriggerMode Attached Property
+
+    public static readonly DependencyProperty ColumnFilterTriggerModeProperty =
+        DependencyProperty.RegisterAttached(
+            "ColumnFilterTriggerMode",
+            typeof(ColumnFilterTriggerMode),
+            typeof(FilterableColumnHeaderBehavior),
+            new PropertyMetadata(ColumnFilterTriggerMode.Inherit));
+
+    public static ColumnFilterTriggerMode GetColumnFilterTriggerMode(DependencyObject obj) =>
+        (ColumnFilterTriggerMode)obj.GetValue(ColumnFilterTriggerModeProperty);
+
+    public static void SetColumnFilterTriggerMode(DependencyObject obj, ColumnFilterTriggerMode value) =>
+        obj.SetValue(ColumnFilterTriggerModeProperty, value);
 
     #endregion
 
@@ -126,10 +147,9 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         base.OnDetaching();
         AssociatedObject.Loaded -= OnAssociatedObjectLoaded;
         AssociatedObject.DataContextChanged -= OnDataContextChanged;
+        DetachHeaderTriggerHandlers();
         if (_filterButton != null)
-        {
             _filterButton.Click -= OnFilterButtonClick;
-        }
 
         if (_filterPopup != null)
         {
@@ -207,14 +227,45 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
             UpdateDockPanelForCurrentColumn(dock);
     }
 
+    private DependencyObject? FindFilterGridHost()
+    {
+        var parent = VisualTreeHelper.GetParent(AssociatedObject);
+        while (parent != null)
+        {
+            if (parent is DataGrid or ListView or GridView)
+                return parent;
+
+            parent = VisualTreeHelper.GetParent(parent);
+        }
+
+        return null;
+    }
+
+    private bool IsColumnFilteringEnabled() =>
+        ColumnFilterHeaderSettings.IsColumnFilteringEnabled(
+            GetAssociatedColumn() as DependencyObject,
+            AssociatedObject,
+            FindFilterGridHost());
+
+    private ColumnFilterTriggerMode GetEffectiveTriggerMode() =>
+        ColumnFilterHeaderSettings.GetEffectiveTriggerMode(
+            GetAssociatedColumn() as DependencyObject,
+            FindFilterGridHost());
+
     private void TryResolvePropertyName()
     {
+        if (!IsColumnFilteringEnabled())
+        {
+            PropertyName = string.Empty;
+            return;
+        }
+
         // Implementation for DataGrid
         if (AssociatedObject is DataGridColumnHeader dgHeader && dgHeader.Column != null)
         {
             // Check if column explicitly disabled filtering
             var isFilterableObj = dgHeader.Column.ReadLocalValue(IsFilterableProperty);
-            if (isFilterableObj is bool isF && !isF)
+            if (isFilterableObj is bool isF && isFilterableObj != DependencyProperty.UnsetValue && !isF)
             {
                 PropertyName = string.Empty; // Abort
                 return;
@@ -238,7 +289,7 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         else if (AssociatedObject is GridViewColumnHeader gvHeader && gvHeader.Column != null)
         {
             var isFilterableObj = gvHeader.Column.ReadLocalValue(IsFilterableProperty);
-            if (isFilterableObj is bool isF && !isF)
+            if (isFilterableObj is bool isF && isFilterableObj != DependencyProperty.UnsetValue && !isF)
             {
                 PropertyName = string.Empty; // Abort
                 return;
@@ -336,7 +387,19 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
             await _viewModel.LoadStateAsync(existingState);
         }
 
+        if (_viewModel is INotifyPropertyChanged inpc)
+        {
+            inpc.PropertyChanged -= OnColumnFilterVmPropertyChanged;
+            inpc.PropertyChanged += OnColumnFilterVmPropertyChanged;
+        }
+
         SubscribeParentFilterEvents(parentVm);
+    }
+
+    private void OnColumnFilterVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(ColumnFilterVm.IsFilterActive))
+            ApplyHeaderFilterBorder();
     }
 
     private void SubscribeParentFilterEvents(GridFilterVm parentVm)
@@ -371,6 +434,7 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         }
 
         await SyncColumnFilterFromParentAsync(parentVm);
+        ApplyHeaderFilterBorder();
     }
 
     private async System.Threading.Tasks.Task SyncColumnFilterFromParentAsync(GridFilterVm parentVm)
@@ -395,7 +459,7 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
 
     private void BuildHeaderContent()
     {
-        if (_viewModel == null) return;
+        if (_viewModel == null || !IsColumnFilteringEnabled()) return;
 
         if (_contentInjected && AssociatedObject is ContentControl existingHeader && existingHeader.Content is DockPanel existingDock)
         {
@@ -419,25 +483,7 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
             HorizontalAlignment = HorizontalAlignment.Stretch
         };
 
-        _filterButton = new ColumnFilterButton
-        {
-            Margin = new Thickness(4, 0, 0, 0),
-            MinWidth = 14,
-            MinHeight = 14,
-            VerticalAlignment = VerticalAlignment.Center,
-            Cursor = Cursors.Hand
-        };
-        if (!string.IsNullOrWhiteSpace(PropertyName))
-        {
-            AutomationProperties.SetAutomationId(_filterButton, $"df-filter-btn-{PropertyName}");
-        }
-        _filterButton.Click += OnFilterButtonClick;
-
-        // Bind IsActive
-        _filterButton.SetBinding(ColumnFilterButton.IsActiveProperty, new Binding(nameof(ColumnFilterVm.IsFilterActive)) { Source = _viewModel });
-
-        DockPanel.SetDock(_filterButton, Dock.Right);
-        dockPanel.Children.Add(_filterButton);
+        ApplyTriggerModeToHeader(dockPanel);
 
         var contentPresenter = CreateHeaderContentPresenter();
         dockPanel.Children.Add(contentPresenter);
@@ -446,6 +492,14 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         header.ContentTemplate = null;
         header.ContentTemplateSelector = null;
         header.Content = dockPanel;
+    }
+
+    private void ApplyNativeSortPolicy()
+    {
+        if (GetAssociatedColumn() is DataGridColumn dgColumn)
+        {
+            dgColumn.CanUserSort = !ColumnFilterHeaderOptions.SuppressesNativeColumnSort(GetEffectiveTriggerMode());
+        }
     }
 
     private ContentPresenter CreateHeaderContentPresenter()
@@ -502,15 +556,7 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         if (contentPresenter != null)
             ApplyHeaderContentBinding(contentPresenter);
 
-        if (_filterButton == null)
-            return;
-
-        _filterButton.SetBinding(
-            ColumnFilterButton.IsActiveProperty,
-            new Binding(nameof(ColumnFilterVm.IsFilterActive)) { Source = _viewModel });
-
-        if (!string.IsNullOrWhiteSpace(PropertyName))
-            AutomationProperties.SetAutomationId(_filterButton, $"df-filter-btn-{PropertyName}");
+        ApplyTriggerModeToHeader(dockPanel);
     }
 
     /// <summary>
@@ -521,7 +567,52 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
     private async void OnFilterButtonClick(object sender, RoutedEventArgs e)
     {
         e.Handled = true;
-        if (_viewModel == null) return;
+        await ToggleFilterPopupAsync();
+    }
+
+    private async void OnHeaderRightClick(object sender, MouseButtonEventArgs e)
+    {
+        if (GetEffectiveTriggerMode() != ColumnFilterTriggerMode.HeaderRightClick)
+            return;
+
+        e.Handled = true;
+        await ToggleFilterPopupAsync();
+    }
+
+    private async void OnHeaderLeftClick(object sender, MouseButtonEventArgs e)
+    {
+        if (GetEffectiveTriggerMode() != ColumnFilterTriggerMode.HeaderLeftClick)
+            return;
+
+        e.Handled = true;
+        await ToggleFilterPopupAsync();
+    }
+
+    private async void OnHeaderDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (GetEffectiveTriggerMode() != ColumnFilterTriggerMode.HeaderDoubleClick)
+            return;
+
+        e.Handled = true;
+        await ToggleFilterPopupAsync();
+    }
+
+    private async void OnHeaderMiddleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (GetEffectiveTriggerMode() != ColumnFilterTriggerMode.HeaderMiddleClick
+            || e.ChangedButton != MouseButton.Middle)
+        {
+            return;
+        }
+
+        e.Handled = true;
+        await ToggleFilterPopupAsync();
+    }
+
+    private async Task ToggleFilterPopupAsync()
+    {
+        if (_viewModel == null || !IsColumnFilteringEnabled())
+            return;
 
         // Keep post-refactor robustness: headers/parent can change when the grid re-templates after a filter.
         TryResolvePropertyName();
@@ -551,8 +642,18 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
                     await _viewModel.LoadStateAsync(state);
             }
 
+            _filterPopup.PlacementTarget = GetPopupPlacementTarget();
             _filterPopup.IsOpen = true;
         }
+    }
+
+    private FrameworkElement GetPopupPlacementTarget()
+    {
+        var mode = GetEffectiveTriggerMode();
+        if (ColumnFilterHeaderOptions.UsesFilterButtonChrome(mode) && _filterButton is { Visibility: Visibility.Visible })
+            return _filterButton;
+
+        return AssociatedObject;
     }
 
     private void BuildPopup()
@@ -561,7 +662,7 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         {
             StaysOpen = true,
             AllowsTransparency = true,
-            PlacementTarget = _filterButton,
+            PlacementTarget = GetPopupPlacementTarget(),
             Placement = PlacementMode.Custom,
             CustomPopupPlacementCallback = PlaceFilterPopup,
             PopupAnimation = PopupAnimation.Fade
@@ -586,10 +687,11 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
 
     private CustomPopupPlacement[] PlaceFilterPopup(Size popupSize, Size targetSize, Point offset)
     {
-        if (_filterButton == null)
+        var placementTarget = GetPopupPlacementTarget();
+        if (placementTarget == null)
             return new[] { new CustomPopupPlacement(new Point(0, targetSize.Height), PopupPrimaryAxis.Horizontal) };
 
-        bool isRtl = _filterButton.FlowDirection == FlowDirection.RightToLeft;
+        bool isRtl = placementTarget.FlowDirection == FlowDirection.RightToLeft;
         // Default anchor rule:
         // - LTR: popup top-left at button bottom-right
         // - RTL: popup top-right at button bottom-left (=> top-left at -popupWidth, bottom)
@@ -597,14 +699,14 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
 
         // Clamp to keep as visible as possible within the window (goal: stay visible in the app window).
         // Callback expects offsets in DIPs relative to target.
-        var window = Window.GetWindow(_filterButton);
+        var window = Window.GetWindow(placementTarget);
         if (window == null || window.ActualWidth <= 0 || window.ActualHeight <= 0)
             return new[] { new CustomPopupPlacement(desiredRelative, PopupPrimaryAxis.Horizontal) };
 
         const double margin = 8;
         // Work purely in DIPs. The callback expects offsets in DIPs relative to target, so mixing
         // screen pixels (PointToScreen) with Window.Left/Top (DIPs) can push the popup offscreen.
-        var targetInWindow = _filterButton.TranslatePoint(new Point(0, 0), window);
+        var targetInWindow = placementTarget.TranslatePoint(new Point(0, 0), window);
         var desiredInWindow = new Point(targetInWindow.X + desiredRelative.X, targetInWindow.Y + desiredRelative.Y);
 
         var minX = margin;
@@ -624,7 +726,7 @@ public class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         // Ensure the popup cannot exceed the current monitor working area. Without this, the measured
         // popup size can be larger than small CI desktops (e.g. 1024x720), and placement clamping
         // alone cannot keep the window inside the working area.
-        if (_filterPopup is { Child: FrameworkElement child } && _filterButton != null)
+        if (_filterPopup is { Child: FrameworkElement child } && GetPopupPlacementTarget() is { } placementTarget)
         {
             try
             {

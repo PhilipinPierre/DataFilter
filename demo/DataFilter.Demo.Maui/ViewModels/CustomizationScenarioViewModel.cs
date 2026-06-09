@@ -5,13 +5,16 @@ using DataFilter.PlatformShared.ViewModels;
 
 namespace DataFilter.Maui.Demo.ViewModels;
 
-public partial class CustomizationScenarioViewModel : ObservableObject
+public partial class CustomizationScenarioViewModel : ObservableObject, IDemoHeaderSettingsHost
 {
+    public DemoHeaderSettings HeaderSettings { get; }
+
     [ObservableProperty]
     private FilterableDataGridViewModel<Employee> _gridViewModel = new();
 
-    public CustomizationScenarioViewModel()
+    public CustomizationScenarioViewModel(DemoHeaderSettings headerSettings)
     {
+        HeaderSettings = headerSettings;
         GridViewModel.LocalDataSource = EmployeeDataGenerator.Employees;
         _ = GridViewModel.RefreshDataAsync();
     }

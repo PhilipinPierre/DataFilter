@@ -1,5 +1,6 @@
 ﻿@typeparam TItem
 @using DataFilter.PlatformShared.ViewModels
+@using DataFilter.PlatformShared.ColumnFilter
 @using DataFilter.Filtering.ExcelLike.Models
 @using DataFilter.Filtering.ExcelLike.Services
 @using DataFilter.Core.Enums
@@ -36,19 +37,32 @@ else
                 <tr>
                     @foreach (var col in Columns)
                     {
-                        <th class="df-grid-header">
+                        <th class="@GetHeaderChromeClass(col)">
                             <div class="df-header-content">
-                                <span>@col.Title</span>
-                                <ColumnFilterButton ViewModel="@GetViewModel(col)"
-                                                    ColumnKey="@col.PropertyName">
-                                    <PopupContent Context="popup">
-                                        <FilterPopup ViewModel="@GetViewModel(col)"
-                                                     Visible="popup.Visible"
-                                                     VisibleChanged="popup.VisibleChanged"
-                                                     ElementId="@popup.PopupElementId"
-                                                     PopupStyle="@popup.PopupStyle" />
-                                    </PopupContent>
-                                </ColumnFilterButton>
+                                @{
+                                    var triggerMode = GetEffectiveTriggerMode(col);
+                                }
+                                @if (!ColumnFilterHeaderOptions.HasHeaderFilterTrigger(triggerMode) || ColumnFilterHeaderOptions.UsesAlwaysVisibleFilterButton(triggerMode))
+                                {
+                                    <span>@col.Title</span>
+                                }
+                                @if (ColumnFilterHeaderOptions.HasHeaderFilterTrigger(triggerMode))
+                                {
+                                    <ColumnFilterButton ViewModel="@GetViewModel(col)"
+                                                        ColumnKey="@col.PropertyName"
+                                                        Title="@(ColumnFilterHeaderOptions.UsesAlwaysVisibleFilterButton(triggerMode) ? null : col.Title)"
+                                                        AreColumnFiltersEnabled="@AreColumnFiltersEnabled"
+                                                        IsFilterable="@col.IsFilterable"
+                                                        TriggerMode="@triggerMode">
+                                        <PopupContent Context="popup">
+                                            <FilterPopup ViewModel="@GetViewModel(col)"
+                                                         Visible="popup.Visible"
+                                                         VisibleChanged="popup.VisibleChanged"
+                                                         ElementId="@popup.PopupElementId"
+                                                         PopupStyle="@popup.PopupStyle" />
+                                        </PopupContent>
+                                    </ColumnFilterButton>
+                                }
                             </div>
                         </th>
                     }
@@ -89,6 +103,8 @@ else
     [Parameter] public int PageSize { get; set; } = 20;
     [Parameter] public bool Headless { get; set; }
     [Parameter] public bool ShowFilterBar { get; set; }
+    [Parameter] public bool AreColumnFiltersEnabled { get; set; } = true;
+    [Parameter] public ColumnFilterTriggerMode ColumnFilterTriggerMode { get; set; } = ColumnFilterTriggerMode.FilterButton;
     [Parameter] public RenderFragment<DataFilterGridContext<TItem>>? ChildContent { get; set; }
 
     private readonly FilterPipelineSession _pipelineSession = new();
@@ -112,7 +128,11 @@ else
             return GetViewModel(col);
         },
         getFilteredItems: () => _filteredItems,
-        getIsLoading: () => _isLoading);
+        getIsLoading: () => _isLoading,
+        areColumnFiltersEnabled: AreColumnFiltersEnabled,
+        columnFilterTriggerMode: ColumnFilterTriggerMode,
+        isColumnFilterEnabled: IsColumnFilterEnabled,
+        getEffectiveTriggerMode: GetEffectiveTriggerMode);
 
     protected override void OnInitialized()
     {
@@ -131,6 +151,26 @@ else
         // Re-applying from column VMs on every parent re-render would wipe JSON/pipeline presets.
         if (itemsSourceChanged || _filteredItems.Count == 0)
             await ApplyFiltersAsync();
+    }
+
+    private bool IsColumnFilterEnabled(ColumnDefinition<TItem> column) =>
+        ColumnFilterHeaderOptions.IsFilteringEnabled(AreColumnFiltersEnabled, column.IsFilterable);
+
+    private ColumnFilterTriggerMode GetEffectiveTriggerMode(ColumnDefinition<TItem> column) =>
+        ColumnFilterHeaderOptions.ResolveTriggerMode(ColumnFilterTriggerMode, column.TriggerMode);
+
+    private string GetHeaderChromeClass(ColumnDefinition<TItem> column)
+    {
+        if (!IsColumnFilterEnabled(column))
+            return "df-grid-header";
+
+        var mode = GetEffectiveTriggerMode(column);
+        if (!ColumnFilterHeaderOptions.ShowsFilterStateOnHeaderBorder(mode))
+            return "df-grid-header";
+
+        return GetViewModel(column).IsFilterActive
+            ? $"df-grid-header {ColumnFilterHeaderChrome.BlazorFilteredIndicatorClass}"
+            : "df-grid-header";
     }
 
     private string ResolveColumnTitle(string propertyName) =>
@@ -505,5 +545,7 @@ else
         public string PropertyName { get; set; } = "";
         public Func<T, object> Selector { get; set; } = default!;
         public Type PropertyType { get; set; } = typeof(string);
+        public bool IsFilterable { get; set; } = true;
+        public ColumnFilterTriggerMode TriggerMode { get; set; } = ColumnFilterTriggerMode.Inherit;
     }
 }

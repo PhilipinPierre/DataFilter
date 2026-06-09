@@ -16,6 +16,14 @@
             <Picker x:Name="DirectionPicker" WidthRequest="110" />
             <Label Text="Language:" VerticalOptions="Center" />
             <Picker x:Name="LanguagePicker" WidthRequest="220" />
+            <Label Text="Column filters:" VerticalOptions="Center" />
+            <CheckBox x:Name="ColumnFiltersCheck"
+                      AutomationId="df-column-filters-enabled"
+                      VerticalOptions="Center" />
+            <Label Text="Header trigger:" VerticalOptions="Center" />
+            <Picker x:Name="TriggerModePicker"
+                    AutomationId="df-column-filter-trigger-mode"
+                    WidthRequest="200" />
         </HorizontalStackLayout>
     </Shell.TitleView>
 

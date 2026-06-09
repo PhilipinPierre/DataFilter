@@ -26,7 +26,9 @@
                                      ItemsSource="{Binding GridViewModel.FilteredItems}"
                                      AutoGenerateColumns="True"
                                      VirtualizingPanel.IsVirtualizing="True"
-                                     FilterContext="{Binding GridViewModel.Context}" />
+                                     FilterContext="{Binding GridViewModel.Context}"
+                                     AreColumnFiltersEnabled="{Binding HeaderSettings.AreColumnFiltersEnabled}"
+                                     ColumnFilterTriggerMode="{Binding HeaderSettings.ColumnFilterTriggerMode}" />
         
     </Grid>
 </UserControl>

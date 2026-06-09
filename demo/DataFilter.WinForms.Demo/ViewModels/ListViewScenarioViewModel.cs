@@ -4,12 +4,15 @@ using DataFilter.PlatformShared.ViewModels;
 
 namespace DataFilter.WinForms.Demo.ViewModels;
 
-public class ListViewScenarioViewModel
+public class ListViewScenarioViewModel : IDemoHeaderSettingsHost
 {
+    public DemoHeaderSettings HeaderSettings { get; }
+
     public FilterableDataGridViewModel<Employee> GridViewModel { get; }
 
-    public ListViewScenarioViewModel()
+    public ListViewScenarioViewModel(DemoHeaderSettings headerSettings)
     {
+        HeaderSettings = headerSettings;
         GridViewModel = new FilterableDataGridViewModel<Employee>();
         Regenerate(1000);
     }

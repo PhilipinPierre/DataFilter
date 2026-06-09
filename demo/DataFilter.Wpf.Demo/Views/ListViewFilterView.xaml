@@ -11,7 +11,9 @@
         <ListView ItemsSource="{Binding GridViewModel.FilteredItems}"
                   VirtualizingPanel.IsVirtualizing="True">
             <ListView.View>
-                <controls:FilterableGridView ViewModel="{Binding GridViewModel}">
+                <controls:FilterableGridView ViewModel="{Binding GridViewModel}"
+                                             AreColumnFiltersEnabled="{Binding HeaderSettings.AreColumnFiltersEnabled}"
+                                             ColumnFilterTriggerMode="{Binding HeaderSettings.ColumnFilterTriggerMode}">
                     <GridViewColumn Header="Id" DisplayMemberBinding="{Binding Id}" Width="50"/>
                     <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="150"/>
                     <GridViewColumn Header="Department" DisplayMemberBinding="{Binding Department}" Width="150"/>

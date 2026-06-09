@@ -37,7 +37,12 @@
 </div>
 
 <div class="grid-container">
-    <DataFilterGrid @ref="_grid" Items="@_data" Columns="@_columns" ShowFilterBar="true" />
+    <DataFilterGrid @ref="_grid"
+                    Items="@_data"
+                    Columns="@_columns"
+                    ShowFilterBar="true"
+                    AreColumnFiltersEnabled="@State.AreColumnFiltersEnabled"
+                    ColumnFilterTriggerMode="@State.ColumnFilterTriggerMode" />
 </div>
 
 @using DataFilter.Blazor.Demo.Shared.Helpers

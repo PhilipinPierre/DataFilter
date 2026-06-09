@@ -288,3 +288,51 @@
     color: var(--df-primary-color);
 }
 
+.df-header-trigger-left,
+.df-header-trigger-right,
+.df-header-trigger-double,
+.df-header-trigger-middle {
+    cursor: pointer;
+}
+
+.df-column-header-active-indicator {
+    margin-left: 4px;
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+.df-column-header-filter-active,
+th.df-column-header-filter-active,
+.df-column-header-container.df-column-header-filter-active {
+    position: relative;
+}
+
+.df-column-header-filter-active::after,
+th.df-column-header-filter-active::after,
+.df-column-header-container.df-column-header-filter-active::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 2px solid var(--df-primary-color, #1e90ff);
+    pointer-events: none;
+    box-sizing: border-box;
+}
+
+.df-column-header-context-menu {
+    background: var(--df-popup-bg, #fff);
+    border: 1px solid var(--df-secondary-border, #d0d0d0);
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 4px;
+}
+
+.df-column-header-context-menu-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: none;
+    background: transparent;
+    padding: 6px 10px;
+    cursor: pointer;
+}
+

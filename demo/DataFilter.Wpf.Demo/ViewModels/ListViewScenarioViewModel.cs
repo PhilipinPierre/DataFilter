@@ -5,15 +5,18 @@ using DataFilter.Wpf.ViewModels;
 
 namespace DataFilter.Wpf.Demo.ViewModels;
 
-public sealed partial class ListViewScenarioViewModel : ObservableObject, IDemoItem
+public sealed partial class ListViewScenarioViewModel : ObservableObject, IDemoItem, IDemoHeaderSettingsHost
 {
+    public DemoHeaderSettings HeaderSettings { get; }
+
     [ObservableProperty]
     private IFilterableDataGridViewModel<Employee> _gridViewModel;
     [ObservableProperty]
     private IEnumerable<Employee> _employees;
 
-    public ListViewScenarioViewModel()
+    public ListViewScenarioViewModel(DemoHeaderSettings headerSettings)
     {
+        HeaderSettings = headerSettings;
         Regenerate(1000);
     }
 

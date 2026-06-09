@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
+using DataFilter.PlatformShared.ColumnFilter;
 
 namespace DataFilter.Wpf.Controls;
 
@@ -139,6 +140,41 @@ public class FilterableDataGrid : DataGrid
             return style.BasedOn;
 
         return style;
+    }
+
+    public static readonly DependencyProperty AreColumnFiltersEnabledProperty =
+        DependencyProperty.Register(
+            nameof(AreColumnFiltersEnabled),
+            typeof(bool),
+            typeof(FilterableDataGrid),
+            new PropertyMetadata(true));
+
+    /// <summary>
+    /// Gets or sets whether column filter UI is enabled for this grid. When <c>false</c>, filter buttons
+    /// and header triggers are hidden on every column. Per-column disable uses
+    /// <see cref="FilterableColumnHeaderBehavior.IsFilterableProperty"/> on the column.
+    /// </summary>
+    public bool AreColumnFiltersEnabled
+    {
+        get => (bool)GetValue(AreColumnFiltersEnabledProperty);
+        set => SetValue(AreColumnFiltersEnabledProperty, value);
+    }
+
+    public static readonly DependencyProperty ColumnFilterTriggerModeProperty =
+        DependencyProperty.Register(
+            nameof(ColumnFilterTriggerMode),
+            typeof(ColumnFilterTriggerMode),
+            typeof(FilterableDataGrid),
+            new PropertyMetadata(ColumnFilterTriggerMode.FilterButton));
+
+    /// <summary>
+    /// Gets or sets the default way column filter popups are opened from headers.
+    /// Per-column overrides use <see cref="FilterableColumnHeaderBehavior.ColumnFilterTriggerModeProperty"/>.
+    /// </summary>
+    public ColumnFilterTriggerMode ColumnFilterTriggerMode
+    {
+        get => (ColumnFilterTriggerMode)GetValue(ColumnFilterTriggerModeProperty);
+        set => SetValue(ColumnFilterTriggerModeProperty, value);
     }
 
     public static readonly DependencyProperty ViewModelProperty =

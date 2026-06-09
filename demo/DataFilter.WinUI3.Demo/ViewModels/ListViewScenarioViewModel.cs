@@ -5,10 +5,22 @@ using DataFilter.PlatformShared.ViewModels;
 
 namespace DataFilter.WinUI3.Demo.ViewModels;
 
-public partial class ListViewScenarioViewModel : ObservableObject
+public partial class ListViewScenarioViewModel : ObservableObject, IDemoHeaderSettingsHost
 {
+    public DemoHeaderSettings HeaderSettings { get; }
+
     [ObservableProperty]
     private FilterableDataGridViewModel<Employee> _gridViewModel;
+
+    public ListViewScenarioViewModel(DemoHeaderSettings headerSettings)
+    {
+        HeaderSettings = headerSettings;
+        GridViewModel = new FilterableDataGridViewModel<Employee>
+        {
+            LocalDataSource = EmployeeDataGenerator.Employees
+        };
+        _ = GridViewModel.RefreshDataAsync();
+    }
 
     public void Regenerate(int count)
     {

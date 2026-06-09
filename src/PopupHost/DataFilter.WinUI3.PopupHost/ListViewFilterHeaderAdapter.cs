@@ -1,11 +1,7 @@
+using DataFilter.PlatformShared.ColumnFilter;
 using DataFilter.PlatformShared.ViewModels;
-using DataFilter.WinUI3.Behaviors;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Automation;
-using Windows.Foundation;
 
 namespace DataFilter.WinUI3.Attach;
 
@@ -14,118 +10,82 @@ namespace DataFilter.WinUI3.Attach;
 /// </summary>
 public sealed class ListViewFilterHeaderAdapter : IDisposable
 {
-    public sealed record Column(string Title, string PropertyName, double Width);
+    public sealed record Column(
+        string Title,
+        string PropertyName,
+        double Width = 150,
+        bool IsFilterable = true,
+        ColumnFilterTriggerMode TriggerMode = ColumnFilterTriggerMode.Inherit);
 
     private readonly ListView _listView;
-    private readonly IFilterableDataGridViewModel _viewModel;
     private readonly object? _previousHeader;
     private bool _isDisposed;
 
-    public ListViewFilterHeaderAdapter(ListView listView, IFilterableDataGridViewModel viewModel, IReadOnlyList<Column> columns)
+    public ListViewFilterHeaderAdapter(
+        ListView listView,
+        IFilterableDataGridViewModel viewModel,
+        IReadOnlyList<Column> columns,
+        bool areColumnFiltersEnabled = true,
+        ColumnFilterTriggerMode columnFilterTriggerMode = ColumnFilterTriggerMode.FilterButton)
     {
         _listView = listView ?? throw new ArgumentNullException(nameof(listView));
-        _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+        ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         Columns = columns ?? throw new ArgumentNullException(nameof(columns));
+        AreColumnFiltersEnabled = areColumnFiltersEnabled;
+        ColumnFilterTriggerMode = columnFilterTriggerMode;
 
         _previousHeader = _listView.Header;
         _listView.Header = BuildHeader();
     }
 
-    public static ListViewFilterHeaderAdapter Attach(ListView listView, IFilterableDataGridViewModel viewModel, params Column[] columns)
+    public static ListViewFilterHeaderAdapter Attach(
+        ListView listView,
+        IFilterableDataGridViewModel viewModel,
+        params Column[] columns)
         => new(listView, viewModel, columns);
+
+    public IFilterableDataGridViewModel ViewModel { get; }
 
     public IReadOnlyList<Column> Columns { get; }
 
-    private UIElement BuildHeader()
+    public bool AreColumnFiltersEnabled { get; private set; }
+
+    public ColumnFilterTriggerMode ColumnFilterTriggerMode { get; private set; }
+
+    public void ApplyHeaderSettings(bool areColumnFiltersEnabled, ColumnFilterTriggerMode columnFilterTriggerMode)
     {
-        var headerScroll = new ScrollViewer
-        {
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Disabled
-        };
-
-        var grid = new Grid { Padding = new Thickness(10, 0, 10, 10) };
-        foreach (var c in Columns)
-        {
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(c.Width) });
-        }
-
-        for (int i = 0; i < Columns.Count; i++)
-        {
-            var col = Columns[i];
-            var columnKey = SanitizeForId(col.PropertyName);
-            var btn = new Button
-            {
-                Content = $"{col.Title} \uD83D\uDD0D",
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
-                Padding = new Thickness(5)
-            };
-            if (!string.IsNullOrWhiteSpace(columnKey))
-            {
-                AutomationProperties.SetAutomationId(btn, $"df-filter-btn-{columnKey}");
-            }
-            Grid.SetColumn(btn, i);
-
-            btn.Click += (_, _) =>
-            {
-                var popup = FilterHeaderBehavior.CreatePopup(_viewModel, col.PropertyName);
-                if (!string.IsNullOrWhiteSpace(columnKey))
-                {
-                    AutomationProperties.SetAutomationId(popup, $"df-filter-popup-{columnKey}");
-                }
-                var flyout = new Flyout { Content = popup };
-                if (popup.ViewModel != null)
-                {
-                    popup.ViewModel.OnApply += (_, __) => flyout.Hide();
-                    popup.ViewModel.OnClear += (_, __) => flyout.Hide();
-                    popup.CancelRequested += (_, __) => flyout.Hide();
-                }
-
-                bool isRtl = btn.FlowDirection == FlowDirection.RightToLeft;
-                var desired = new Point(isRtl ? -popup.Width : btn.ActualWidth, btn.ActualHeight);
-                flyout.ShowAt(btn, new FlyoutShowOptions
-                {
-                    Placement = FlyoutPlacementMode.Bottom,
-                    Position = desired
-                });
-            };
-
-            grid.Children.Add(btn);
-        }
-
-        headerScroll.Content = grid;
-        return headerScroll;
+        AreColumnFiltersEnabled = areColumnFiltersEnabled;
+        ColumnFilterTriggerMode = columnFilterTriggerMode;
+        _listView.Header = BuildHeader();
     }
 
-    private static string? SanitizeForId(string? raw)
+    private UIElement BuildHeader()
     {
-        if (string.IsNullOrWhiteSpace(raw))
-            return null;
-
-        raw = raw.Trim();
-        Span<char> buf = stackalloc char[raw.Length];
-        int n = 0;
-        foreach (var ch in raw)
+        var specs = Columns.Select(c => new ListViewFilterHeaderInteractions.ColumnSpec
         {
-            if ((ch >= 'a' && ch <= 'z') ||
-                (ch >= 'A' && ch <= 'Z') ||
-                (ch >= '0' && ch <= '9') ||
-                ch == '_' || ch == '-')
-            {
-                buf[n++] = ch;
-            }
-        }
+            Title = c.Title,
+            PropertyName = c.PropertyName,
+            Width = c.Width,
+            IsFilterable = c.IsFilterable,
+            TriggerMode = c.TriggerMode,
+        }).ToList();
 
-        return n == 0 ? null : new string(buf[..n]);
+        return ListViewFilterHeaderInteractions.BuildHeader(
+            ViewModel,
+            specs,
+            new ListViewFilterHeaderInteractions.Settings
+            {
+                AreColumnFiltersEnabled = AreColumnFiltersEnabled,
+                ColumnFilterTriggerMode = ColumnFilterTriggerMode,
+            });
     }
 
     public void Dispose()
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
         _isDisposed = true;
 
         _listView.Header = _previousHeader;
     }
 }
-

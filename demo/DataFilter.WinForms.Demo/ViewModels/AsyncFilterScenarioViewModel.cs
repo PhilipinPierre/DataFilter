@@ -4,14 +4,17 @@ using DataFilter.PlatformShared.ViewModels;
 
 namespace DataFilter.WinForms.Demo.ViewModels;
 
-public class AsyncFilterScenarioViewModel
+public class AsyncFilterScenarioViewModel : IDemoHeaderSettingsHost
 {
     private readonly IMockEmployeeApiService _mockService;
 
+    public DemoHeaderSettings HeaderSettings { get; }
+
     public FilterableDataGridViewModel<Employee> GridViewModel { get; }
 
-    public AsyncFilterScenarioViewModel(IMockEmployeeApiService mockService)
+    public AsyncFilterScenarioViewModel(IMockEmployeeApiService mockService, DemoHeaderSettings headerSettings)
     {
+        HeaderSettings = headerSettings;
         _mockService = mockService;
         GridViewModel = new FilterableDataGridViewModel<Employee>
         {
