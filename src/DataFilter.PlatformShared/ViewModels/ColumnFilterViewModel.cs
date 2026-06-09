@@ -557,6 +557,10 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
         if (t == typeof(string)) return FilterDataType.Text;
         if (t == typeof(int) || t == typeof(long) || t == typeof(double) || t == typeof(float) || t == typeof(decimal) || t == typeof(short)) return FilterDataType.Number;
         if (t == typeof(DateTime) || t == typeof(DateTimeOffset)) return FilterDataType.Date;
+#if NET6_0_OR_GREATER
+        if (t == typeof(DateOnly)) return FilterDataType.Date;
+#endif
+        if (t.FullName == "System.DateOnly") return FilterDataType.Date;
         if (t == typeof(TimeSpan)) return FilterDataType.Time;
         if (t == typeof(bool)) return FilterDataType.Boolean;
         return FilterDataType.Other;
@@ -711,32 +715,41 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
 
     private void InitializeFlatList(IEnumerable<object> distinctValues, List<FilterValueItem> newFilterValues)
     {
+        var seen = new HashSet<object>();
         foreach (var val in distinctValues)
         {
-            var isSelected = FilterState.SelectAll || (val != null && FilterState.SelectedValues.Contains(val));
+            if (!seen.Add(val!))
+                continue;
+
+            var isSelected = FilterState.SelectAll || FilterState.SelectedValues.Contains(val!);
             var display = val?.ToString() ?? _blanksDisplayTextProvider();
             var item = new FilterValueItem(display, val, null, isSelected);
             newFilterValues.Add(item);
-
-            if (val != null)
-                FilterState.DistinctValues.Add(val);
+            FilterState.DistinctValues.Add(val!);
         }
     }
 
     private void InitializeDateTree(IEnumerable<object> distinctValues, List<FilterValueItem> newFilterValues)
     {
         var validDates = new List<DateTime>();
+        var canonicalByDay = new Dictionary<DateTime, object>();
         var blankItem = (FilterValueItem?)null;
 
         foreach (var val in distinctValues)
         {
-            if (val is DateTime dt) validDates.Add(dt);
-            else if (val is DateTimeOffset dto) validDates.Add(dto.DateTime);
-            else if (val == null)
+            if (val == null)
             {
-                var isSelected = FilterState.SelectAll || FilterState.SelectedValues.Contains(val!);
+                var isSelected = FilterState.SelectAll || FilterState.SelectedValues.Contains(null!);
                 blankItem = new FilterValueItem(_blanksDisplayTextProvider(), null, null, isSelected);
-                FilterState.DistinctValues.Add(val!);
+                FilterState.DistinctValues.Add(null!);
+                continue;
+            }
+
+            if (TryGetTreeDate(val, out var treeDate, out var canonical)
+                && !canonicalByDay.ContainsKey(treeDate))
+            {
+                canonicalByDay[treeDate] = canonical;
+                validDates.Add(treeDate);
             }
         }
 
@@ -751,13 +764,14 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
                 var monthName = new DateTime(2000, monthGrp.Key, 1).ToString("MMMM");
                 var monthNode = new FilterValueItem(monthName, null, yearNode, false);
 
-                var days = monthGrp.OrderBy(d => d.Day);
-                foreach (var day in days)
+                foreach (var day in monthGrp.OrderBy(d => d.Day))
                 {
-                    bool isSelected = FilterState.SelectAll || FilterState.SelectedValues.Contains(day);
-                    var dayNode = new FilterValueItem(day.Day.ToString("D2"), day, monthNode, isSelected);
+                    var canonical = canonicalByDay[day];
+                    bool isSelected = FilterState.SelectAll
+                        || FilterState.SelectedValues.Any(v => DateDistinctHelper.AreSameCalendarDate(v, canonical));
+                    var dayNode = new FilterValueItem(day.Day.ToString("D2"), canonical, monthNode, isSelected);
                     monthNode.AddChild(dayNode);
-                    FilterState.DistinctValues.Add(day);
+                    FilterState.DistinctValues.Add(canonical);
                 }
 
                 monthNode.UpdateStateFromChildren();
@@ -770,6 +784,48 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
 
         if (blankItem != null)
             newFilterValues.Add(blankItem);
+    }
+
+    private static bool TryGetTreeDate(object? val, out DateTime treeDate, out object canonical)
+    {
+        if (val == null)
+        {
+            treeDate = default;
+            canonical = null!;
+            return false;
+        }
+
+        switch (val)
+        {
+            case DateTime dt:
+                treeDate = dt.Date;
+                canonical = dt.Date;
+                return true;
+            case DateTimeOffset dto:
+                treeDate = dto.Date;
+                canonical = new DateTimeOffset(dto.Year, dto.Month, dto.Day, 0, 0, 0, dto.Offset);
+                return true;
+#if NET6_0_OR_GREATER
+            case DateOnly dateOnly:
+                treeDate = dateOnly.ToDateTime(TimeOnly.MinValue);
+                canonical = dateOnly;
+                return true;
+#endif
+            default:
+                if (val.GetType().FullName == "System.DateOnly")
+                {
+                    var year = (int)val.GetType().GetProperty("Year")!.GetValue(val)!;
+                    var month = (int)val.GetType().GetProperty("Month")!.GetValue(val)!;
+                    var day = (int)val.GetType().GetProperty("Day")!.GetValue(val)!;
+                    treeDate = new DateTime(year, month, day);
+                    canonical = val;
+                    return true;
+                }
+
+                treeDate = default;
+                canonical = val;
+                return false;
+        }
     }
 
     private void UpdateBlanksDisplayTexts()
@@ -1047,12 +1103,12 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
             {
                 if (AccumulationMode == AccumulationMode.Intersection)
                 {
-                    bool wasSelected = item.Value != null && _selectionSnapshot.Contains(item.Value);
+                    bool wasSelected = _selectionSnapshot.Contains(item.Value!);
                     item.IsSelected = wasSelected && matches;
                 }
                 else
                 {
-                    bool wasSelected = item.Value != null && _selectionSnapshot.Contains(item.Value);
+                    bool wasSelected = _selectionSnapshot.Contains(item.Value!);
                     item.IsSelected = wasSelected || matches;
                 }
             }
@@ -1153,11 +1209,10 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
         }
         else
         {
-            if (item.Value == null) return;
             if (item.IsSelected == true)
-                FilterState.SelectedValues.Add(item.Value);
+                FilterState.SelectedValues.Add(item.Value!);
             else if (item.IsSelected == false)
-                FilterState.SelectedValues.Remove(item.Value);
+                FilterState.SelectedValues.Remove(item.Value!);
         }
     }
 
@@ -1172,8 +1227,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
         }
         else
         {
-            if (item.Value != null)
-                item.IsSelected = selectedValues.Contains(item.Value);
+            item.IsSelected = selectedValues.Contains(item.Value!);
         }
     }
 

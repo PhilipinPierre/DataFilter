@@ -102,6 +102,7 @@ else
     private int _currentPage = 1;
     private readonly FilterContext _context = new();
     private IEnumerable<TItem>? _itemsSourceReference;
+    private static readonly DistinctValuesExtractor DistinctExtractor = new();
 
     private DataFilterGridContext<TItem> GridContext => new(
         getColumnFilterViewModel: id =>
@@ -241,17 +242,14 @@ else
         if (!_viewModels.TryGetValue(column.Id, out var vm))
         {
             vm = new ColumnFilterViewModel(
-                async (search) => {
+                async (search) =>
+                {
                     if (DataProvider != null)
                     {
                         return await DataProvider.FetchDistinctValuesAsync(column.PropertyName, search);
                     }
-                    var distinctValues = Items.Select(column.Selector).Distinct();
-                    if (!string.IsNullOrEmpty(search))
-                    {
-                         distinctValues = distinctValues.Where(x => x?.ToString()?.Contains(search, StringComparison.OrdinalIgnoreCase) == true);
-                    }
-                    return distinctValues.ToList();
+
+                    return GetLocalDistinctValues(column, search);
                 },
                 _state => { _ = ApplyFiltersAsync(); },
                 () => { _ = ApplyFiltersAsync(); },
@@ -271,7 +269,7 @@ else
             // Initialize VM with distinct values
             if (DataProvider == null)
             {
-                _ = vm.InitializeAsync(Items.Select(column.Selector).Distinct());
+                _ = vm.InitializeAsync(GetLocalDistinctValues(column, string.Empty));
             }
             else
             {
@@ -282,6 +280,21 @@ else
             _viewModels[column.Id] = vm;
         }
         return vm;
+    }
+
+    private IEnumerable<object> GetLocalDistinctValues(ColumnDefinition<TItem> column, string search)
+    {
+        IEnumerable<object> distinctValues = !string.IsNullOrWhiteSpace(column.PropertyName)
+            ? DistinctExtractor.Extract(Items, typeof(TItem), column.PropertyName)
+            : Items.Select(column.Selector).Distinct().Cast<object>();
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            distinctValues = distinctValues.Where(x =>
+                x?.ToString()?.Contains(search, StringComparison.OrdinalIgnoreCase) == true);
+        }
+
+        return distinctValues.ToList();
     }
 
     public async Task ClearFilters()

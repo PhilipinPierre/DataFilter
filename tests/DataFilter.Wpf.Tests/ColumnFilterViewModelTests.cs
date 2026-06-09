@@ -217,6 +217,48 @@ public class ColumnFilterViewModelTests
     }
 
     [Fact]
+    public async Task InitializeAsync_DateTree_ShowsSingleCheckboxPerCalendarDay()
+    {
+        var morning = new DateTime(2024, 3, 15, 8, 0, 0);
+        var evening = new DateTime(2024, 3, 15, 18, 0, 0);
+        var otherDay = new DateTime(2024, 6, 1, 12, 0, 0);
+
+        var vm = new ColumnFilterViewModel(
+            async _ => new List<object> { morning, evening, otherDay },
+            _ => { },
+            () => { },
+            propertyType: typeof(DateTime));
+
+        await vm.InitializeAsync(new List<object> { morning.Date, otherDay.Date });
+
+        var dayNodes = vm.FilterValues
+            .SelectMany(year => year.Children)
+            .SelectMany(month => month.Children)
+            .ToList();
+
+        Assert.Equal(2, dayNodes.Count);
+        Assert.Equal(2, vm.FilterState.DistinctValues.Count);
+    }
+
+    [Fact]
+    public async Task InitializeAsync_DateTree_IncludesBlanksCheckbox_WhenNullIsDistinct()
+    {
+        var d1 = new DateTime(2024, 3, 15);
+        var distinctValues = new List<object?> { d1, null };
+
+        var vm = new ColumnFilterViewModel(
+            async _ => distinctValues!,
+            _ => { },
+            () => { },
+            propertyType: typeof(DateTime?));
+
+        await vm.InitializeAsync(distinctValues!);
+
+        var blanksItem = vm.FilterValues.Single(x => x.Value == null && x.Children.Count == 0);
+        Assert.True(vm.FilterState.DistinctValues.Any(v => v == null));
+    }
+
+    [Fact]
     public async Task ApplyCommand_WithAddToExistingFilterAndCustomOperator_AccumulatesAndResetsCustomFilter()
     {
         // Arrange

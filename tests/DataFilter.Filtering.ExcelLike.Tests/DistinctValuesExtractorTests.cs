@@ -9,6 +9,10 @@ public class DistinctValuesExtractorTests
     {
         public string Category { get; set; } = string.Empty;
         public int Number { get; set; }
+        public DateTime HireDate { get; set; }
+#if NET6_0_OR_GREATER
+        public DateOnly BirthDate { get; set; }
+#endif
     }
 
     [Fact]
@@ -39,4 +43,78 @@ public class DistinctValuesExtractorTests
         Assert.Equal(2, numbers[1]);
         Assert.Equal(3, numbers[2]);
     }
+
+    [Fact]
+    public void Extract_IncludesNullOnce_WhenPropertyHasNullValues()
+    {
+        var extractor = new DistinctValuesExtractor();
+        var items = new List<TestItem>
+        {
+            new TestItem { Category = "A" },
+            new TestItem { Category = null! },
+            new TestItem { Category = "B" },
+            new TestItem { Category = null! }
+        };
+
+        var categories = extractor.Extract(items, "Category").ToList();
+
+        Assert.Equal(3, categories.Count);
+        Assert.Equal("A", categories[0]);
+        Assert.Equal("B", categories[1]);
+        Assert.Null(categories[2]);
+    }
+
+    [Fact]
+    public void Extract_ReturnsOnlyNull_WhenAllValuesAreNull()
+    {
+        var extractor = new DistinctValuesExtractor();
+        var items = new List<TestItem>
+        {
+            new TestItem { Category = null! },
+            new TestItem { Category = null! }
+        };
+
+        var categories = extractor.Extract(items, "Category").ToList();
+
+        Assert.Single(categories);
+        Assert.Null(categories[0]);
+    }
+
+    [Fact]
+    public void Extract_DateTime_ReturnsDistinctCalendarDays()
+    {
+        var extractor = new DistinctValuesExtractor();
+        var items = new List<TestItem>
+        {
+            new TestItem { HireDate = new DateTime(2024, 3, 15, 8, 30, 0) },
+            new TestItem { HireDate = new DateTime(2024, 3, 15, 17, 45, 0) },
+            new TestItem { HireDate = new DateTime(2024, 6, 1, 12, 0, 0) }
+        };
+
+        var dates = extractor.Extract(items, "HireDate").Cast<DateTime>().ToList();
+
+        Assert.Equal(2, dates.Count);
+        Assert.Equal(new DateTime(2024, 3, 15), dates[0]);
+        Assert.Equal(new DateTime(2024, 6, 1), dates[1]);
+    }
+
+#if NET6_0_OR_GREATER
+    [Fact]
+    public void Extract_DateOnly_ReturnsDistinctSortedValues()
+    {
+        var extractor = new DistinctValuesExtractor();
+        var items = new List<TestItem>
+        {
+            new TestItem { BirthDate = new DateOnly(2024, 12, 1) },
+            new TestItem { BirthDate = new DateOnly(2024, 3, 15) },
+            new TestItem { BirthDate = new DateOnly(2024, 3, 15) }
+        };
+
+        var dates = extractor.Extract(items, "BirthDate").Cast<DateOnly>().ToList();
+
+        Assert.Equal(2, dates.Count);
+        Assert.Equal(new DateOnly(2024, 3, 15), dates[0]);
+        Assert.Equal(new DateOnly(2024, 12, 1), dates[1]);
+    }
+#endif
 }

@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Linq.Expressions;
+using System.Reflection;
+using DataFilter.Core.Engine;
 using DataFilter.Filtering.ExcelLike.Abstractions;
 
 namespace DataFilter.Filtering.ExcelLike.Services;
@@ -39,35 +41,27 @@ public class DistinctValuesExtractor : IDistinctValuesExtractor
 
             var lambda = Expression.Lambda<Func<object, object>>(current, objParameter);
             var compiledFunc = lambda.Compile();
+            var valueType = UnwrapNullableType(current.Type);
 
-            var distinctMap = new List<object>();
-            foreach (var x in source)
-            {
-                if (x == null) continue;
-                var v = compiledFunc(x);
-                if (v != null)
+            return ExtractDistinct(
+                source,
+                item =>
                 {
-                    distinctMap.Add(v);
-                }
-            }
-
-            distinctMap = distinctMap.Distinct().ToList();
-            return Sort(distinctMap);
+                    if (item == null) return null;
+                    return compiledFunc(item);
+                },
+                valueType);
         }
 
-        var results = new List<object>();
-        foreach (var x in source)
-        {
-            if (x == null) continue;
-            var v = propertyInfo.GetValue(x);
-            if (v != null)
+        var propertyValueType = UnwrapNullableType(propertyInfo.PropertyType);
+        return ExtractDistinct(
+            source,
+            item =>
             {
-                results.Add(v);
-            }
-        }
-
-        var distinctResults = results.Distinct().ToList();
-        return Sort(distinctResults);
+                if (item == null) return null;
+                return propertyInfo.GetValue(item);
+            },
+            propertyValueType);
     }
 
     /// <inheritdoc />
@@ -76,9 +70,53 @@ public class DistinctValuesExtractor : IDistinctValuesExtractor
         return Extract(source!, typeof(T), propertyName);
     }
 
-    private static IEnumerable<object> Sort(List<object> values)
+    private static IEnumerable<object> ExtractDistinct(
+        IEnumerable source,
+        Func<object?, object?> getPropertyValue,
+        Type propertyValueType)
+    {
+        var hasNull = false;
+        var seen = new HashSet<object>();
+        var values = new List<object>();
+        var isDateColumn = DateDistinctHelper.IsCalendarDateType(propertyValueType);
+
+        foreach (var item in source)
+        {
+            var value = getPropertyValue(item);
+            if (value == null)
+            {
+                hasNull = true;
+                continue;
+            }
+
+            var canonical = isDateColumn
+                ? DateDistinctHelper.CanonicalizeDistinctValue(value, propertyValueType)
+                : value;
+
+            if (seen.Add(canonical))
+            {
+                values.Add(canonical);
+            }
+        }
+
+        var sorted = Sort(values, propertyValueType).ToList();
+
+        if (hasNull)
+        {
+            sorted.Add(null!);
+        }
+
+        return sorted;
+    }
+
+    private static IEnumerable<object> Sort(List<object> values, Type propertyValueType)
     {
         if (values.Count == 0) return values;
+
+        propertyValueType = UnwrapNullableType(propertyValueType);
+
+        if (DateDistinctHelper.IsCalendarDateType(propertyValueType))
+            return values.OrderBy(x => x, Comparer<object>.Create(DateDistinctHelper.CompareCalendarDates));
 
         var firstValidItem = values.FirstOrDefault(x => x != null);
         if (firstValidItem == null) return values;
@@ -97,6 +135,14 @@ public class DistinctValuesExtractor : IDistinctValuesExtractor
         if (type == typeof(DateTime))
             return values.OrderBy(x => (DateTime)x);
 
+        if (type == typeof(DateTimeOffset))
+            return values.OrderBy(x => (DateTimeOffset)x);
+
         return values.OrderBy(x => x?.ToString());
+    }
+
+    private static Type UnwrapNullableType(Type type)
+    {
+        return Nullable.GetUnderlyingType(type) ?? type;
     }
 }

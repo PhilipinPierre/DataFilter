@@ -38,6 +38,17 @@ public sealed class FilterDescriptorFactory : IFilterDescriptorFactory
             return new DateFilterDescriptor(propertyName, FilterOperator.Equals, DateTime.Today);
         }
 
+#if NET6_0_OR_GREATER
+        if (underlyingType == typeof(DateOnly))
+        {
+            return new DateFilterDescriptor(propertyName, FilterOperator.Equals, DateTime.Today);
+        }
+#endif
+        if (underlyingType.FullName == "System.DateOnly")
+        {
+            return new DateFilterDescriptor(propertyName, FilterOperator.Equals, DateTime.Today);
+        }
+
         // Default fallback to a standard Equals descriptor
         return new Core.Models.FilterDescriptor(propertyName, FilterOperator.Equals, null);
     }

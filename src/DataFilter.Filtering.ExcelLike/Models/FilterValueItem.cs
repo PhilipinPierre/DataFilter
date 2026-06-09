@@ -114,9 +114,9 @@ public partial class FilterValueItem : ObservableObject
     {
         if (Children.Count == 0)
         {
-            if (IsSelected == true && Value != null)
+            if (IsSelected == true)
             {
-                selectedValues.Add(Value);
+                selectedValues.Add(Value!);
             }
         }
         else
@@ -132,9 +132,9 @@ public partial class FilterValueItem : ObservableObject
     {
         if (Children.Count == 0)
         {
-            if (IsSelected == true && Value != null)
+            if (IsSelected == true)
             {
-                selectedValues.Enqueue(Value);
+                selectedValues.Enqueue(Value!);
             }
         }
         else

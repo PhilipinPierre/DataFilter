@@ -183,4 +183,21 @@ public class FilterExpressionBuilderTests
         Assert.True(func(new TestItem { Value = 3 }));
         Assert.False(func(new TestItem { Value = 4 }));
     }
+
+    private class DateItem
+    {
+        public DateTime HireDate { get; set; }
+    }
+
+    [Fact]
+    public void BuildExpression_In_DateTime_MatchesByCalendarDay()
+    {
+        var selectedDay = new DateTime(2024, 3, 15);
+        var descriptor = new FilterDescriptor("HireDate", FilterOperator.In, new object[] { selectedDay });
+        var func = Engine.FilterExpressionBuilder.BuildExpression<DateItem>(descriptor).Compile();
+
+        Assert.True(func(new DateItem { HireDate = new DateTime(2024, 3, 15, 8, 30, 0) }));
+        Assert.True(func(new DateItem { HireDate = new DateTime(2024, 3, 15, 18, 0, 0) }));
+        Assert.False(func(new DateItem { HireDate = new DateTime(2024, 3, 16, 8, 30, 0) }));
+    }
 }

@@ -49,6 +49,11 @@ public class FilterEvaluator : IFilterEvaluator
         }
 
         // Support numeric/comparable comparisons
+        if (DateDistinctHelper.TryGetCalendarParts(itemValue, out _, out _, out _))
+        {
+            return EvaluateCalendarDateOperator(itemValue, op, v1, v2);
+        }
+
         if (itemValue is IComparable comparable)
         {
             try
@@ -79,6 +84,50 @@ public class FilterEvaluator : IFilterEvaluator
         }
 
         return false;
+    }
+
+    private static bool EvaluateCalendarDateOperator(object itemValue, FilterOperator op, object? v1, object? v2)
+    {
+        var convertedV1 = ConvertCalendarFilterValue(v1);
+        var convertedV2 = ConvertCalendarFilterValue(v2);
+
+        if (op == FilterOperator.Between)
+        {
+            if (convertedV1 == null || convertedV2 == null) return false;
+            return DateDistinctHelper.CompareCalendarDates(itemValue, convertedV1) >= 0
+                && DateDistinctHelper.CompareCalendarDates(itemValue, convertedV2) <= 0;
+        }
+
+        if (convertedV1 == null)
+        {
+            return op == FilterOperator.Equals;
+        }
+
+        var cmp = DateDistinctHelper.CompareCalendarDates(itemValue, convertedV1);
+        return op switch
+        {
+            FilterOperator.Equals => cmp == 0,
+            FilterOperator.NotEquals => cmp != 0,
+            FilterOperator.GreaterThan => cmp > 0,
+            FilterOperator.GreaterThanOrEqual => cmp >= 0,
+            FilterOperator.LessThan => cmp < 0,
+            FilterOperator.LessThanOrEqual => cmp <= 0,
+            _ => false
+        };
+    }
+
+    private static object? ConvertCalendarFilterValue(object? value)
+    {
+        if (value == null)
+            return null;
+
+        if (DateDistinctHelper.TryGetCalendarParts(value, out _, out _, out _))
+            return value;
+
+        if (value is string s && DateTime.TryParse(s, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
+            return parsed.Date;
+
+        return null;
     }
 
     private object? ConvertValue(object? value, Type targetType)

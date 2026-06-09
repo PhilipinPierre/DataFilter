@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using DataFilter.Core.Engine;
 using DataFilter.Filtering.ExcelLike.Models;
 
 namespace DataFilter.Filtering.ExcelLike.Services;
@@ -51,17 +52,19 @@ public static class ExcelFilterSelectionReconciler
             }
 
             object? canonical = null;
+            var found = false;
             for (int i = 0; i < distinctArr.Length; i++)
             {
                 if (EqualsValue(distinctArr[i], sel))
                 {
                     canonical = distinctArr[i];
+                    found = true;
                     break;
                 }
             }
 
-            if (canonical != null)
-                newSelection.Add(canonical);
+            if (found)
+                newSelection.Add(canonical!);
             else if (!dropSelectionsNotInDistinct)
                 newSelection.Add(sel);
         }
@@ -75,6 +78,12 @@ public static class ExcelFilterSelectionReconciler
     {
         if (a == null && b == null) return true;
         if (a == null || b == null) return false;
+        if (DateDistinctHelper.TryGetCalendarParts(a, out _, out _, out _)
+            && DateDistinctHelper.TryGetCalendarParts(b, out _, out _, out _))
+        {
+            return DateDistinctHelper.AreSameCalendarDate(a, b);
+        }
+
         return Equals(a, b);
     }
 }

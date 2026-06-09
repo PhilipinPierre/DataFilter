@@ -69,4 +69,16 @@ public class ExcelFilterSelectionReconcilerTests
         Assert.Single(state.SelectedValues);
         Assert.Contains("Alice", state.SelectedValues);
     }
+
+    [Fact]
+    public void ReconcileSelectedValues_NullSelection_KeepsNullWhenPresentInDistinct()
+    {
+        var state = new ExcelFilterState();
+        state.SelectedValues.Add(null!);
+
+        ExcelFilterSelectionReconciler.ReconcileSelectedValues(state, new List<object> { "A", null! });
+
+        Assert.Single(state.SelectedValues);
+        Assert.Null(state.SelectedValues.First());
+    }
 }
