@@ -1,9 +1,9 @@
-﻿using DataFilter.Wpf.Behaviors;
+﻿using DataFilter.PlatformShared.ColumnFilter;
+using DataFilter.Wpf.Behaviors;
 using DataFilter.Wpf.ViewModels;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using DataFilter.PlatformShared.ColumnFilter;
 
 namespace DataFilter.Wpf.Controls;
 
@@ -26,7 +26,7 @@ public class FilterableGridView : GridView
             nameof(AreColumnFiltersEnabled),
             typeof(bool),
             typeof(FilterableGridView),
-            new PropertyMetadata(true));
+            new PropertyMetadata(true, ColumnFilterHeaderRefresh.OnGridHeaderSettingsChanged));
 
     /// <summary>
     /// Gets or sets whether column filter UI is enabled for this grid view.
@@ -42,7 +42,7 @@ public class FilterableGridView : GridView
             nameof(ColumnFilterTriggerMode),
             typeof(ColumnFilterTriggerMode),
             typeof(FilterableGridView),
-            new PropertyMetadata(ColumnFilterTriggerMode.FilterButton));
+            new PropertyMetadata(ColumnFilterTriggerMode.FilterButton, ColumnFilterHeaderRefresh.OnGridHeaderSettingsChanged));
 
     /// <summary>
     /// Gets or sets the default way column filter popups are opened from headers.

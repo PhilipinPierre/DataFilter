@@ -147,7 +147,7 @@ public class FilterableDataGrid : DataGrid
             nameof(AreColumnFiltersEnabled),
             typeof(bool),
             typeof(FilterableDataGrid),
-            new PropertyMetadata(true));
+            new PropertyMetadata(true, ColumnFilterHeaderRefresh.OnGridHeaderSettingsChanged));
 
     /// <summary>
     /// Gets or sets whether column filter UI is enabled for this grid. When <c>false</c>, filter buttons
@@ -165,7 +165,7 @@ public class FilterableDataGrid : DataGrid
             nameof(ColumnFilterTriggerMode),
             typeof(ColumnFilterTriggerMode),
             typeof(FilterableDataGrid),
-            new PropertyMetadata(ColumnFilterTriggerMode.FilterButton));
+            new PropertyMetadata(ColumnFilterTriggerMode.FilterButton, ColumnFilterHeaderRefresh.OnGridHeaderSettingsChanged));
 
     /// <summary>
     /// Gets or sets the default way column filter popups are opened from headers.

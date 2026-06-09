@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using DataFilter.Localization;
 using DataFilter.Maui.Behaviors;
 using DataFilter.PlatformShared.ColumnFilter;
@@ -8,6 +9,8 @@ namespace DataFilter.Maui.Attach;
 
 internal static class ListViewFilterHeaderInteractions
 {
+    private static readonly ConditionalWeakTable<Page, Stack<Page>> OpenModalPages = new();
+
     internal sealed class ColumnSpec
     {
         public required string Title { get; init; }
@@ -110,13 +113,13 @@ internal static class ListViewFilterHeaderInteractions
 
             if (ColumnFilterHeaderOptions.UsesHoverRevealFilterButton(mode))
             {
-                var hoverButton = CreateInlineFilterButton(hostPage, viewModel, col, columnKey);
-                hoverButton.IsVisible = false;
-                layout.Add(hoverButton, 1, 0);
-                var enter = new PointerGestureRecognizer();
-                enter.PointerEntered += (_, _) => hoverButton.IsVisible = true;
-                enter.PointerExited += (_, _) => hoverButton.IsVisible = false;
-                layout.GestureRecognizers.Add(enter);
+                var hoverReveal = new HoverRevealButtonController(
+                    CreateInlineFilterButton(hostPage, viewModel, col, columnKey, wireDefaultClick: false),
+                    layout);
+                layout.Add(hoverReveal.Button, 1, 0);
+                hoverReveal.Attach();
+                hoverReveal.Button.Clicked += async (_, _) =>
+                    await ShowFilterPopupAsync(hostPage, viewModel, col.PropertyName, layout, columnKey, hoverReveal);
             }
 
             AttachTriggers(hostPage, viewModel, col, mode, columnKey, layout);
@@ -173,7 +176,8 @@ internal static class ListViewFilterHeaderInteractions
         Page hostPage,
         IFilterableDataGridViewModel viewModel,
         ColumnSpec col,
-        string? columnKey)
+        string? columnKey,
+        bool wireDefaultClick = true)
     {
         var btn = new Button
         {
@@ -186,7 +190,9 @@ internal static class ListViewFilterHeaderInteractions
         if (!string.IsNullOrWhiteSpace(columnKey))
             btn.AutomationId = $"df-filter-btn-{columnKey}";
 
-        btn.Clicked += async (_, _) => await ShowFilterPopupAsync(hostPage, viewModel, col.PropertyName, btn, columnKey);
+        if (wireDefaultClick)
+            btn.Clicked += async (_, _) => await ShowFilterPopupAsync(hostPage, viewModel, col.PropertyName, btn, columnKey);
+
         return btn;
     }
 
@@ -305,23 +311,109 @@ internal static class ListViewFilterHeaderInteractions
         IFilterableDataGridViewModel viewModel,
         string propertyName,
         VisualElement anchor,
-        string? columnKey)
+        string? columnKey,
+        HoverRevealButtonController? hoverReveal = null)
     {
+        await DismissOpenModalsAsync(hostPage);
+
         var popupView = FilterHeaderBehavior.CreatePopup(viewModel, propertyName);
         var anchorRect = GetAbsoluteRect(anchor);
         var page = new FilterPopupPage(popupView, anchorRect, anchor.FlowDirection, columnKey);
-        popupView.CloseRequested += async (_, __) =>
-        {
-            if (page.Navigation.ModalStack.Contains(page))
-                await page.Navigation.PopModalAsync();
-        };
-        page.DismissRequested += async (_, __) =>
-        {
-            if (page.Navigation.ModalStack.Contains(page))
-                await page.Navigation.PopModalAsync();
-        };
+        hoverReveal?.OnPopupOpened();
 
+        async Task DismissPopupAsync()
+        {
+            if (!page.Navigation.ModalStack.Contains(page))
+                return;
+
+            await page.Navigation.PopModalAsync();
+            RemoveTrackedModal(hostPage, page);
+            hoverReveal?.OnPopupClosed();
+        }
+
+        popupView.CloseRequested += async (_, __) => await DismissPopupAsync();
+        page.DismissRequested += async (_, __) => await DismissPopupAsync();
+
+        TrackModal(hostPage, page);
         await hostPage.Navigation.PushModalAsync(page);
+    }
+
+    private static async Task DismissOpenModalsAsync(Page hostPage)
+    {
+        if (!OpenModalPages.TryGetValue(hostPage, out var stack) || stack.Count == 0)
+            return;
+
+        while (stack.Count > 0)
+        {
+            var modal = stack.Peek();
+            if (hostPage.Navigation.ModalStack.Contains(modal))
+                await hostPage.Navigation.PopModalAsync();
+            else
+                stack.Pop();
+        }
+    }
+
+    private static void TrackModal(Page hostPage, Page modalPage)
+    {
+        var stack = OpenModalPages.GetOrCreateValue(hostPage);
+        stack.Push(modalPage);
+    }
+
+    private static void RemoveTrackedModal(Page hostPage, Page modalPage)
+    {
+        if (!OpenModalPages.TryGetValue(hostPage, out var stack))
+            return;
+
+        if (stack.Count > 0 && ReferenceEquals(stack.Peek(), modalPage))
+            stack.Pop();
+    }
+
+    private sealed class HoverRevealButtonController
+    {
+        public Button Button { get; }
+        private readonly View _host;
+        private bool _isPointerOverHost;
+        private bool _isPopupOpen;
+
+        public HoverRevealButtonController(Button button, View host)
+        {
+            Button = button;
+            _host = host;
+            Button.IsVisible = false;
+        }
+
+        public void Attach()
+        {
+            var enter = new PointerGestureRecognizer();
+            enter.PointerEntered += (_, _) =>
+            {
+                _isPointerOverHost = true;
+                UpdateVisibility();
+            };
+            enter.PointerExited += (_, _) =>
+            {
+                _isPointerOverHost = false;
+                UpdateVisibility();
+            };
+            _host.GestureRecognizers.Add(enter);
+        }
+
+        public void OnPopupOpened()
+        {
+            _isPopupOpen = true;
+            UpdateVisibility();
+        }
+
+        public void OnPopupClosed()
+        {
+            _isPopupOpen = false;
+            UpdateVisibility();
+        }
+
+        private void UpdateVisibility()
+        {
+            Button.IsVisible = _isPointerOverHost || _isPopupOpen;
+        }
     }
 
     private static string? SanitizeForId(string? raw)

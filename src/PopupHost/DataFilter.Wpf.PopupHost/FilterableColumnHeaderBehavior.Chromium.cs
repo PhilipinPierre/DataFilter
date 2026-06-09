@@ -168,14 +168,30 @@ public partial class FilterableColumnHeaderBehavior
 
     private void OnHeaderMouseEnter(object sender, MouseEventArgs e)
     {
-        if (_filterButton != null && GetEffectiveTriggerMode() == ColumnFilterTriggerMode.HoverRevealButton)
-            _filterButton.Visibility = Visibility.Visible;
+        if (GetEffectiveTriggerMode() != ColumnFilterTriggerMode.HoverRevealButton)
+            return;
+
+        _isPointerOverHeader = true;
+        ApplyHoverRevealButtonVisibility();
     }
 
     private void OnHeaderMouseLeave(object sender, MouseEventArgs e)
     {
-        if (_filterButton != null && GetEffectiveTriggerMode() == ColumnFilterTriggerMode.HoverRevealButton && _filterPopup is not { IsOpen: true })
-            _filterButton.Visibility = Visibility.Collapsed;
+        if (GetEffectiveTriggerMode() != ColumnFilterTriggerMode.HoverRevealButton)
+            return;
+
+        _isPointerOverHeader = false;
+        ApplyHoverRevealButtonVisibility();
+    }
+
+    private void ApplyHoverRevealButtonVisibility()
+    {
+        if (_filterButton == null || GetEffectiveTriggerMode() != ColumnFilterTriggerMode.HoverRevealButton)
+            return;
+
+        _filterButton.Visibility = _isPointerOverHeader || _filterPopup is { IsOpen: true }
+            ? Visibility.Visible
+            : Visibility.Collapsed;
     }
 
     private async void OnHeaderModifierClick(object sender, MouseButtonEventArgs e)

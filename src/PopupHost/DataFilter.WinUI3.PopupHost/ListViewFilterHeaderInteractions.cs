@@ -14,6 +14,29 @@ namespace DataFilter.WinUI3.Attach;
 
 internal static class ListViewFilterHeaderInteractions
 {
+    private static readonly List<WeakReference<Flyout>> OpenFlyouts = new();
+
+    private static void CloseOpenFlyouts()
+    {
+        foreach (var reference in OpenFlyouts.ToArray())
+        {
+            if (reference.TryGetTarget(out var flyout))
+                flyout.Hide();
+        }
+
+        OpenFlyouts.Clear();
+    }
+
+    private static void TrackFlyout(Flyout flyout)
+    {
+        OpenFlyouts.RemoveAll(r => !r.TryGetTarget(out _));
+        OpenFlyouts.Add(new WeakReference<Flyout>(flyout));
+        flyout.Closed += (_, _) =>
+        {
+            OpenFlyouts.RemoveAll(r => r.TryGetTarget(out var f) && ReferenceEquals(f, flyout));
+        };
+    }
+
     internal sealed class ColumnSpec
     {
         public required string Title { get; init; }
@@ -112,11 +135,13 @@ internal static class ListViewFilterHeaderInteractions
 
             if (ColumnFilterHeaderOptions.UsesHoverRevealFilterButton(mode))
             {
-                var hoverButton = CreateInlineFilterButton(viewModel, col, columnKey);
-                hoverButton.Visibility = Visibility.Collapsed;
-                host.Children.Add(hoverButton);
-                host.PointerEntered += (_, _) => hoverButton.Visibility = Visibility.Visible;
-                host.PointerExited += (_, _) => hoverButton.Visibility = Visibility.Collapsed;
+                var hoverReveal = new HoverRevealButtonController(
+                    CreateInlineFilterButton(viewModel, col, columnKey, wireDefaultClick: false),
+                    host);
+                host.Children.Add(hoverReveal.Button);
+                hoverReveal.Attach();
+                hoverReveal.Button.Click += (_, _) =>
+                    ShowFilterFlyout(viewModel, col.PropertyName, host, columnKey, hoverReveal);
             }
 
             AttachTriggers(viewModel, col, mode, columnKey, host);
@@ -171,7 +196,11 @@ internal static class ListViewFilterHeaderInteractions
         return btn;
     }
 
-    private static Button CreateInlineFilterButton(IFilterableDataGridViewModel viewModel, ColumnSpec col, string? columnKey)
+    private static Button CreateInlineFilterButton(
+        IFilterableDataGridViewModel viewModel,
+        ColumnSpec col,
+        string? columnKey,
+        bool wireDefaultClick = true)
     {
         var btn = new Button
         {
@@ -186,7 +215,9 @@ internal static class ListViewFilterHeaderInteractions
         if (!string.IsNullOrWhiteSpace(columnKey))
             AutomationProperties.SetAutomationId(btn, $"df-filter-btn-{columnKey}");
 
-        btn.Click += (_, _) => ShowFilterFlyout(viewModel, col.PropertyName, btn, columnKey);
+        if (wireDefaultClick)
+            btn.Click += (_, _) => ShowFilterFlyout(viewModel, col.PropertyName, btn, columnKey);
+
         return btn;
     }
 
@@ -310,19 +341,30 @@ internal static class ListViewFilterHeaderInteractions
         IFilterableDataGridViewModel viewModel,
         string propertyName,
         FrameworkElement anchor,
-        string? columnKey)
+        string? columnKey,
+        HoverRevealButtonController? hoverReveal = null)
     {
         var popup = FilterHeaderBehavior.CreatePopup(viewModel, propertyName);
         if (!string.IsNullOrWhiteSpace(columnKey))
             AutomationProperties.SetAutomationId(popup, $"df-filter-popup-{columnKey}");
 
-        var flyout = new Flyout { Content = popup };
+        CloseOpenFlyouts();
+
+        var flyout = new Flyout
+        {
+            Content = popup,
+            LightDismissOverlayMode = LightDismissOverlayMode.On,
+        };
         if (popup.ViewModel != null)
         {
             popup.ViewModel.OnApply += (_, __) => flyout.Hide();
             popup.ViewModel.OnClear += (_, __) => flyout.Hide();
             popup.CancelRequested += (_, __) => flyout.Hide();
         }
+
+        TrackFlyout(flyout);
+        flyout.Opened += (_, _) => hoverReveal?.OnFlyoutOpened();
+        flyout.Closed += (_, _) => hoverReveal?.OnFlyoutClosed();
 
         bool isRtl = anchor.FlowDirection == FlowDirection.RightToLeft;
         var desired = new Point(isRtl ? -popup.Width : anchor.ActualWidth, anchor.ActualHeight);
@@ -331,6 +373,54 @@ internal static class ListViewFilterHeaderInteractions
             Placement = FlyoutPlacementMode.Bottom,
             Position = desired
         });
+    }
+
+    private sealed class HoverRevealButtonController
+    {
+        public Button Button { get; }
+        private readonly Grid _host;
+        private bool _isPointerOverHost;
+        private bool _isFlyoutOpen;
+
+        public HoverRevealButtonController(Button button, Grid host)
+        {
+            Button = button;
+            _host = host;
+            Button.Visibility = Visibility.Collapsed;
+        }
+
+        public void Attach()
+        {
+            _host.PointerEntered += (_, _) =>
+            {
+                _isPointerOverHost = true;
+                UpdateVisibility();
+            };
+            _host.PointerExited += (_, _) =>
+            {
+                _isPointerOverHost = false;
+                UpdateVisibility();
+            };
+        }
+
+        public void OnFlyoutOpened()
+        {
+            _isFlyoutOpen = true;
+            UpdateVisibility();
+        }
+
+        public void OnFlyoutClosed()
+        {
+            _isFlyoutOpen = false;
+            UpdateVisibility();
+        }
+
+        private void UpdateVisibility()
+        {
+            Button.Visibility = _isPointerOverHost || _isFlyoutOpen
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+        }
     }
 
     private static string? SanitizeForId(string? raw)

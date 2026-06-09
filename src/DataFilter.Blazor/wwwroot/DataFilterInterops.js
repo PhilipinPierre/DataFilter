@@ -87,11 +87,18 @@ window.DataFilterInterops = (function () {
             var el = document.getElementById(elementId);
             var btn = document.getElementById(toggleButtonId);
             if (el && !el.contains(e.target) && (!btn || !btn.contains(e.target))) {
-                dotnetHelper.invokeMethodAsync(closeMethodName || 'ClosePopup');
-                window.removeEventListener('mousedown', listener);
+                dotnetHelper.invokeMethodAsync(closeMethodName || 'ClosePopupFromJs');
+                removeListeners();
             }
         };
-        setTimeout(() => window.addEventListener('mousedown', listener), 10);
+        function removeListeners() {
+            window.removeEventListener('mousedown', listener);
+            window.removeEventListener('contextmenu', listener);
+        };
+        setTimeout(function () {
+            window.addEventListener('mousedown', listener);
+            window.addEventListener('contextmenu', listener);
+        }, 10);
     }
 
     function initResizable(elementId, handleId) {

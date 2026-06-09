@@ -1,9 +1,13 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
+using System.Windows.Media;
+using System.Windows.Threading;
 using DataFilter.PlatformShared.ColumnFilter;
 using DataFilter.Wpf.Behaviors;
 using DataFilter.Wpf.Controls;
+using DataFilter.Wpf.ViewModels;
 
 namespace DataFilter.Wpf.PopupHost.Tests;
 
@@ -64,6 +68,48 @@ public sealed class ColumnFilterHeaderSettingsTests
         });
 
     [Fact]
+    public void Changing_grid_trigger_mode_refreshes_column_headers()
+        => RunSta(() =>
+        {
+            var vm = new FilterableDataGridViewModel<HeaderSettingsPerson>();
+            vm.LocalDataSource = new[] { new HeaderSettingsPerson { Name = "Alice" } };
+
+            var grid = new FilterableDataGrid
+            {
+                Width = 400,
+                Height = 200,
+                ViewModel = vm,
+                ItemsSource = vm.FilteredItems,
+                ColumnFilterTriggerMode = ColumnFilterTriggerMode.FilterButton,
+            };
+            grid.Columns.Add(new DataGridTextColumn
+            {
+                Header = "Name",
+                Binding = new Binding(nameof(HeaderSettingsPerson.Name)),
+            });
+
+            var window = new Window
+            {
+                Content = grid,
+                DataContext = vm,
+                Width = 450,
+                Height = 250,
+            };
+
+            window.Show();
+            PumpDispatcher(window.Dispatcher);
+
+            var exception = Record.Exception(() =>
+            {
+                grid.ColumnFilterTriggerMode = ColumnFilterTriggerMode.HoverRevealButton;
+                PumpDispatcher(window.Dispatcher);
+            });
+
+            window.Close();
+            Assert.Null(exception);
+        });
+
+    [Fact]
     public void Attached_grid_properties_are_used_for_plain_datagrid()
         => RunSta(() =>
         {
@@ -78,6 +124,19 @@ public sealed class ColumnFilterHeaderSettingsTests
                 ColumnFilterTriggerMode.HeaderLeftClick,
                 ColumnFilterHeaderSettings.GetEffectiveTriggerMode(column, grid));
         });
+
+    private static void PumpDispatcher(Dispatcher dispatcher)
+    {
+        for (int i = 0; i < 20; i++)
+            dispatcher.Invoke(() => { }, DispatcherPriority.Background);
+
+        dispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+    }
+
+    private sealed class HeaderSettingsPerson
+    {
+        public string Name { get; set; } = string.Empty;
+    }
 
     private static void RunSta(Action action)
     {

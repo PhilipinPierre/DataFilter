@@ -181,6 +181,9 @@ public static class DataGridViewFilterHeaderInteractions
                 popupHost.Close();
         };
 
+        if (popupHost.Visible)
+            popupHost.Close();
+
         popupHost.Items.Clear();
         var host = new ToolStripControlHost(popup) { AutoSize = false, Width = popup.Width, Height = popup.Height };
         popupHost.Items.Add(host);

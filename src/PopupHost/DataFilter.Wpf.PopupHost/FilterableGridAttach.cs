@@ -74,7 +74,10 @@ public static class FilterableGridAttach
             "AreColumnFiltersEnabled",
             typeof(bool),
             typeof(FilterableGridAttach),
-            new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.Inherits));
+            new FrameworkPropertyMetadata(
+                true,
+                FrameworkPropertyMetadataOptions.Inherits,
+                ColumnFilterHeaderRefresh.OnGridHeaderSettingsChanged));
 
     public static bool GetAreColumnFiltersEnabled(DependencyObject obj) => (bool)obj.GetValue(AreColumnFiltersEnabledProperty);
     public static void SetAreColumnFiltersEnabled(DependencyObject obj, bool value) => obj.SetValue(AreColumnFiltersEnabledProperty, value);
@@ -88,7 +91,10 @@ public static class FilterableGridAttach
             "ColumnFilterTriggerMode",
             typeof(ColumnFilterTriggerMode),
             typeof(FilterableGridAttach),
-            new FrameworkPropertyMetadata(ColumnFilterTriggerMode.FilterButton, FrameworkPropertyMetadataOptions.Inherits));
+            new FrameworkPropertyMetadata(
+                ColumnFilterTriggerMode.FilterButton,
+                FrameworkPropertyMetadataOptions.Inherits,
+                ColumnFilterHeaderRefresh.OnGridHeaderSettingsChanged));
 
     public static ColumnFilterTriggerMode GetColumnFilterTriggerMode(DependencyObject obj) =>
         (ColumnFilterTriggerMode)obj.GetValue(ColumnFilterTriggerModeProperty);

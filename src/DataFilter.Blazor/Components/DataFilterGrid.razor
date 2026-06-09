@@ -33,6 +33,7 @@ else
                              ElementId="@($"df-filter-popup-bar-{_barEditColumn.PropertyName}")" />
             </div>
         }
+        <CascadingValue Value="_popupGroupKey" IsFixed="true">
         <table class="df-grid">
             <thead>
                 <tr>
@@ -94,6 +95,7 @@ else
                 }
             </tbody>
         </table>
+        </CascadingValue>
     </div>
 }
 
@@ -112,6 +114,7 @@ else
     [Parameter] public FilterTheme? Theme { get; set; }
     [Parameter] public RenderFragment<DataFilterGridContext<TItem>>? ChildContent { get; set; }
 
+    private readonly object _popupGroupKey = new();
     private readonly FilterPipelineSession _pipelineSession = new();
     private FilterBarViewModel _filterBar = null!;
     private ColumnDefinition<TItem>? _barEditColumn;

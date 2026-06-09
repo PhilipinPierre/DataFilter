@@ -33,6 +33,7 @@ internal sealed class DataGridViewFilterHeaderEventHandler : IDisposable
         _grid.CellMouseMove += OnCellMouseMove;
         _grid.KeyDown += OnGridKeyDown;
         _grid.DataBindingComplete += OnDataBindingComplete;
+        _popupHost.Closed += OnFilterPopupHostClosed;
     }
 
     private void OnDataBindingComplete(object? sender, DataGridViewBindingCompleteEventArgs e)
@@ -156,6 +157,33 @@ internal sealed class DataGridViewFilterHeaderEventHandler : IDisposable
         await DataGridViewFilterHeaderInteractions.ShowFilterPopupAsync(_grid, _popupHost, viewModel, column, headerRect);
     }
 
+    private void OnFilterPopupHostClosed(object? sender, ToolStripDropDownClosedEventArgs e)
+    {
+        SyncHoveredColumnIndexFromCursor();
+    }
+
+    private void SyncHoveredColumnIndexFromCursor()
+    {
+        var clientPoint = _grid.PointToClient(Cursor.Position);
+        int? newHover = null;
+        if (_grid.ClientRectangle.Contains(clientPoint))
+        {
+            var hit = _grid.HitTest(clientPoint.X, clientPoint.Y);
+            if (hit.Type == DataGridViewHitTestType.ColumnHeader)
+                newHover = hit.ColumnIndex;
+        }
+
+        if (_hoveredColumnIndex == newHover)
+            return;
+
+        var previous = _hoveredColumnIndex;
+        _hoveredColumnIndex = newHover;
+        if (previous is int previousIndex)
+            _grid.InvalidateCell(previousIndex, -1);
+        if (newHover is int nextIndex)
+            _grid.InvalidateCell(nextIndex, -1);
+    }
+
     public void Dispose()
     {
         if (_isDisposed)
@@ -169,6 +197,7 @@ internal sealed class DataGridViewFilterHeaderEventHandler : IDisposable
         _grid.CellMouseMove -= OnCellMouseMove;
         _grid.KeyDown -= OnGridKeyDown;
         _grid.DataBindingComplete -= OnDataBindingComplete;
+        _popupHost.Closed -= OnFilterPopupHostClosed;
 
         _longPressTimer?.Stop();
         _longPressTimer?.Dispose();

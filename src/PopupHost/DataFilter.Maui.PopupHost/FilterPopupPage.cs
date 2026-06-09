@@ -35,10 +35,21 @@ public sealed class FilterPopupPage : ContentPage
             BackgroundColor = Color.FromArgb("#80000000"),
             InputTransparent = false
         };
-        overlay.GestureRecognizers.Add(new TapGestureRecognizer
+        var dismiss = new Command(() => DismissRequested?.Invoke(this, EventArgs.Empty));
+        overlay.GestureRecognizers.Add(new TapGestureRecognizer { Command = dismiss });
+
+        var pointerDismiss = new PointerGestureRecognizer();
+        pointerDismiss.PointerPressed += (_, e) =>
         {
-            Command = new Command(() => DismissRequested?.Invoke(this, EventArgs.Empty))
-        });
+            if (e.GetPosition(overlay) is { } point
+                && point.X >= 0 && point.Y >= 0
+                && point.X <= overlay.Width
+                && point.Y <= overlay.Height)
+            {
+                dismiss.Execute(null);
+            }
+        };
+        overlay.GestureRecognizers.Add(pointerDismiss);
 
         _border = new Border
         {

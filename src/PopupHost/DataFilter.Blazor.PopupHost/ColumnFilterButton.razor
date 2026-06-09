@@ -29,7 +29,7 @@
             <span class="df-column-header-title">@Title</span>
         }
 
-        @if (_showFilterButton && (!_hoverReveal || _hoverVisible))
+        @if (_showFilterButton && (!_hoverReveal || _hoverVisible || _showPopup))
         {
             <button type="button"
                     id="@_toggleButtonId"
@@ -43,7 +43,11 @@
 
         @if (_showPopup)
         {
-            <div style="position: fixed; inset: 0; z-index: 1999;" @onclick="ClosePopup"></div>
+            <div style="position: fixed; inset: 0; z-index: 1999;"
+                 @onclick="ClosePopup"
+                 @onmousedown="ClosePopup"
+                 @oncontextmenu="ClosePopup"
+                 @oncontextmenu:preventDefault="true"></div>
 
             <div style="position: absolute; z-index: 2000; top: calc(100% + 6px); left: 0;"
                  data-testid="@_popupContainerTestId"
@@ -79,10 +83,12 @@
     [Parameter] public bool AreColumnFiltersEnabled { get; set; } = true;
     [Parameter] public bool IsFilterable { get; set; } = true;
     [Parameter] public ColumnFilterTriggerMode TriggerMode { get; set; } = ColumnFilterTriggerMode.FilterButton;
+    [CascadingParameter] private object? PopupGroupKey { get; set; }
 
     private bool _showPopup;
     private bool _showContextMenu;
     private bool _hoverVisible;
+    private bool _pointerOverHeader;
     private double _contextMenuXpx;
     private double _contextMenuYpx;
     private long? _longPressPointerId;
@@ -146,9 +152,21 @@
 
     private void TogglePopup()
     {
-        _showPopup = !_showPopup;
-        if (!_showPopup)
-            _ = StopAutoUpdateAsync();
+        if (_showPopup)
+        {
+            ClosePopup();
+            return;
+        }
+
+        if (PopupGroupKey != null)
+        {
+            ColumnFilterPopupCoordinator.Instance.NotifyOpened(
+                PopupGroupKey,
+                this,
+                ClosePopup);
+        }
+
+        _showPopup = true;
     }
 
     private void OnContainerClick(MouseEventArgs e)
@@ -235,14 +253,27 @@
 
     private void OnMouseEnter()
     {
-        if (_hoverReveal)
-            _hoverVisible = true;
+        if (!_hoverReveal)
+            return;
+
+        _pointerOverHeader = true;
+        _hoverVisible = true;
     }
 
     private void OnMouseLeave()
     {
-        if (_hoverReveal && !_showPopup)
+        if (!_hoverReveal)
+            return;
+
+        _pointerOverHeader = false;
+        if (!_showPopup)
             _hoverVisible = false;
+    }
+
+    private void SyncHoverRevealAfterPopupClose()
+    {
+        if (_hoverReveal)
+            _hoverVisible = _pointerOverHeader;
     }
 
     private void OpenFromContextMenu()
@@ -255,16 +286,38 @@
 
     private void OnVisibilityChanged(bool visible)
     {
-        _showPopup = visible;
-        if (!_showPopup)
-            _ = StopAutoUpdateAsync();
+        if (visible)
+        {
+            if (PopupGroupKey != null)
+            {
+                ColumnFilterPopupCoordinator.Instance.NotifyOpened(
+                    PopupGroupKey,
+                    this,
+                    ClosePopup);
+            }
+
+            _showPopup = true;
+        }
+        else
+        {
+            ClosePopup();
+            return;
+        }
+
         StateHasChanged();
     }
 
     private void ClosePopup()
     {
+        if (!_showPopup)
+            return;
+
         _showPopup = false;
+        if (PopupGroupKey != null)
+            ColumnFilterPopupCoordinator.Instance.NotifyClosed(PopupGroupKey, this);
+
         _ = StopAutoUpdateAsync();
+        SyncHoverRevealAfterPopupClose();
         StateHasChanged();
     }
 

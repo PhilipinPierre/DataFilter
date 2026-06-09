@@ -37,6 +37,7 @@ public partial class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
     private DataTemplate? _savedHeaderContentTemplate;
     private DataTemplateSelector? _savedHeaderContentTemplateSelector;
     private FilterStateIndicatorAdorner? _filterStateIndicatorAdorner;
+    private bool _isPointerOverHeader;
 
     #region IsFilterable Attached Property
 
@@ -155,9 +156,7 @@ public partial class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         {
             _filterPopup.Opened -= OnFilterPopupOpened;
             _filterPopup.Closed -= OnFilterPopupClosed;
-            var window = Window.GetWindow(AssociatedObject);
-            if (window != null)
-                window.PreviewMouseLeftButtonDown -= OnWindowMouseDown;
+            FilterColumnPopupTracker.OnPopupClosed(this);
         }
 
     }
@@ -559,6 +558,40 @@ public partial class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
         ApplyTriggerModeToHeader(dockPanel);
     }
 
+    internal static void RefreshHeaderChrome(FrameworkElement header)
+    {
+        foreach (var behavior in Interaction.GetBehaviors(header).OfType<FilterableColumnHeaderBehavior>())
+            behavior.RefreshHeaderChrome();
+    }
+
+    private void RefreshHeaderChrome()
+    {
+        _isPointerOverHeader = AssociatedObject.IsMouseOver;
+
+        if (_filterPopup is { IsOpen: true })
+            _filterPopup.IsOpen = false;
+
+        ApplyNativeSortPolicy();
+
+        if (_contentInjected && AssociatedObject is ContentControl { Content: DockPanel dockPanel })
+        {
+            if (!IsColumnFilteringEnabled())
+            {
+                DetachHeaderTriggerHandlers();
+                if (_filterButton != null)
+                    _filterButton.Visibility = Visibility.Collapsed;
+                ApplyHeaderFilterBorder();
+                return;
+            }
+
+            UpdateDockPanelForCurrentColumn(dockPanel);
+            return;
+        }
+
+        if (_viewModel != null && IsColumnFilteringEnabled())
+            BuildHeaderContent();
+    }
+
     /// <summary>
     /// Opens/closes the filter popup. Loads distinct values first, then restores selection from the parent
     /// grid context so reopening a filtered column matches the applied filter. No deferred <c>IsOpen</c> or
@@ -642,10 +675,30 @@ public partial class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
                     await _viewModel.LoadStateAsync(state);
             }
 
+            var gridHost = FindFilterGridHost();
+            if (gridHost != null)
+            {
+                ColumnFilterPopupCoordinator.Instance.NotifyOpened(
+                    gridHost,
+                    this,
+                    CloseFilterPopup);
+            }
+
             _filterPopup.PlacementTarget = GetPopupPlacementTarget();
             _filterPopup.IsOpen = true;
         }
     }
+
+    internal void CloseFilterPopup()
+    {
+        if (_filterPopup is { IsOpen: true })
+            _filterPopup.IsOpen = false;
+    }
+
+    internal FrameworkElement? AssociatedHeader => AssociatedObject;
+
+    internal UIElement? TryGetOpenPopupChild() =>
+        _filterPopup is { IsOpen: true, Child: UIElement child } ? child : null;
 
     private FrameworkElement GetPopupPlacementTarget()
     {
@@ -750,45 +803,23 @@ public partial class FilterableColumnHeaderBehavior : Behavior<FrameworkElement>
             }
         }
 
-        var window = Window.GetWindow(AssociatedObject);
-        if (window != null)
-            window.PreviewMouseLeftButtonDown += OnWindowMouseDown;
+        FilterColumnPopupTracker.OnPopupOpened(this);
     }
 
     private void OnFilterPopupClosed(object? sender, EventArgs e)
     {
-        var window = Window.GetWindow(AssociatedObject);
-        if (window != null)
-            window.PreviewMouseLeftButtonDown -= OnWindowMouseDown;
+        FilterColumnPopupTracker.OnPopupClosed(this);
+
+        var gridHost = FindFilterGridHost();
+        if (gridHost != null)
+            ColumnFilterPopupCoordinator.Instance.NotifyClosed(gridHost, this);
 
         if (_cultureBeforePopup != null)
         {
             LocalizationManager.Instance.SetCulture(_cultureBeforePopup);
             _cultureBeforePopup = null;
         }
+
+        ApplyHoverRevealButtonVisibility();
     }
-
-    private void OnWindowMouseDown(object sender, MouseButtonEventArgs e)
-    {
-        if (_filterPopup is not { IsOpen: true, Child: UIElement child })
-            return;
-
-        // Before first layout, RenderSize can be (0,0). Rect with zero area contains no points,
-        // so every position looks "outside" and we would close the popup immediately after open.
-        double w = child.RenderSize.Width;
-        double h = child.RenderSize.Height;
-        if (child is FrameworkElement fe)
-        {
-            if (w <= 0) w = fe.ActualWidth;
-            if (h <= 0) h = fe.ActualHeight;
-        }
-
-        if (w <= 0 || h <= 0)
-            return;
-
-        if (!new Rect(0, 0, w, h).Contains(e.GetPosition(child)))
-            _filterPopup.IsOpen = false;
-    }
-
-    // FindFilterableParent is no longer needed but kept empty for safety, or removed entirely.
 }

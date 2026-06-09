@@ -134,14 +134,14 @@ public sealed class FilterBarPopupService
     {
         Window? window = Window.GetWindow(_popup?.PlacementTarget);
         if (window != null)
-            window.PreviewMouseLeftButtonDown += OnWindowMouseDown;
+            window.PreviewMouseDown += OnWindowMouseDown;
     }
 
     private void OnPopupClosed(object? sender, EventArgs e)
     {
         Window? window = Window.GetWindow(_popup?.PlacementTarget);
         if (window != null)
-            window.PreviewMouseLeftButtonDown -= OnWindowMouseDown;
+            window.PreviewMouseDown -= OnWindowMouseDown;
         DetachHandlers();
         _columnVm?.SetBarEditContext(null);
     }
