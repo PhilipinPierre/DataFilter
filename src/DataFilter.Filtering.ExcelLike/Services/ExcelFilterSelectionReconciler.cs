@@ -84,6 +84,12 @@ public static class ExcelFilterSelectionReconciler
             return DateDistinctHelper.AreSameCalendarDate(a, b);
         }
 
+        if (TimeDistinctHelper.TryGetTimeParts(a, out _, out _, out _, out _)
+            && TimeDistinctHelper.TryGetTimeParts(b, out _, out _, out _, out _))
+        {
+            return TimeDistinctHelper.AreSameTimeOfDay(a, b);
+        }
+
         return Equals(a, b);
     }
 }

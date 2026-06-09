@@ -202,6 +202,11 @@ public static class FilterExpressionBuilder
                 return BuildInExpressionForCalendarDates(left, rightValue, filterOperator == FilterOperator.NotIn);
             }
 
+            if (TimeDistinctHelper.IsTimeOfDayType(left.Type))
+            {
+                return BuildInExpressionForTimeOfDay(left, rightValue, filterOperator == FilterOperator.NotIn);
+            }
+
             return BuildInExpression(left, rightValue, filterOperator == FilterOperator.NotIn);
         }
 
@@ -296,6 +301,42 @@ public static class FilterExpressionBuilder
             var equal = Expression.Call(
                 typeof(DateDistinctHelper),
                 nameof(DateDistinctHelper.MatchesCalendarDate),
+                Type.EmptyTypes,
+                leftObject,
+                Expression.Constant(val, typeof(object)));
+
+            combinedBody = combinedBody == null
+                ? equal
+                : Expression.OrElse(combinedBody, equal);
+        }
+
+        return invert ? Expression.Not(combinedBody) : combinedBody;
+    }
+
+    private static Expression BuildInExpressionForTimeOfDay(Expression left, object? value, bool invert)
+    {
+        if (value is not System.Collections.IEnumerable enumerable || value is string)
+        {
+            throw new ArgumentException("Value must be an IEnumerable for In/NotIn operations.");
+        }
+
+        var unboxMethod = typeof(Enumerable).GetMethod("Cast")!.MakeGenericMethod(typeof(object));
+        var castedEnumerable = (IEnumerable<object>)unboxMethod.Invoke(null, new[] { value })!;
+        var valuesList = castedEnumerable.ToList();
+
+        if (valuesList.Count == 0)
+        {
+            return Expression.Constant(invert);
+        }
+
+        Expression combinedBody = null!;
+        var leftObject = Expression.Convert(left, typeof(object));
+
+        foreach (var val in valuesList)
+        {
+            var equal = Expression.Call(
+                typeof(TimeDistinctHelper),
+                nameof(TimeDistinctHelper.MatchesTimeOfDay),
                 Type.EmptyTypes,
                 leftObject,
                 Expression.Constant(val, typeof(object)));

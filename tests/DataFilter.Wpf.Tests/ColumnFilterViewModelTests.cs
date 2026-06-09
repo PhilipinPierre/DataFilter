@@ -3,6 +3,7 @@ using Moq;
 using DataFilter.Wpf.ViewModels;
 using DataFilter.Filtering.ExcelLike.Models;
 using DataFilter.Core.Enums;
+using DataFilter.Core.Engine;
 
 namespace DataFilter.Wpf.Tests;
 
@@ -257,6 +258,59 @@ public class ColumnFilterViewModelTests
         var blanksItem = vm.FilterValues.Single(x => x.Value == null && x.Children.Count == 0);
         Assert.True(vm.FilterState.DistinctValues.Any(v => v == null));
     }
+
+    [Fact]
+    public async Task InitializeAsync_TimeTree_GroupsByHourMinuteSecond()
+    {
+        var t1 = new TimeSpan(8, 15, 30);
+        var t2 = new TimeSpan(8, 15, 45);
+        var t3 = new TimeSpan(14, 0, 5);
+
+        var vm = new ColumnFilterViewModel(
+            async _ => new List<object> { t1, t2, t3 },
+            _ => { },
+            () => { },
+            propertyType: typeof(TimeSpan));
+
+        await vm.InitializeAsync(new List<object> { t1, t2, t3 });
+
+        Assert.Equal(2, vm.FilterValues.Count);
+        var hour8 = vm.FilterValues.Single(x => x.DisplayText == "08h");
+        var minute15 = hour8.Children.Single(x => x.DisplayText == "15");
+        Assert.Equal(2, minute15.Children.Count);
+        Assert.Equal("30", minute15.Children[0].DisplayText);
+        Assert.Equal(t1, minute15.Children[0].Value);
+        Assert.Equal("45", minute15.Children[1].DisplayText);
+
+        var hour14 = vm.FilterValues.Single(x => x.DisplayText == "14h");
+        var minute00 = hour14.Children.Single(x => x.DisplayText == "00");
+        Assert.Single(minute00.Children);
+        Assert.Equal("05", minute00.Children[0].DisplayText);
+        Assert.Equal(3, vm.FilterState.DistinctValues.Count);
+    }
+
+#if NET6_0_OR_GREATER
+    [Fact]
+    public async Task InitializeAsync_TimeTree_SupportsTimeOnly()
+    {
+        var t1 = new TimeOnly(9, 30, 0);
+        var t2 = new TimeOnly(9, 30, 15);
+
+        var vm = new ColumnFilterViewModel(
+            async _ => new List<object> { t1, t2 },
+            _ => { },
+            () => { },
+            propertyType: typeof(TimeOnly));
+
+        await vm.InitializeAsync(new List<object> { t1, t2 });
+
+        var hour9 = vm.FilterValues.Single(x => x.DisplayText == "09h");
+        var minute30 = hour9.Children.Single(x => x.DisplayText == "30");
+        Assert.Equal(2, minute30.Children.Count);
+        Assert.True(TimeDistinctHelper.AreSameTimeOfDay(t1, minute30.Children[0].Value));
+        Assert.True(TimeDistinctHelper.AreSameTimeOfDay(t2, minute30.Children[1].Value));
+    }
+#endif
 
     [Fact]
     public async Task ApplyCommand_WithAddToExistingFilterAndCustomOperator_AccumulatesAndResetsCustomFilter()

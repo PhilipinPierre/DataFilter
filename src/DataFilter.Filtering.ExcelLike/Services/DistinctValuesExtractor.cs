@@ -79,6 +79,7 @@ public class DistinctValuesExtractor : IDistinctValuesExtractor
         var seen = new HashSet<object>();
         var values = new List<object>();
         var isDateColumn = DateDistinctHelper.IsCalendarDateType(propertyValueType);
+        var isTimeColumn = TimeDistinctHelper.IsTimeOfDayType(propertyValueType);
 
         foreach (var item in source)
         {
@@ -91,7 +92,9 @@ public class DistinctValuesExtractor : IDistinctValuesExtractor
 
             var canonical = isDateColumn
                 ? DateDistinctHelper.CanonicalizeDistinctValue(value, propertyValueType)
-                : value;
+                : isTimeColumn
+                    ? TimeDistinctHelper.CanonicalizeDistinctValue(value, propertyValueType)
+                    : value;
 
             if (seen.Add(canonical))
             {
@@ -117,6 +120,9 @@ public class DistinctValuesExtractor : IDistinctValuesExtractor
 
         if (DateDistinctHelper.IsCalendarDateType(propertyValueType))
             return values.OrderBy(x => x, Comparer<object>.Create(DateDistinctHelper.CompareCalendarDates));
+
+        if (TimeDistinctHelper.IsTimeOfDayType(propertyValueType))
+            return values.OrderBy(x => x, Comparer<object>.Create(TimeDistinctHelper.CompareTimeOfDay));
 
         var firstValidItem = values.FirstOrDefault(x => x != null);
         if (firstValidItem == null) return values;

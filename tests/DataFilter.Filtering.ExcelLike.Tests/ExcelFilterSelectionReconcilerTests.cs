@@ -81,4 +81,19 @@ public class ExcelFilterSelectionReconcilerTests
         Assert.Single(state.SelectedValues);
         Assert.Null(state.SelectedValues.First());
     }
+
+    [Fact]
+    public void ReconcileSelectedValues_TimeOfDay_ReplacesWithDistinctInstance()
+    {
+        var state = new ExcelFilterState();
+        state.SelectedValues.Add(new TimeSpan(8, 15, 30));
+
+        var canonical = new TimeSpan(8, 15, 30);
+        var distinct = new List<object> { canonical, new TimeSpan(14, 0, 0) };
+
+        ExcelFilterSelectionReconciler.ReconcileSelectedValues(state, distinct);
+
+        Assert.Single(state.SelectedValues);
+        Assert.Equal(canonical, state.SelectedValues.First());
+    }
 }

@@ -200,4 +200,20 @@ public class FilterExpressionBuilderTests
         Assert.True(func(new DateItem { HireDate = new DateTime(2024, 3, 15, 18, 0, 0) }));
         Assert.False(func(new DateItem { HireDate = new DateTime(2024, 3, 16, 8, 30, 0) }));
     }
+
+    private class TimeItem
+    {
+        public TimeSpan ShiftStart { get; set; }
+    }
+
+    [Fact]
+    public void BuildExpression_In_TimeSpan_MatchesByTimeOfDay()
+    {
+        var selected = new TimeSpan(8, 15, 30);
+        var descriptor = new FilterDescriptor("ShiftStart", FilterOperator.In, new object[] { selected });
+        var func = Engine.FilterExpressionBuilder.BuildExpression<TimeItem>(descriptor).Compile();
+
+        Assert.True(func(new TimeItem { ShiftStart = new TimeSpan(8, 15, 30) }));
+        Assert.False(func(new TimeItem { ShiftStart = new TimeSpan(8, 15, 31) }));
+    }
 }

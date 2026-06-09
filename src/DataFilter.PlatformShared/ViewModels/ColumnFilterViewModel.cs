@@ -177,6 +177,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
 
     private readonly IFilterEvaluator _filterEvaluator;
     private readonly Func<string> _blanksDisplayTextProvider;
+    private readonly Type? _propertyType;
 
     /// <summary>
     /// When set, Apply/Clear target a single pipeline node (filter bar edit mode).
@@ -199,6 +200,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
         _onApplyAction = onApply;
         _onClearAction = onClear;
         _filterEvaluator = filterEvaluator ?? new FilterEvaluator();
+        _propertyType = propertyType;
         DataType = DetermineDataType(propertyType);
 
         ApplyCommand = new RelayCommand(() =>
@@ -562,6 +564,10 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
 #endif
         if (t.FullName == "System.DateOnly") return FilterDataType.Date;
         if (t == typeof(TimeSpan)) return FilterDataType.Time;
+#if NET6_0_OR_GREATER
+        if (t == typeof(TimeOnly)) return FilterDataType.Time;
+#endif
+        if (t.FullName == "System.TimeOnly") return FilterDataType.Time;
         if (t == typeof(bool)) return FilterDataType.Boolean;
         return FilterDataType.Other;
     }
@@ -591,9 +597,7 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
             }
             else if (DataType == FilterDataType.Time)
             {
-                // TODO: Fix TreeView for Time with 15-min intervals
-                // InitializeTimeTree(distinctValues, newFilterValues);
-                InitializeFlatList(distinctList, newFilterValues);
+                InitializeTimeTree(distinctList, newFilterValues);
             }
             else
             {
@@ -852,59 +856,55 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
 
     private void InitializeTimeTree(IEnumerable<object> distinctValues, List<FilterValueItem> newFilterValues)
     {
-        /*
-        var validTimes = new List<TimeSpan>();
-        bool tooPrecise = false;
-        var blankItem = (FilterValueItem?)null;
+        var propertyType = ResolveTimePropertyType(distinctValues);
+        var entries = new List<(int Hour, int Minute, int Second, int Millisecond, object Canonical)>();
+        var seen = new HashSet<object>(TimeCanonicalEqualityComparer.Instance);
+        FilterValueItem? blankItem = null;
 
         foreach (var val in distinctValues)
         {
-            TimeSpan ts = default;
-            if (val is TimeSpan timeSpan) ts = timeSpan;
-            else if (val is DateTime dt) ts = dt.TimeOfDay;
-            else if (val is DateTimeOffset dto) ts = dto.TimeOfDay;
-            else if (val == null)
+            if (val == null)
             {
                 var isSelected = FilterState.SelectAll || FilterState.SelectedValues.Contains(val!);
-                blankItem = new FilterValueItem(_blanksDisplayText, null, null, isSelected);
-                FilterState.DistinctValues.Add(val!);
+                blankItem = new FilterValueItem(_blanksDisplayTextProvider(), null, null, isSelected);
+                FilterState.DistinctValues.Add(null!);
                 continue;
             }
 
-            if (ts.Seconds > 0 || ts.Milliseconds > 0 || ts.Minutes % 15 != 0)
-            {
-                tooPrecise = true;
-            }
-            validTimes.Add(ts);
+            var canonical = TimeDistinctHelper.CanonicalizeDistinctValue(val, propertyType);
+            if (!seen.Add(canonical))
+                continue;
+
+            if (!TimeDistinctHelper.TryGetTimeParts(canonical, out var hour, out var minute, out var second, out var millisecond))
+                continue;
+
+            entries.Add((hour, minute, second, millisecond, canonical));
         }
 
-        if (tooPrecise)
-        {
-            // If too precise, just use Flat list or nothing? 
-            // "ne fait pas de liste et utilise uniquement la gestion par texte libre" -> Empty FilterValues
-            foreach (var ts in validTimes) FilterState.DistinctValues.Add(ts);
-            if (blankItem != null) FilterState.DistinctValues.Add(null!);
-            return;
-        }
-
-        var groupedByHour = validTimes.GroupBy(t => t.Hours).OrderBy(g => g.Key);
+        var groupedByHour = entries.GroupBy(e => e.Hour).OrderBy(g => g.Key);
         foreach (var hourGrp in groupedByHour)
         {
-            var hourStr = hourGrp.Key.ToString("D2") + "h";
-            var hourNode = new FilterValueItem(hourStr, null, null, false);
+            var hourNode = new FilterValueItem($"{hourGrp.Key:D2}h", null, null, false);
 
-            var groupedByQuarter = hourGrp.GroupBy(t => t.Minutes / 15).OrderBy(g => g.Key);
-            foreach (var quarterGrp in groupedByQuarter)
+            var groupedByMinute = hourGrp.GroupBy(e => e.Minute).OrderBy(g => g.Key);
+            foreach (var minuteGrp in groupedByMinute)
             {
-                var quarterNodes = quarterGrp.OrderBy(t => t).Distinct();
-                foreach (var quarter in quarterNodes)
+                var minuteNode = new FilterValueItem(minuteGrp.Key.ToString("D2"), null, hourNode, false);
+
+                foreach (var entry in minuteGrp.OrderBy(e => e.Second).ThenBy(e => e.Millisecond))
                 {
-                    bool isSelected = FilterState.SelectAll || FilterState.SelectedValues.Contains(quarter);
-                    string display = $"{quarter.Hours:D2}:{quarter.Minutes:D2}";
-                    var quarterNode = new FilterValueItem(display, quarter, hourNode, isSelected);
-                    hourNode.AddChild(quarterNode);
-                    FilterState.DistinctValues.Add(quarter);
+                    var isSelected = FilterState.SelectAll
+                        || FilterState.SelectedValues.Any(v => TimeDistinctHelper.AreSameTimeOfDay(v, entry.Canonical));
+                    var display = entry.Millisecond == 0
+                        ? entry.Second.ToString("D2")
+                        : $"{entry.Second:D2}.{entry.Millisecond:D3}";
+                    var secondNode = new FilterValueItem(display, entry.Canonical, minuteNode, isSelected);
+                    minuteNode.AddChild(secondNode);
+                    FilterState.DistinctValues.Add(entry.Canonical);
                 }
+
+                minuteNode.UpdateStateFromChildren();
+                hourNode.AddChild(minuteNode);
             }
 
             hourNode.UpdateStateFromChildren();
@@ -913,7 +913,42 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
 
         if (blankItem != null)
             newFilterValues.Add(blankItem);
-        */
+    }
+
+    private Type ResolveTimePropertyType(IEnumerable<object> distinctValues)
+    {
+        var declaredType = _propertyType != null
+            ? Nullable.GetUnderlyingType(_propertyType) ?? _propertyType
+            : null;
+
+        if (declaredType != null && TimeDistinctHelper.IsTimeOfDayType(declaredType))
+            return declaredType;
+
+        foreach (var val in distinctValues)
+        {
+            if (val == null)
+                continue;
+
+            var runtimeType = val.GetType();
+            if (TimeDistinctHelper.IsTimeOfDayType(runtimeType))
+                return runtimeType;
+        }
+
+        return typeof(TimeSpan);
+    }
+
+    private sealed class TimeCanonicalEqualityComparer : IEqualityComparer<object>
+    {
+        public static readonly TimeCanonicalEqualityComparer Instance = new();
+
+        public bool Equals(object? x, object? y) => TimeDistinctHelper.AreSameTimeOfDay(x, y);
+
+        public int GetHashCode(object obj)
+        {
+            return TimeDistinctHelper.TryGetTimeSpan(obj, out var timeSpan)
+                ? timeSpan.GetHashCode()
+                : obj.GetHashCode();
+        }
     }
 
     /// <summary>
@@ -1169,14 +1204,6 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
 
     private void UpdateSelectAllState()
     {
-        var selectedCount = FilterValues.Count;
-        if (selectedCount == 0 && DataType == FilterDataType.Time)
-        {
-            // Time list hidden case
-            SelectAll = FilterState.SelectAll;
-            return;
-        }
-
         bool allSelected = FilterValues.All(x => x.IsSelected == true);
         bool allUnselected = FilterValues.All(x => x.IsSelected == false);
 
@@ -1227,8 +1254,36 @@ public partial class ColumnFilterViewModel : ObservableObject, IColumnFilterView
         }
         else
         {
-            item.IsSelected = selectedValues.Contains(item.Value!);
+            item.IsSelected = IsValueSelected(item.Value, selectedValues);
         }
+    }
+
+    private static bool IsValueSelected(object? value, ICollection<object> selectedValues)
+    {
+        if (value == null)
+            return selectedValues.Contains(null!);
+
+        foreach (var selected in selectedValues)
+        {
+            if (TimeDistinctHelper.TryGetTimeParts(value, out _, out _, out _, out _)
+                && TimeDistinctHelper.TryGetTimeParts(selected, out _, out _, out _, out _))
+            {
+                if (TimeDistinctHelper.AreSameTimeOfDay(selected, value))
+                    return true;
+            }
+            else if (DateDistinctHelper.TryGetCalendarParts(value, out _, out _, out _)
+                && DateDistinctHelper.TryGetCalendarParts(selected, out _, out _, out _))
+            {
+                if (DateDistinctHelper.AreSameCalendarDate(selected, value))
+                    return true;
+            }
+            else if (Equals(selected, value))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>

@@ -10,8 +10,10 @@ public class DistinctValuesExtractorTests
         public string Category { get; set; } = string.Empty;
         public int Number { get; set; }
         public DateTime HireDate { get; set; }
+        public TimeSpan ShiftStart { get; set; }
 #if NET6_0_OR_GREATER
         public DateOnly BirthDate { get; set; }
+        public TimeOnly BreakTime { get; set; }
 #endif
     }
 
@@ -115,6 +117,44 @@ public class DistinctValuesExtractorTests
         Assert.Equal(2, dates.Count);
         Assert.Equal(new DateOnly(2024, 3, 15), dates[0]);
         Assert.Equal(new DateOnly(2024, 12, 1), dates[1]);
+    }
+#endif
+
+    [Fact]
+    public void Extract_TimeSpan_ReturnsDistinctSortedValues()
+    {
+        var extractor = new DistinctValuesExtractor();
+        var items = new List<TestItem>
+        {
+            new TestItem { ShiftStart = new TimeSpan(14, 30, 0) },
+            new TestItem { ShiftStart = new TimeSpan(8, 15, 30) },
+            new TestItem { ShiftStart = new TimeSpan(8, 15, 30) }
+        };
+
+        var times = extractor.Extract(items, "ShiftStart").Cast<TimeSpan>().ToList();
+
+        Assert.Equal(2, times.Count);
+        Assert.Equal(new TimeSpan(8, 15, 30), times[0]);
+        Assert.Equal(new TimeSpan(14, 30, 0), times[1]);
+    }
+
+#if NET6_0_OR_GREATER
+    [Fact]
+    public void Extract_TimeOnly_ReturnsDistinctSortedValues()
+    {
+        var extractor = new DistinctValuesExtractor();
+        var items = new List<TestItem>
+        {
+            new TestItem { BreakTime = new TimeOnly(12, 0, 0) },
+            new TestItem { BreakTime = new TimeOnly(9, 30, 15) },
+            new TestItem { BreakTime = new TimeOnly(9, 30, 15) }
+        };
+
+        var times = extractor.Extract(items, "BreakTime").Cast<TimeOnly>().ToList();
+
+        Assert.Equal(2, times.Count);
+        Assert.Equal(new TimeOnly(9, 30, 15), times[0]);
+        Assert.Equal(new TimeOnly(12, 0, 0), times[1]);
     }
 #endif
 }

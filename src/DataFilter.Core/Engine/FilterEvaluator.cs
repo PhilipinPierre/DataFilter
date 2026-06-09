@@ -54,6 +54,11 @@ public class FilterEvaluator : IFilterEvaluator
             return EvaluateCalendarDateOperator(itemValue, op, v1, v2);
         }
 
+        if (TimeDistinctHelper.TryGetTimeParts(itemValue, out _, out _, out _, out _))
+        {
+            return EvaluateTimeOfDayOperator(itemValue, op, v1, v2);
+        }
+
         if (itemValue is IComparable comparable)
         {
             try
@@ -114,6 +119,50 @@ public class FilterEvaluator : IFilterEvaluator
             FilterOperator.LessThanOrEqual => cmp <= 0,
             _ => false
         };
+    }
+
+    private static bool EvaluateTimeOfDayOperator(object itemValue, FilterOperator op, object? v1, object? v2)
+    {
+        var convertedV1 = ConvertTimeFilterValue(v1);
+        var convertedV2 = ConvertTimeFilterValue(v2);
+
+        if (op == FilterOperator.Between)
+        {
+            if (convertedV1 == null || convertedV2 == null) return false;
+            return TimeDistinctHelper.CompareTimeOfDay(itemValue, convertedV1) >= 0
+                && TimeDistinctHelper.CompareTimeOfDay(itemValue, convertedV2) <= 0;
+        }
+
+        if (convertedV1 == null)
+        {
+            return op == FilterOperator.Equals;
+        }
+
+        var cmp = TimeDistinctHelper.CompareTimeOfDay(itemValue, convertedV1);
+        return op switch
+        {
+            FilterOperator.Equals => cmp == 0,
+            FilterOperator.NotEquals => cmp != 0,
+            FilterOperator.GreaterThan => cmp > 0,
+            FilterOperator.GreaterThanOrEqual => cmp >= 0,
+            FilterOperator.LessThan => cmp < 0,
+            FilterOperator.LessThanOrEqual => cmp <= 0,
+            _ => false
+        };
+    }
+
+    private static object? ConvertTimeFilterValue(object? value)
+    {
+        if (value == null)
+            return null;
+
+        if (TimeDistinctHelper.TryGetTimeParts(value, out _, out _, out _, out _))
+            return value;
+
+        if (value is string s && TimeSpan.TryParse(s, CultureInfo.InvariantCulture, out var parsed))
+            return parsed;
+
+        return null;
     }
 
     private static object? ConvertCalendarFilterValue(object? value)
