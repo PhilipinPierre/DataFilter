@@ -14,6 +14,7 @@
              d:DataContext="{d:DesignInstance Type=viewmodels:ColumnFilterViewModel}"
              Background="{DynamicResource FilterPopupBackground}"
              Foreground="{DynamicResource FilterPopupForeground}"
+             TextElement.Foreground="{DynamicResource FilterPopupForeground}"
              BorderBrush="{DynamicResource FilterPopupBorder}"
              BorderThickness="1"
              Padding="5"
@@ -86,7 +87,8 @@
                           AutomationProperties.AutomationId="df-add-to-existing"
                           IsChecked="{Binding AddToExistingFilter}"
                           VerticalAlignment="Center"
-                          FontSize="11" />
+                          FontSize="11"
+                          Style="{DynamicResource FilterCheckBoxStyle}" />
                 <ComboBox ItemsSource="{Binding Source={StaticResource AccumulationModeValues}}"
                           AutomationProperties.AutomationId="df-accumulation-mode"
                           SelectedItem="{Binding AccumulationMode}"
@@ -190,9 +192,16 @@
                       ItemsSource="{Binding FilterValues}" 
                       BorderThickness="0" 
                       Background="Transparent"
+                      Foreground="{DynamicResource FilterPopupForeground}"
                       Padding="0"
                       ScrollViewer.VerticalScrollBarVisibility="Auto"
                       VirtualizingStackPanel.IsVirtualizing="True">
+                <TreeView.Resources>
+                    <Style TargetType="TreeViewItem">
+                        <Setter Property="Foreground" Value="{DynamicResource FilterPopupForeground}" />
+                        <Setter Property="TextElement.Foreground" Value="{DynamicResource FilterPopupForeground}" />
+                    </Style>
+                </TreeView.Resources>
                 <TreeView.ItemsPanel>
                     <ItemsPanelTemplate>
                         <VirtualizingStackPanel />
@@ -202,6 +211,8 @@
                     <Style TargetType="TreeViewItem">
                         <Setter Property="IsExpanded" Value="False" />
                         <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="Foreground" Value="{DynamicResource FilterPopupForeground}" />
+                        <Setter Property="TextElement.Foreground" Value="{DynamicResource FilterPopupForeground}" />
                         <Setter Property="Focusable" Value="False" />
                     </Style>
                 </TreeView.ItemContainerStyle>

@@ -53,6 +53,7 @@
 
     <Style x:Key="FilterCheckBoxStyle" TargetType="CheckBox">
         <Setter Property="Foreground" Value="{DynamicResource FilterPopupForeground}"/>
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource FilterPopupForeground}"/>
         <Setter Property="Margin" Value="2"/>
     </Style>
 

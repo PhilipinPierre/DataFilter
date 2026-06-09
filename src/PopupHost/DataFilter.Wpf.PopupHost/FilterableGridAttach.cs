@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using DataFilter.PlatformShared.ColumnFilter;
+using DataFilter.Wpf.Controls;
 
 namespace DataFilter.Wpf.Behaviors;
 
@@ -31,6 +32,8 @@ public static class FilterableGridAttach
         {
             case DataGrid dg:
                 EnsureDataGridHeaderStyle(dg);
+                DataGridScrollViewerFix.Apply(dg);
+                DataGridHeaderRowBackgroundFix.Apply(dg);
                 break;
             case GridView gv:
                 EnsureGridViewHeaderStyle(gv);

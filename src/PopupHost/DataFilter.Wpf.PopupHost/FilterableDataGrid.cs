@@ -43,6 +43,7 @@ public class FilterableDataGrid : DataGrid
         EnsureFilterableColumnHeaderStyle();
         PreserveColumnDisplayOrder();
         DataGridScrollViewerFix.Apply(this);
+        DataGridHeaderRowBackgroundFix.Apply(this);
 
         // Auto-generated columns may appear after the first Loaded pass (code-behind / late bindings).
         Dispatcher.BeginInvoke(() =>
@@ -70,6 +71,7 @@ public class FilterableDataGrid : DataGrid
             return;
 
         grid.EnsureFilterableColumnHeaderStyle();
+        DataGridHeaderRowBackgroundFix.Apply(grid);
     }
 
     /// <summary>

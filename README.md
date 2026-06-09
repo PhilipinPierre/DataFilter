@@ -1,4 +1,4 @@
-# DataFilter WPF
+# DataFilter
 
 A visual data filtering system inspired by Excel filtering, with multiple UI integrations (WPF, WinForms, Blazor, WinUI 3, MAUI) and support for asynchronous data loading from external APIs.
 
