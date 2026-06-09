@@ -2,6 +2,8 @@
 
 High-performance engine for advanced, Excel-like filtering logic.
 
+**Visual customization:** UI packages only — [CUSTOMIZATION.md](../../CUSTOMIZATION.md#shared-model-filtertheme).
+
 ## NuGet integration
 
 ### Install the package
@@ -19,6 +21,8 @@ dotnet add package DataFilter.Filtering.ExcelLike
 - `DataFilter.Core` (transitive when referenced from UI packages)
 
 Typically consumed indirectly via `DataFilter.Wpf`, `DataFilter.Blazor`, or `DataFilter.PlatformShared`. Add this package directly when building a custom UI on top of Core.
+
+Popup **colors and styles** are configured in UI packages via **`FilterTheme`** — see [CUSTOMIZATION.md](../../CUSTOMIZATION.md#shared-model-filtertheme).
 
 ### Quick start
 

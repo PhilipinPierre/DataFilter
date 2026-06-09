@@ -1,4 +1,5 @@
 using DataFilter.Demo.Shared.Services;
+using DataFilter.PlatformShared.Theming;
 using DataFilter.WinForms.Controls;
 using DataFilter.WinForms.Demo.Services;
 using DataFilter.WinForms.Demo.ViewModels;
@@ -61,6 +62,8 @@ public partial class CustomizationView : UserControl, IDemoHeaderSettingsView
 
     private void ApplyTheme(bool isDark)
     {
+        FilterTheme.Current = isDark ? FilterTheme.Dark : FilterTheme.Light;
+
         if (isDark)
         {
             _grid.BackgroundColor = Color.FromArgb(30, 30, 30);

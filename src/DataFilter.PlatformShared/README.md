@@ -2,6 +2,8 @@
 
 Shared view-model logic for DataFilter UI specializations (WinForms, MAUI, WinUI 3, WPF adapters, Blazor grid).
 
+**Visual customization:** [CUSTOMIZATION.md — `FilterTheme`](../../CUSTOMIZATION.md#shared-model-filtertheme) (shared model used by all UI stacks)
+
 ## NuGet integration
 
 ### Install the package
@@ -132,6 +134,31 @@ Example JSON (two OR groups + sort):
   ]
 }
 ```
+
+## Visual theming (`Theming` namespace)
+
+Shared palette for all UI stacks. See [CUSTOMIZATION.md — `FilterTheme`](../../CUSTOMIZATION.md#shared-model-filtertheme).
+
+```csharp
+using DataFilter.PlatformShared.Theming;
+
+FilterTheme.Current = FilterTheme.Dark;
+
+var brand = FilterTheme.Light.With(
+    popupBackground: "#FAFAFA",
+    primaryColor: "#E65100");
+
+// Blazor: inline CSS custom properties
+var css = brand.ToCssVariableStyle();
+```
+
+| Type | Role |
+|------|------|
+| **`FilterTheme`** | Colors, typography, shadows; **`Current`**, **`Light`**, **`Dark`**, **`With(...)`** |
+| **`FilterThemeResourceKeys`** | WPF `x:Key` names and Blazor `--df-*` variable names |
+| **`FilterColor`** | Parse `#RRGGBB` / `#AARRGGBB` without UI dependencies |
+
+Each UI package applies **`FilterTheme`** via ResourceDictionary (WPF), CSS variables (Blazor), or **`ApplyTheme`** methods (WinForms, MAUI, WinUI 3).
 
 ## Column filter header settings (`ColumnFilter` namespace)
 

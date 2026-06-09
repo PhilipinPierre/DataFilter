@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+using DataFilter.PlatformShared.Theming;
 using DataFilter.WinUI3.Demo.ViewModels;
 
 namespace DataFilter.WinUI3.Demo.Pages;
@@ -25,9 +26,11 @@ public sealed partial class CustomizationPage : Page
 
     private void ToggleSwitch_Toggled(object sender, RoutedEventArgs e)
     {
-        if (sender is ToggleSwitch toggleSwitch && toggleSwitch.XamlRoot?.Content is FrameworkElement rootElement)
-        {
-            rootElement.RequestedTheme = toggleSwitch.IsOn ? ElementTheme.Dark : ElementTheme.Light;
-        }
+        FilterTheme.Current = sender is ToggleSwitch toggleSwitch && toggleSwitch.IsOn
+            ? FilterTheme.Dark
+            : FilterTheme.Light;
+
+        if (sender is ToggleSwitch ts && ts.XamlRoot?.Content is FrameworkElement rootElement)
+            rootElement.RequestedTheme = ts.IsOn ? ElementTheme.Dark : ElementTheme.Light;
     }
 }

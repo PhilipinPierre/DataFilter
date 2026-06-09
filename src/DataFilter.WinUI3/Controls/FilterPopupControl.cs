@@ -163,6 +163,10 @@ public sealed class FilterPopupControl : UserControl
         return (DataTemplate)Microsoft.UI.Xaml.Markup.XamlReader.Load(xaml);
     }
 
+    /// <summary>Overrides system theme brushes with <see cref="FilterTheme"/> colors.</summary>
+    public void ApplyTheme(PlatformShared.Theming.FilterTheme? theme = null) =>
+        Theming.FilterThemeApplier.ApplyToPopup(this, theme);
+
     public void Bind(ColumnFilterViewModel vm)
     {
         ViewModel = vm;

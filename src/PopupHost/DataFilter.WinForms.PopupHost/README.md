@@ -2,6 +2,8 @@
 
 Hosts and positions the WinForms filter popup, and provides `FilterableDataGrid` plus attach adapters.
 
+**Visual customization:** [CUSTOMIZATION.md — WinForms](../../../CUSTOMIZATION.md#winforms-datafilterwinforms)
+
 ## NuGet integration
 
 ### Install the packages
@@ -49,3 +51,7 @@ var adapter = DataGridViewFilterAdapter.Attach(existingGrid, viewModel);
 - Popup hosting: open/close lifecycle, LTR/RTL anchoring, screen clamping.
 
 Filter bar and popup **content** remain in **`DataFilter.WinForms`**.
+
+## Theming
+
+Popups call **`FilterPopupControl.ApplyTheme()`** using **`FilterTheme.Current`**. Customize via **`FilterTheme`** / **`FilterTheme.With(...)`** — see [CUSTOMIZATION.md — WinForms](../../../CUSTOMIZATION.md#winforms-datafilterwinforms).

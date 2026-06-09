@@ -1,5 +1,7 @@
 using DataFilter.Maui.Services;
+using DataFilter.Maui.Theming;
 using DataFilter.PlatformShared.FilterBar;
+using DataFilter.PlatformShared.Theming;
 using DataFilter.PlatformShared.ViewModels;
 
 namespace DataFilter.Maui.Controls;
@@ -11,7 +13,7 @@ public sealed class FilterGridChromeView : Grid
 {
     private readonly FilterBarView _filterBar = new();
     private readonly ContentView _gridHost = new();
-    private readonly BoxView _overlay = new() { BackgroundColor = Color.FromRgba(0, 0, 0, 0.5), IsVisible = false };
+    private readonly BoxView _overlay = new() { IsVisible = false };
     private readonly Frame _popupFrame = new()
     {
         IsVisible = false,
@@ -24,6 +26,9 @@ public sealed class FilterGridChromeView : Grid
 
     public FilterGridChromeView()
     {
+        ApplyOverlayTheme();
+        FilterTheme.CurrentChanged += (_, _) => ApplyOverlayTheme();
+
         RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
 
@@ -86,4 +91,7 @@ public sealed class FilterGridChromeView : Grid
 
         await _popupService.ShowAsync(_filterBar.GridViewModel, request, _filterBar);
     }
+
+    private void ApplyOverlayTheme() =>
+        _overlay.BackgroundColor = FilterThemeApplier.ToMauiColor(FilterTheme.Current.OverlayBackground);
 }

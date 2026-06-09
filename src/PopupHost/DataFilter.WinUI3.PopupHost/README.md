@@ -2,6 +2,8 @@
 
 Hosts and positions the WinUI 3 filter popup (open/close lifecycle, LTR/RTL anchoring).
 
+**Visual customization:** [CUSTOMIZATION.md — WinUI 3](../../../CUSTOMIZATION.md#winui-3-datafilterwinui3)
+
 ## NuGet integration
 
 ### Install the packages
@@ -34,3 +36,7 @@ await vm.RefreshDataAsync();
 ## What this package contains
 
 Popup **hosting and positioning** only. UI controls remain in **`DataFilter.WinUI3`**.
+
+## Theming
+
+Default: WinUI system theme. Optional **`FilterPopupControl.ApplyTheme()`** for explicit **`FilterTheme`** colors — [CUSTOMIZATION.md — WinUI 3](../../../CUSTOMIZATION.md#winui-3-datafilterwinui3).

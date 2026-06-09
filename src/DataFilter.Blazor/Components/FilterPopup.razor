@@ -1,4 +1,5 @@
 @using DataFilter.PlatformShared.ViewModels
+@using DataFilter.PlatformShared.Theming
 @using DataFilter.Core.Enums
 @using DataFilter.Filtering.ExcelLike.Models
 @using System.ComponentModel
@@ -9,7 +10,7 @@
 
 @if (Visible)
 {
-    <div id="@ElementId" class="df-popup-container" style="@PopupStyle">
+    <div id="@ElementId" class="df-popup-container @ThemeClass" style="@GetCombinedStyle()">
         <div class="df-popup-body">
             <!-- Sort Buttons -->
             <div class="df-sort-section">
@@ -113,9 +114,19 @@
     [Parameter] public bool Visible { get; set; }
     [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
     [Parameter] public string PopupStyle { get; set; } = "";
+    [Parameter] public string ThemeClass { get; set; } = "";
+    [Parameter] public FilterTheme? Theme { get; set; }
     [Parameter] public string ElementId { get; set; } = "df-popup-" + Guid.NewGuid().ToString("N");
 
     private string _resizeHandleId = "resize-" + Guid.NewGuid().ToString("N");
+
+    private string GetCombinedStyle()
+    {
+        var themeStyle = Theme?.ToCssVariableStyle();
+        if (string.IsNullOrEmpty(themeStyle))
+            return PopupStyle;
+        return string.IsNullOrEmpty(PopupStyle) ? themeStyle : $"{PopupStyle} {themeStyle}";
+    }
 
     protected override void OnInitialized()
     {

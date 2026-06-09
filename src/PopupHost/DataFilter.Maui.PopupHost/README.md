@@ -2,6 +2,8 @@
 
 Hosts and positions the MAUI filter popup (modal overlay page, LTR/RTL anchoring, page clamping).
 
+**Visual customization:** [CUSTOMIZATION.md — MAUI](../../../CUSTOMIZATION.md#maui-datafiltermaui)
+
 ## NuGet integration
 
 ### Install the packages
@@ -32,3 +34,7 @@ await vm.RefreshDataAsync();
 ## What this package contains
 
 Popup **hosting and positioning** only. UI controls remain in **`DataFilter.Maui`**.
+
+## Theming
+
+Popup surfaces follow **`FilterTheme.Current`** on **`FilterPopupView`**. See [CUSTOMIZATION.md — MAUI](../../../CUSTOMIZATION.md#maui-datafiltermaui).

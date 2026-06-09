@@ -2,6 +2,8 @@
 
 Modern Blazor UI components for the DataFilter library, providing Excel-like filtering, filter pipeline presets, and an optional active-filters bar.
 
+**Visual customization:** [CUSTOMIZATION.md — Blazor](../../CUSTOMIZATION.md#blazor-datafilterblazor)
+
 ## Support
 
 - **Blazor Server**
@@ -101,6 +103,57 @@ using DataFilter.Localization;
 LocalizationManager.Instance.SetCulture(new CultureInfo("fr"));
 ```
 
-## Customization
+## Theming & customization
 
-Components use CSS classes prefixed with `df-`. Override in your app stylesheet. See [DataFilter.css](wwwroot/DataFilter.css) and [CUSTOMIZATION.md](../../CUSTOMIZATION.md).
+Components use stable CSS classes prefixed with **`df-`**. All colors are driven by **CSS custom properties** (`--df-*`) — see **`FilterThemeResourceKeys`** in PlatformShared.
+
+### Quick start
+
+```html
+<link href="_content/DataFilter.Blazor/DataFilter.css" rel="stylesheet" />
+```
+
+```css
+/* Global brand override */
+:root {
+    --df-primary-color: #e65100;
+    --df-popup-bg: #fff8f0;
+}
+
+/* Or scoped dark theme */
+.my-grid.df-theme-dark {
+    --df-popup-bg: #252526;
+}
+```
+
+### Component parameters
+
+| Parameter | Role |
+|-----------|------|
+| **`ThemeClass`** | e.g. `df-theme-dark` (`FilterThemeResourceKeys.BlazorDarkThemeClass`) |
+| **`Theme`** | `FilterTheme` instance → inline CSS variables via `ToCssVariableStyle()` |
+
+```razor
+<DataFilterGrid ThemeClass="df-theme-dark"
+                Theme="@FilterTheme.Dark"
+                … />
+```
+
+### CSS variable reference
+
+| Variable | `FilterTheme` property |
+|----------|------------------------|
+| `--df-popup-bg` | `PopupBackground` |
+| `--df-popup-fg` | `PopupForeground` |
+| `--df-popup-border` | `PopupBorder` |
+| `--df-primary-color` | `PrimaryColor` |
+| `--df-secondary-bg` / `--df-secondary-border` | Secondary surfaces |
+| `--df-header-bg` | Advanced-filter header |
+| `--df-button-active-color` / `--df-button-inactive-color` | Header filter button |
+| `--df-btn-primary-fg` | OK button text |
+| `--df-overlay-bg` | Modal overlay |
+| `--df-filter-bar-cluster-bg` | Filter bar AND clusters |
+| `--df-popup-shadow` / `--df-resize-handle-color` | Chrome details |
+| `--df-font-family` / `--df-font-size` | Typography |
+
+Full details: [CUSTOMIZATION.md — Blazor](../../CUSTOMIZATION.md#blazor-datafilterblazor) and [DataFilter.css](wwwroot/DataFilter.css).

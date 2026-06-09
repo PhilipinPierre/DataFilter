@@ -2,6 +2,8 @@
 
 The foundation of the DataFilter library, providing pure filtering logic, abstractions, and standard data models.
 
+**Visual customization:** UI packages only — overview in [CUSTOMIZATION.md](../../CUSTOMIZATION.md#shared-model-filtertheme).
+
 ## NuGet integration
 
 ### Install the package
@@ -17,6 +19,8 @@ dotnet add package DataFilter.Core
 ### Dependencies
 
 None (UI-independent). Optional companion packages: `DataFilter.Filtering.ExcelLike` for Excel-style descriptors, `DataFilter.Expressions.Server` for LINQ translation.
+
+Visual theming (colors, styles) lives in UI packages — see [CUSTOMIZATION.md](../../CUSTOMIZATION.md#shared-model-filtertheme) and **`FilterTheme`** in `DataFilter.PlatformShared`.
 
 ### Quick start
 

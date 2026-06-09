@@ -171,8 +171,7 @@ public static class DataGridViewFilterHeaderInteractions
 
         var popup = await FilterHeaderBehavior.CreatePopupAsync(viewModel, propertyName);
 
-        bool isDark = grid.BackgroundColor.R < 128;
-        popup.ApplyTheme(isDark);
+        popup.ApplyTheme();
 
         popup.Width = 320;
         popup.Height = 420;

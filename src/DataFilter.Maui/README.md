@@ -2,6 +2,8 @@
 
 Native MAUI specialization of DataFilter: filter bar chrome, popup services, and list/grid integration aligned with **DataFilter.PlatformShared**.
 
+**Visual customization:** [CUSTOMIZATION.md — MAUI](../../CUSTOMIZATION.md#maui-datafiltermaui)
+
 ## NuGet integration
 
 ### Install the packages
@@ -63,3 +65,23 @@ LocalizationManager.Instance.SetCulture(new CultureInfo("fr"));
 ```
 
 Per-grid culture: **`IFilterableDataGridViewModel.CultureOverride`**.
+
+## Theming
+
+Filter UI follows **`FilterTheme.Current`** (PlatformShared). Popups subscribe to **`FilterTheme.CurrentChanged`**.
+
+```csharp
+using DataFilter.PlatformShared.Theming;
+
+FilterTheme.Current = FilterTheme.Light.With(
+    popupBackground: "#FFFFFF",
+    primaryColor: "#512BD4");
+```
+
+| API | Role |
+|-----|------|
+| **`FilterPopupView.ApplyTheme(FilterTheme?)`** | Popup background, OK button, advanced toggle |
+| **`FilterGridChromeView`** | Overlay uses `FilterTheme.Current.OverlayBackground` |
+| **`FilterThemeApplier.ToMauiColor`** | `#RRGGBB` → `Microsoft.Maui.Graphics.Color` |
+
+Combine with `Application.Current.UserAppTheme` for system light/dark. See [CUSTOMIZATION.md — MAUI](../../CUSTOMIZATION.md#maui-datafiltermaui).

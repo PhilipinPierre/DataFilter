@@ -2,6 +2,8 @@
 
 Windows Forms specialization of DataFilter: filter bar chrome, popup controls, and header behaviors. Grid hosting lives in **`DataFilter.WinForms.PopupHost`**.
 
+**Visual customization:** [CUSTOMIZATION.md — WinForms](../../CUSTOMIZATION.md#winforms-datafilterwinforms)
+
 ## NuGet integration
 
 ### Install the packages
@@ -80,3 +82,27 @@ LocalizationManager.Instance.SetCulture(new CultureInfo("fr"));
 ```
 
 Per-grid culture: **`IFilterableDataGridViewModel.CultureOverride`**.
+
+## Theming
+
+Popup colors are **not hardcoded**. Use **`FilterTheme`** from PlatformShared:
+
+```csharp
+using DataFilter.PlatformShared.Theming;
+using DataFilter.WinForms.Controls;
+
+FilterTheme.Current = FilterTheme.Dark.With(primaryColor: "#007ACC");
+
+// Applied automatically when the popup opens, or call explicitly:
+popup.ApplyTheme();
+popup.ApplyTheme(myCustomTheme);
+popup.ApplyTheme(isDark: true); // shorthand → Light / Dark preset
+```
+
+| API | Role |
+|-----|------|
+| **`FilterTheme.Current`** | Application-wide palette |
+| **`FilterPopupControl.ApplyTheme(FilterTheme?)`** | Apply to an open popup |
+| **`FilterThemeApplier.ToDrawingColor`** | Convert `#RRGGBB` → `System.Drawing.Color` |
+
+Resource key mapping and full palette: [CUSTOMIZATION.md — WinForms](../../CUSTOMIZATION.md#winforms-datafilterwinforms).

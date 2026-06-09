@@ -1,5 +1,6 @@
 ﻿using DataFilter.Maui.Demo.ViewModels;
 using DataFilter.Maui.Controls;
+using DataFilter.PlatformShared.Theming;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 
@@ -18,10 +19,9 @@ namespace DataFilter.Maui.Demo.Pages;
 
         private void OnThemeSwitchToggled(object sender, ToggledEventArgs e)
         {
+            FilterTheme.Current = e.Value ? FilterTheme.Dark : FilterTheme.Light;
             if (Application.Current != null)
-            {
                 Application.Current.UserAppTheme = e.Value ? AppTheme.Dark : AppTheme.Light;
-            }
         }
 
         private void OnFilterId(object sender, EventArgs e) => ShowPopup((VisualElement)sender, "Id");

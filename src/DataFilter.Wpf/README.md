@@ -2,6 +2,8 @@
 
 Visual data filtering system for WPF with Excel-like interaction, filter pipeline presets, optional active-filters bar, and asynchronous data support.
 
+**Visual customization:** [CUSTOMIZATION.md — WPF](../../CUSTOMIZATION.md#wpf-datafilterwpf)
+
 ## NuGet integration
 
 ### Install the packages
@@ -140,4 +142,32 @@ Subscribes to **`IFilterableDataGridViewModel.FilterDescriptorsChanged`** and it
 
 ## Theming
 
-Controls use `Generic.xaml` with no hardcoded colors. Base themes: **`FilterLightTheme.xaml`**, **`FilterDarkTheme.xaml`**. See [CUSTOMIZATION.md](../../CUSTOMIZATION.md).
+Controls use `Generic.xaml` with **no hardcoded colors**. Override via ResourceDictionary keys (see **`FilterThemeResourceKeys`** in PlatformShared).
+
+### Base themes
+
+- `Themes/Generic.xaml` — `ColumnFilterButton` template
+- `Themes/FilterLightTheme.xaml` — default light palette
+- `Themes/FilterDarkTheme.xaml` — default dark palette
+
+Merge in `App.xaml` (see [CUSTOMIZATION.md — WPF](../../CUSTOMIZATION.md#wpf-datafilterwpf)).
+
+### Key resources
+
+| Resource key | Purpose |
+|--------------|---------|
+| `FilterPopupBackground` / `FilterPopupForeground` / `FilterPopupBorder` | Popup surface |
+| `FilterButtonActiveColor` / `FilterButtonInactiveColor` | Header filter button |
+| `FilterPopupMaxHeight` | Popup height cap |
+| `FilterButtonStyle`, `FilterCheckBoxStyle`, `FilterSearchBoxStyle`, `FilterExpanderStyle` | Control styles |
+
+Override colors or replace entire styles:
+
+```xml
+<Color x:Key="FilterPopupBackgroundColor">#FAFAFA</Color>
+<SolidColorBrush x:Key="FilterButtonActiveColor" Color="Orange" />
+```
+
+`ColumnFilterButton` also supports **`IconTemplate`**, **`ActiveBrush`**, **`InactiveBrush`**.
+
+Runtime preset switch (demo **Customization**): swap merged `FilterLightTheme.xaml` / `FilterDarkTheme.xaml`. For cross-stack alignment, values match **`FilterTheme.Light`** / **`FilterTheme.Dark`**.

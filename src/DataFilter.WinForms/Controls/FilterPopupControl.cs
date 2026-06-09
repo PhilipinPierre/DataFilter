@@ -1,6 +1,8 @@
 using DataFilter.Core.Enums;
 using DataFilter.Localization;
+using DataFilter.PlatformShared.Theming;
 using DataFilter.PlatformShared.ViewModels;
+using DataFilter.WinForms.Theming;
 using System.ComponentModel;
 using System.Windows.Forms;
 
@@ -221,23 +223,40 @@ public sealed class FilterPopupControl : UserControl
         public override string ToString() => Text;
     }
 
-    public void ApplyTheme(bool isDark)
+    /// <summary>Applies <paramref name="theme"/> (or <see cref="FilterTheme.Current"/> when null).</summary>
+    public void ApplyTheme(FilterTheme? theme = null)
     {
-        this.BackColor = isDark ? Color.FromArgb(45, 45, 48) : SystemColors.Control;
-        this.ForeColor = isDark ? Color.White : SystemColors.ControlText;
-        UpdateControlTheme(this, isDark);
+        theme ??= FilterTheme.Current;
+        BackColor = FilterThemeApplier.ToDrawingColor(theme.PopupBackground);
+        ForeColor = FilterThemeApplier.ToDrawingColor(theme.PopupForeground);
+
+        var surface = FilterThemeApplier.ToDrawingColor(theme.SecondaryBackground);
+        var border = FilterThemeApplier.ToDrawingColor(theme.SecondaryBorder);
+        var primary = FilterThemeApplier.ToDrawingColor(theme.PrimaryColor);
+        var primaryFg = FilterThemeApplier.ToDrawingColor(theme.PrimaryButtonForeground);
+
+        foreach (var input in new Control[] { _search, _custom1, _custom2, _values, _operator, _accumulationMode })
+        {
+            input.BackColor = surface;
+            input.ForeColor = ForeColor;
+        }
+
+        foreach (var btn in new Button[] { _sortAsc, _sortDesc, _addSortAsc, _addSortDesc, _clear, _cancel })
+        {
+            btn.BackColor = BackColor;
+            btn.ForeColor = ForeColor;
+            btn.FlatStyle = FlatStyle.Flat;
+            btn.FlatAppearance.BorderColor = border;
+        }
+
+        _ok.BackColor = primary;
+        _ok.ForeColor = primaryFg;
+        _ok.FlatStyle = FlatStyle.Flat;
+        _ok.FlatAppearance.BorderColor = border;
     }
 
-    private void UpdateControlTheme(Control parent, bool isDark)
-    {
-        foreach (Control c in parent.Controls)
-        {
-            c.BackColor = isDark ? Color.FromArgb(45, 45, 48) : SystemColors.Window;
-            c.ForeColor = isDark ? Color.White : SystemColors.ControlText;
-            if (c is Button b) b.FlatStyle = FlatStyle.Flat;
-            UpdateControlTheme(c, isDark);
-        }
-    }
+    /// <summary>Applies built-in <see cref="FilterTheme.Dark"/> or <see cref="FilterTheme.Light"/>.</summary>
+    public void ApplyTheme(bool isDark) => ApplyTheme(isDark ? FilterTheme.Dark : FilterTheme.Light);
 
     private void OnSelectAllChanged(bool checkedState)
     {

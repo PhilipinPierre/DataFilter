@@ -110,7 +110,7 @@ public sealed class FilterBarControl : UserControl
                 {
                     Orientation = Orientation.Horizontal,
                     Spacing = 4,
-                    BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.LightGray),
+                    BorderBrush = Theming.FilterThemeApplier.ToBrush(PlatformShared.Theming.FilterTheme.Current.PopupBorder),
                     BorderThickness = new Thickness(1),
                     Padding = new Thickness(6),
                     CornerRadius = new CornerRadius(6),

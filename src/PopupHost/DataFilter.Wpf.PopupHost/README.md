@@ -2,6 +2,8 @@
 
 Hosts and positions the WPF filter popup, and provides ready-made filterable grid/list controls.
 
+**Visual customization:** [CUSTOMIZATION.md — WPF](../../../CUSTOMIZATION.md#wpf-datafilterwpf)
+
 ## NuGet integration
 
 ### Install the package
@@ -53,3 +55,7 @@ behaviors:FilterableColumnHeaderBehavior.ViewModel="{Binding GridViewModel}"
 - Popup hosting: open/close lifecycle, LTR/RTL anchoring, window clamping.
 
 Popup **content** (checkbox list, operators) remains in **`DataFilter.Wpf`** (`FilterPopup`, themes).
+
+## Theming
+
+Header buttons and popups inherit WPF ResourceDictionary keys from **`DataFilter.Wpf`** (`FilterLightTheme` / `FilterDarkTheme`). See [CUSTOMIZATION.md — WPF](../../../CUSTOMIZATION.md#wpf-datafilterwpf) and **`FilterThemeResourceKeys`** in PlatformShared.

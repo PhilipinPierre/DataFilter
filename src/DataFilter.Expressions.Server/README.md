@@ -2,6 +2,8 @@
 
 Extension for applying DataFilter criteria to `IQueryable<T>` with compiled LINQ expression trees (EF Core, Dapper, etc.).
 
+**Visual customization:** UI packages only — [CUSTOMIZATION.md](../../CUSTOMIZATION.md#shared-model-filtertheme).
+
 ## NuGet integration
 
 ### Install the package
@@ -19,6 +21,8 @@ dotnet add package DataFilter.Expressions.Server
 - `DataFilter.Core`
 
 Use alongside your UI stack or API layer; no UI references.
+
+Visual theming is handled by UI packages (`FilterTheme` in PlatformShared) — [CUSTOMIZATION.md](../../CUSTOMIZATION.md#shared-model-filtertheme).
 
 ### Quick start
 

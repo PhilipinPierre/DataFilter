@@ -5,6 +5,8 @@ using DataFilter.Filtering.ExcelLike.Models;
 using System.ComponentModel;
 using Microsoft.Maui.ApplicationModel;
 using DataFilter.Localization;
+using DataFilter.PlatformShared.Theming;
+using DataFilter.Maui.Theming;
 
 namespace DataFilter.Maui.Controls;
 
@@ -37,10 +39,10 @@ public sealed class FilterPopupView : ContentView
     public FilterPopupView()
     {
         Padding = 10;
-        // Follow the app theme (dark/light) instead of forcing white.
-        this.SetAppThemeColor(BackgroundColorProperty, Colors.White, Color.FromArgb("#1f1f1f"));
         WidthRequest = 280;
         MinimumHeightRequest = 350;
+        ApplyTheme();
+        FilterTheme.CurrentChanged += OnGlobalThemeChanged;
 
         _itemsView = CreateItemsView();
         _advancedLayout = new VerticalStackLayout { Spacing = 4, IsVisible = false };
@@ -87,7 +89,6 @@ public sealed class FilterPopupView : ContentView
 
         // 3. Advanced Filter
         _advancedToggle = new Button { FontSize = 12, BackgroundColor = Colors.Transparent, Padding = 0, HeightRequest = 30 };
-        _advancedToggle.SetAppThemeColor(Button.TextColorProperty, Colors.Blue, Color.FromArgb("#ac99ea"));
         _advancedToggle.Clicked += (s, e) => _advancedLayout.IsVisible = !_advancedLayout.IsVisible;
         root.Add(_advancedToggle);
 
@@ -269,6 +270,23 @@ public sealed class FilterPopupView : ContentView
         if (ViewModel == null) return;
         foreach (var op in ViewModel.AvailableOperators)
             _localizedOperators.Add(new LocalizedItem(op, LocalizationManager.Instance[$"FilterOperator_{op}"]));
+    }
+
+    /// <summary>Applies <paramref name="theme"/> (or <see cref="FilterTheme.Current"/> when null).</summary>
+    public void ApplyTheme(FilterTheme? theme = null)
+    {
+        theme ??= FilterTheme.Current;
+        BackgroundColor = FilterThemeApplier.ToMauiColor(theme.PopupBackground);
+        _advancedToggle.TextColor = FilterThemeApplier.ToMauiColor(theme.PrimaryColor);
+        _okButton.BackgroundColor = FilterThemeApplier.ToMauiColor(theme.PrimaryColor);
+        _okButton.TextColor = FilterThemeApplier.ToMauiColor(theme.PrimaryButtonForeground);
+    }
+
+    private void OnGlobalThemeChanged(object? sender, EventArgs e)
+    {
+        if (Handler == null)
+            return;
+        MainThread.BeginInvokeOnMainThread(() => ApplyTheme());
     }
 
     private void ApplyLocalization()

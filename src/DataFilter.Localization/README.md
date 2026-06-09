@@ -2,6 +2,8 @@
 
 Shared localization resources and runtime culture switching helpers used by DataFilter UI integrations.
 
+**Theming vs. localization:** [CUSTOMIZATION.md — Localization vs. theming](../../CUSTOMIZATION.md#localization-vs-theming)
+
 ## NuGet integration
 
 ### Install the package
@@ -35,6 +37,8 @@ LocalizationManager.Instance.SetCulture(null);
 ```
 
 Per-grid culture override is available on `IFilterableDataGridViewModel.CultureOverride` (see **DataFilter.PlatformShared**).
+
+**Theming** (colors, fonts, control chrome) is separate from localization — override via **`FilterTheme`** and platform resource keys; see [CUSTOMIZATION.md — Localization vs. theming](../../CUSTOMIZATION.md#localization-vs-theming).
 
 ## What this project contains
 

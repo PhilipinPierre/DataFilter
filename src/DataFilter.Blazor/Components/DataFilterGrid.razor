@@ -1,6 +1,7 @@
 ﻿@typeparam TItem
 @using DataFilter.PlatformShared.ViewModels
 @using DataFilter.PlatformShared.ColumnFilter
+@using DataFilter.PlatformShared.Theming
 @using DataFilter.Filtering.ExcelLike.Models
 @using DataFilter.Filtering.ExcelLike.Services
 @using DataFilter.Core.Enums
@@ -18,7 +19,7 @@
 }
 else
 {
-    <div class="df-grid-container">
+    <div class="df-grid-container @ThemeClass" style="@GetThemeStyle()">
         @if (ShowFilterBar)
         {
             <FilterBar ViewModel="_filterBar" OnEdit="HandleBarEditAsync" />
@@ -105,6 +106,10 @@ else
     [Parameter] public bool ShowFilterBar { get; set; }
     [Parameter] public bool AreColumnFiltersEnabled { get; set; } = true;
     [Parameter] public ColumnFilterTriggerMode ColumnFilterTriggerMode { get; set; } = ColumnFilterTriggerMode.FilterButton;
+    /// <summary>CSS class for theme scope (e.g. <see cref="FilterThemeResourceKeys.BlazorDarkThemeClass"/>).</summary>
+    [Parameter] public string ThemeClass { get; set; } = "";
+    /// <summary>When set, emits inline CSS custom properties from <see cref="FilterTheme.ToCssVariables"/>.</summary>
+    [Parameter] public FilterTheme? Theme { get; set; }
     [Parameter] public RenderFragment<DataFilterGridContext<TItem>>? ChildContent { get; set; }
 
     private readonly FilterPipelineSession _pipelineSession = new();
@@ -537,6 +542,8 @@ else
         foreach (SortSnapshotEntry sort in _pipelineSession.SortEntries)
             _sortDescriptors.Add((sort.PropertyName, sort.IsDescending));
     }
+
+    private string GetThemeStyle() => Theme?.ToCssVariableStyle() ?? "";
 
     public class ColumnDefinition<T>
     {

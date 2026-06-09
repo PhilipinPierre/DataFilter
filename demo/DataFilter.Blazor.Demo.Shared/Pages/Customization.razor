@@ -1,6 +1,7 @@
 @page "/demo/customization"
 @using DataFilter.Blazor.Demo.Shared.State
 @using DataFilter.Blazor.Demo.Shared.Helpers
+@using DataFilter.PlatformShared.Theming
 @inject DemoState State
 @inject IJSRuntime JSRuntime
 
@@ -96,6 +97,7 @@
     private async Task ToggleTheme(ChangeEventArgs e)
     {
         _isDark = (bool)(e.Value ?? false);
+        FilterTheme.Current = _isDark ? FilterTheme.Dark : FilterTheme.Light;
         StateHasChanged();
         await JSRuntime.InvokeVoidAsync("console.log", $"Theme toggled to: {(_isDark ? "Dark" : "Light")}");
     }

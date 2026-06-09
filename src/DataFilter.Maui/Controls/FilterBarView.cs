@@ -109,7 +109,12 @@ public sealed class FilterBarView : ScrollView
                 var wrap = new HorizontalStackLayout { Spacing = 4 };
                 foreach (FilterBarChipItem chip in cluster.Chips)
                     wrap.Add(CreateChip(chip));
-                var border = new Border { Content = wrap, Stroke = Colors.LightGray, Padding = new Thickness(6) };
+                var border = new Border
+                {
+                    Content = wrap,
+                    Stroke = Theming.FilterThemeApplier.ToMauiColor(PlatformShared.Theming.FilterTheme.Current.PopupBorder),
+                    Padding = new Thickness(6)
+                };
                 WireClusterDrop(border, cluster.AddAndAnchorNodeId);
                 _layout.Add(border);
             }

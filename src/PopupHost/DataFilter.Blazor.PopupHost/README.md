@@ -2,6 +2,8 @@
 
 Hosts and positions the Blazor filter popup (anchored fixed-position overlay, LTR/RTL anchoring, viewport clamping, outside click).
 
+**Visual customization:** [CUSTOMIZATION.md — Blazor](../../../CUSTOMIZATION.md#blazor-datafilterblazor)
+
 ## NuGet integration
 
 ### Install the package
@@ -33,3 +35,7 @@ Custom hosts can call the PopupHost JS interop directly to anchor a **`FilterPop
 ## What this package contains
 
 Popup **positioning and lifecycle** only. Popup **UI** (`FilterPopup`, CSS) lives in **`DataFilter.Blazor`**.
+
+## Theming
+
+Positioning is theme-agnostic. Style popups via Blazor **`ThemeClass`** / **`Theme`** on **`FilterPopup`** or CSS `--df-*` variables — [CUSTOMIZATION.md — Blazor](../../../CUSTOMIZATION.md#blazor-datafilterblazor).

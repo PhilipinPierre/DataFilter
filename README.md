@@ -9,6 +9,8 @@ This repo’s guiding principle is **behavior alignment across UI frameworks**:
 
 To enforce alignment, the repository includes a growing **UI contract suite** that runs the *same* high-level scenarios across different target frameworks.
 
+**Visual customization (colors, themes, styles):** [CUSTOMIZATION.md](CUSTOMIZATION.md)
+
 The solution is divided into several main projects:
 
 1.  **`DataFilter.Core`** (.NET 8 / 9 / .NET Standard 2.0 & 2.1)
@@ -106,22 +108,33 @@ For more in-depth examples and configuration options, please refer to the projec
 - [**DataFilter.Core**](src/DataFilter.Core/README.md): Abstractions, filter pipeline, and `FilterPipelineSnapshotEditor`.
 - [**DataFilter.PlatformShared**](src/DataFilter.PlatformShared/README.md): Shared ViewModels, filter bar, pipeline apply APIs.
 - [**DataFilter.Filtering.ExcelLike**](src/DataFilter.Filtering.ExcelLike/README.md): Excel-style descriptors and selection reconciliation.
-- [**DataFilter.Wpf**](src/DataFilter.Wpf/README.md): WPF controls, themes, filter bar chrome, and behaviors.
-- [**DataFilter.Blazor**](src/DataFilter.Blazor/README.md): `DataFilterGrid`, styling, and host configuration for Blazor.
+- [**DataFilter.Wpf**](src/DataFilter.Wpf/README.md): WPF controls, themes, filter bar chrome, and behaviors — [customization](CUSTOMIZATION.md#wpf-datafilterwpf).
+- [**DataFilter.Blazor**](src/DataFilter.Blazor/README.md): `DataFilterGrid`, styling, and host configuration for Blazor — [customization](CUSTOMIZATION.md#blazor-datafilterblazor).
+- [**DataFilter.WinForms**](src/DataFilter.WinForms/README.md): WinForms popup and filter bar — [customization](CUSTOMIZATION.md#winforms-datafilterwinforms).
+- [**DataFilter.Maui**](src/DataFilter.Maui/README.md): MAUI grid and popup integration — [customization](CUSTOMIZATION.md#maui-datafiltermaui).
+- [**DataFilter.WinUI3**](src/DataFilter.WinUI3/README.md): WinUI 3 grid and header behaviors — [customization](CUSTOMIZATION.md#winui-3-datafilterwinui3).
 - [**DataFilter.Expressions.Server**](src/DataFilter.Expressions.Server/README.md): Server-side LINQ from snapshots.
 - [**DataFilter.Localization**](src/DataFilter.Localization/README.md): Shared popup strings and runtime culture switching.
 
 ## Visual Customization
 
-### WPF
-The WPF controls are designed using `Generic.xaml` with no hardcoded styles.
-Two base themes are provided: `FilterLightTheme.xaml` and `FilterDarkTheme.xaml`.
+Full guide: **[CUSTOMIZATION.md](CUSTOMIZATION.md)** — shared model [`FilterTheme`](CUSTOMIZATION.md#shared-model-filtertheme), per-framework sections below.
 
-### Blazor
-The Blazor components use modern Vanilla CSS with explicit classes (prefix `df-`).
-Customization is done by overriding these classes in your app's stylesheet.
+All UI stacks share a logical palette via **`FilterTheme`** (`DataFilter.PlatformShared.Theming`) and platform-specific hooks:
 
-See [CUSTOMIZATION.md](CUSTOMIZATION.md) for full details on both platforms.
+| Stack | Mechanism | Guide |
+|-------|-----------|-------|
+| **WPF** | ResourceDictionary keys (`FilterLightTheme` / `FilterDarkTheme`) | [WPF](CUSTOMIZATION.md#wpf-datafilterwpf) |
+| **Blazor** | CSS custom properties (`--df-*`) + `ThemeClass` / `Theme` parameters | [Blazor](CUSTOMIZATION.md#blazor-datafilterblazor) |
+| **WinForms** | `FilterPopupControl.ApplyTheme(FilterTheme?)` | [WinForms](CUSTOMIZATION.md#winforms-datafilterwinforms) |
+| **MAUI** | `FilterPopupView.ApplyTheme` + `FilterTheme.Current` | [MAUI](CUSTOMIZATION.md#maui-datafiltermaui) |
+| **WinUI 3** | System theme by default; optional `ApplyTheme` for brand colors | [WinUI 3](CUSTOMIZATION.md#winui-3-datafilterwinui3) |
+
+```csharp
+FilterTheme.Current = FilterTheme.Dark.With(primaryColor: "#E65100");
+```
+
+See also [filter bar & header chrome](CUSTOMIZATION.md#filter-bar--header-chrome) and [localization vs. theming](CUSTOMIZATION.md#localization-vs-theming).
 
 ## Localization (popup internationalization)
 
