@@ -147,6 +147,38 @@ public class ExcelFilterDescriptorTests
         Assert.All(group.Descriptors, d => Assert.Equal(FilterOperator.StartsWith, d.Operator));
     }
 
+    private class DateItem
+    {
+        public DateTime? EventDate { get; set; }
+    }
+
+    [Fact]
+    public void IsMatch_WithSelectedDateAndNull_KeepsNullRows()
+    {
+        var day = new DateTime(2024, 3, 15);
+        var state = new ExcelFilterState();
+        state.DistinctValues.Add(day);
+        state.DistinctValues.Add(null!);
+        state.SelectedValues.Add(day);
+        state.SelectedValues.Add(null!);
+        state.SelectAll = false;
+
+        var descriptor = new ExcelFilterDescriptor("EventDate", state);
+        var engine = new ExcelFilterEngine<DateItem>();
+        var items = new List<DateItem>
+        {
+            new() { EventDate = day },
+            new() { EventDate = null },
+            new() { EventDate = new DateTime(2024, 6, 1) }
+        };
+
+        var result = engine.Apply(items, new[] { descriptor }).ToList();
+
+        Assert.Equal(2, result.Count);
+        Assert.Contains(result, x => x.EventDate == null);
+        Assert.DoesNotContain(result, x => x.EventDate == new DateTime(2024, 6, 1));
+    }
+
     [Fact]
     public void Descriptors_WithOrSearchPatternsAndOrSelectedValues_EmitsOrGroupWithStartsWithAndIn()
     {

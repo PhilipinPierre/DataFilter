@@ -80,7 +80,10 @@ public static class DateDistinctHelper
     /// </summary>
     public static bool MatchesCalendarDate(object? propertyValue, object? filterValue)
     {
-        if (propertyValue == null || filterValue == null)
+        if (filterValue == null)
+            return propertyValue == null;
+
+        if (propertyValue == null)
             return false;
 
         return AreSameCalendarDate(propertyValue, filterValue);

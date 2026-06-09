@@ -59,7 +59,10 @@ public static class TimeDistinctHelper
     /// </summary>
     public static bool MatchesTimeOfDay(object? propertyValue, object? filterValue)
     {
-        if (propertyValue == null || filterValue == null)
+        if (filterValue == null)
+            return propertyValue == null;
+
+        if (propertyValue == null)
             return false;
 
         return AreSameTimeOfDay(propertyValue, filterValue);

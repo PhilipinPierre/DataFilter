@@ -201,6 +201,23 @@ public class FilterExpressionBuilderTests
         Assert.False(func(new DateItem { HireDate = new DateTime(2024, 3, 16, 8, 30, 0) }));
     }
 
+    private class NullableDateItem
+    {
+        public DateTime? HireDate { get; set; }
+    }
+
+    [Fact]
+    public void BuildExpression_In_NullableDateTime_KeepsNullWhenSelected()
+    {
+        var selectedDay = new DateTime(2024, 3, 15);
+        var descriptor = new FilterDescriptor("HireDate", FilterOperator.In, new object?[] { selectedDay, null });
+        var func = Engine.FilterExpressionBuilder.BuildExpression<NullableDateItem>(descriptor).Compile();
+
+        Assert.True(func(new NullableDateItem { HireDate = new DateTime(2024, 3, 15, 8, 30, 0) }));
+        Assert.True(func(new NullableDateItem { HireDate = null }));
+        Assert.False(func(new NullableDateItem { HireDate = new DateTime(2024, 3, 16) }));
+    }
+
     private class TimeItem
     {
         public TimeSpan ShiftStart { get; set; }
