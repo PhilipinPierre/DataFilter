@@ -25,6 +25,9 @@ jobs:
         global-json-file: global.json
 
     - name: Restore dependencies
+      # Restore packages before workloads so .NET discovers MAUI library workload requirements
+      # like mobile-librarybuilder. Running workload restore first caused the build step to fail
+      # later with NETSDK1147 on the Android target.
       run: dotnet restore DataFilter.slnx
 
     - name: Restore workloads (MAUI/Blazor)
