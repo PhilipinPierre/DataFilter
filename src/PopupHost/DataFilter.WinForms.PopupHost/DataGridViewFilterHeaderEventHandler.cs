@@ -1,5 +1,6 @@
 using DataFilter.PlatformShared.ColumnFilter;
 using DataFilter.PlatformShared.ViewModels;
+using DataFilter.WinForms;
 using System.ComponentModel;
 
 namespace DataFilter.WinForms.Attach;
@@ -10,6 +11,7 @@ internal sealed class DataGridViewFilterHeaderEventHandler : IDisposable
     private readonly Func<IFilterableDataGridViewModel?> _getViewModel;
     private readonly Func<DataGridViewFilterHeaderInteractions.Settings> _getSettings;
     private readonly ContextMenuStrip _popupHost = new();
+    private readonly Action _closePopupHost;
     private int? _hoveredColumnIndex;
     private int? _focusedHeaderColumnIndex;
     private System.Windows.Forms.Timer? _longPressTimer;
@@ -25,6 +27,7 @@ internal sealed class DataGridViewFilterHeaderEventHandler : IDisposable
         _grid = grid;
         _getViewModel = getViewModel;
         _getSettings = getSettings;
+        _closePopupHost = CloseFilterPopupHost;
 
         _grid.CellPainting += OnCellPainting;
         _grid.CellMouseClick += OnCellMouseClick;
@@ -155,10 +158,19 @@ internal sealed class DataGridViewFilterHeaderEventHandler : IDisposable
         var column = _grid.Columns[columnIndex];
         var headerRect = _grid.GetCellDisplayRectangle(columnIndex, -1, true);
         await DataGridViewFilterHeaderInteractions.ShowFilterPopupAsync(_grid, _popupHost, viewModel, column, headerRect);
+        if (_popupHost.Visible)
+            AppDeactivationTracker.Register(_closePopupHost);
+    }
+
+    private void CloseFilterPopupHost()
+    {
+        if (_popupHost.Visible)
+            _popupHost.Close();
     }
 
     private void OnFilterPopupHostClosed(object? sender, ToolStripDropDownClosedEventArgs e)
     {
+        AppDeactivationTracker.Unregister(_closePopupHost);
         SyncHoveredColumnIndexFromCursor();
     }
 
@@ -202,6 +214,7 @@ internal sealed class DataGridViewFilterHeaderEventHandler : IDisposable
         _longPressTimer?.Stop();
         _longPressTimer?.Dispose();
         _filterContextMenu?.Dispose();
+        AppDeactivationTracker.Unregister(_closePopupHost);
         _popupHost.Close();
         _popupHost.Dispose();
     }

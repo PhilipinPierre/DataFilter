@@ -21,6 +21,7 @@ public sealed class FilterBarPopupService
     private FilterPopup? _filterControl;
     private GridVm? _grid;
     private FilterBarEditRequest? _request;
+    private EventHandler? _applicationDeactivatedHandler;
 
     /// <summary>
     /// Shows the filter popup for a bar edit request.
@@ -135,6 +136,12 @@ public sealed class FilterBarPopupService
         Window? window = Window.GetWindow(_popup?.PlacementTarget);
         if (window != null)
             window.PreviewMouseDown += OnWindowMouseDown;
+
+        if (_applicationDeactivatedHandler == null)
+        {
+            _applicationDeactivatedHandler = OnApplicationDeactivated;
+            Application.Current.Deactivated += _applicationDeactivatedHandler;
+        }
     }
 
     private void OnPopupClosed(object? sender, EventArgs e)
@@ -142,8 +149,21 @@ public sealed class FilterBarPopupService
         Window? window = Window.GetWindow(_popup?.PlacementTarget);
         if (window != null)
             window.PreviewMouseDown -= OnWindowMouseDown;
+
+        if (_applicationDeactivatedHandler != null)
+        {
+            Application.Current.Deactivated -= _applicationDeactivatedHandler;
+            _applicationDeactivatedHandler = null;
+        }
+
         DetachHandlers();
         _columnVm?.SetBarEditContext(null);
+    }
+
+    private void OnApplicationDeactivated(object? sender, EventArgs e)
+    {
+        if (_popup is { IsOpen: true })
+            _ = DismissAsync();
     }
 
     private void OnWindowMouseDown(object sender, MouseButtonEventArgs e)

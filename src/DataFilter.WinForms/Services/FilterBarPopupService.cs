@@ -2,6 +2,7 @@ using DataFilter.Core.Pipeline;
 using DataFilter.Filtering.ExcelLike.Models;
 using DataFilter.PlatformShared.FilterBar;
 using DataFilter.PlatformShared.ViewModels;
+using DataFilter.WinForms;
 using DataFilter.WinForms.Controls;
 
 namespace DataFilter.WinForms.Services;
@@ -75,15 +76,42 @@ public sealed class FilterBarPopupService
         };
         _popup.Dock = DockStyle.Fill;
         _form.Controls.Add(_popup);
-        _form.Deactivate += (_, _) => _ = DismissAsync();
+        _form.Deactivate += OnPopupFormDeactivate;
+        AppDeactivationTracker.Register(Close);
         _form.Show();
     }
+
+    private void OnPopupFormDeactivate(object? sender, EventArgs e)
+    {
+        if (IsCurrentProcessForeground())
+            return;
+
+        _ = DismissAsync();
+    }
+
+    private static bool IsCurrentProcessForeground()
+    {
+        IntPtr hwnd = GetForegroundWindow();
+        if (hwnd == IntPtr.Zero)
+            return false;
+
+        _ = GetWindowThreadProcessId(hwnd, out uint processId);
+        return processId == (uint)Environment.ProcessId;
+    }
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern IntPtr GetForegroundWindow();
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
 
     public void Close()
     {
         if (_form == null)
             return;
 
+        _form.Deactivate -= OnPopupFormDeactivate;
+        AppDeactivationTracker.Unregister(Close);
         _form.Close();
         _form.Dispose();
         _form = null;

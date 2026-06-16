@@ -9,10 +9,13 @@ internal static class FilterColumnPopupTracker
     private sealed class WindowState
     {
         public HashSet<FilterableColumnHeaderBehavior> OpenBehaviors { get; } = new();
-        public bool IsHandlerAttached { get; set; }
+        public bool IsWindowHandlerAttached { get; set; }
     }
 
     private static readonly ConditionalWeakTable<Window, WindowState> WindowStates = new();
+    private static readonly HashSet<FilterableColumnHeaderBehavior> OpenBehaviors = new();
+    private static int _openPopupCount;
+    private static EventHandler? _applicationDeactivatedHandler;
 
     internal static void OnPopupOpened(FilterableColumnHeaderBehavior behavior)
     {
@@ -22,12 +25,15 @@ internal static class FilterColumnPopupTracker
 
         var state = WindowStates.GetOrCreateValue(window);
         state.OpenBehaviors.Add(behavior);
+        OpenBehaviors.Add(behavior);
 
-        if (state.IsHandlerAttached)
-            return;
+        if (!state.IsWindowHandlerAttached)
+        {
+            window.PreviewMouseLeftButtonDown += OnWindowPreviewMouseLeftButtonDown;
+            state.IsWindowHandlerAttached = true;
+        }
 
-        window.PreviewMouseLeftButtonDown += OnWindowPreviewMouseLeftButtonDown;
-        state.IsHandlerAttached = true;
+        RegisterApplicationDeactivationHandler();
     }
 
     internal static void OnPopupClosed(FilterableColumnHeaderBehavior behavior)
@@ -40,12 +46,43 @@ internal static class FilterColumnPopupTracker
             return;
 
         state.OpenBehaviors.Remove(behavior);
+        OpenBehaviors.Remove(behavior);
+        UnregisterApplicationDeactivationHandler();
+
         if (state.OpenBehaviors.Count > 0)
             return;
 
         window.PreviewMouseLeftButtonDown -= OnWindowPreviewMouseLeftButtonDown;
-        state.IsHandlerAttached = false;
+        state.IsWindowHandlerAttached = false;
         WindowStates.Remove(window);
+    }
+
+    private static void RegisterApplicationDeactivationHandler()
+    {
+        if (_openPopupCount++ != 0)
+            return;
+
+        _applicationDeactivatedHandler = OnApplicationDeactivated;
+        Application.Current.Deactivated += _applicationDeactivatedHandler;
+    }
+
+    private static void UnregisterApplicationDeactivationHandler()
+    {
+        if (--_openPopupCount > 0)
+            return;
+
+        _openPopupCount = 0;
+        if (_applicationDeactivatedHandler == null)
+            return;
+
+        Application.Current.Deactivated -= _applicationDeactivatedHandler;
+        _applicationDeactivatedHandler = null;
+    }
+
+    private static void OnApplicationDeactivated(object? sender, EventArgs e)
+    {
+        foreach (var behavior in OpenBehaviors.ToArray())
+            behavior.CloseFilterPopup();
     }
 
     private static void OnWindowPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
