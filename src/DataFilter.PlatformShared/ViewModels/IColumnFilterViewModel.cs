@@ -1,3 +1,4 @@
+using DataFilter.Core.Enums;
 using DataFilter.Filtering.ExcelLike.Models;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -89,6 +90,11 @@ public interface IColumnFilterViewModel : INotifyPropertyChanged
     /// Gets the list of available custom operators.
     /// </summary>
     ObservableCollection<DataFilter.Core.Enums.FilterOperator> AvailableOperators { get; }
+
+    /// <summary>
+    /// Gets the generalized data type of the column (drives advanced filter value editors).
+    /// </summary>
+    FilterDataType DataType { get; }
 
     /// <summary>
     /// Gets or sets the first value for custom filtering.

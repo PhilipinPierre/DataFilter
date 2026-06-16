@@ -1,5 +1,6 @@
 using DataFilter.Core.Enums;
 using DataFilter.Localization;
+using DataFilter.PlatformShared.FilterValues;
 using DataFilter.PlatformShared.Theming;
 using DataFilter.PlatformShared.ViewModels;
 using DataFilter.WinForms.Theming;
@@ -17,8 +18,12 @@ public sealed class FilterPopupControl : UserControl
     private readonly Label _loading = new() { Dock = DockStyle.Top, Text = "Loading...", TextAlign = System.Drawing.ContentAlignment.MiddleCenter, Visible = false };
     private readonly TreeView _values = new() { Dock = DockStyle.Fill, CheckBoxes = true, AccessibleName = "df-values-tree" };
     private readonly ComboBox _operator = new() { Dock = DockStyle.Top, DropDownStyle = ComboBoxStyle.DropDownList };
-    private readonly TextBox _custom1 = new() { Dock = DockStyle.Top, PlaceholderText = "Value" };
-    private readonly TextBox _custom2 = new() { Dock = DockStyle.Top, PlaceholderText = "To", Visible = false };
+    private readonly TextBox _custom1Text = new() { Dock = DockStyle.Top, PlaceholderText = "Value" };
+    private readonly DateTimePicker _custom1Date = new() { Dock = DockStyle.Top, Format = DateTimePickerFormat.Custom, CustomFormat = FilterCustomValueFormats.DateFormat, Visible = false };
+    private readonly DateTimePicker _custom1Time = new() { Dock = DockStyle.Top, Format = DateTimePickerFormat.Time, ShowUpDown = true, Visible = false };
+    private readonly TextBox _custom2Text = new() { Dock = DockStyle.Top, PlaceholderText = "To", Visible = false };
+    private readonly DateTimePicker _custom2Date = new() { Dock = DockStyle.Top, Format = DateTimePickerFormat.Custom, CustomFormat = FilterCustomValueFormats.DateFormat, Visible = false };
+    private readonly DateTimePicker _custom2Time = new() { Dock = DockStyle.Top, Format = DateTimePickerFormat.Time, ShowUpDown = true, Visible = false };
     private readonly CheckBox _advanced = new() { Dock = DockStyle.Top, Text = "Advanced Filter" };
     private readonly Button _sortAsc = new() { Text = "Sort A to Z", Dock = DockStyle.Top, Height = 24 };
     private readonly Button _sortDesc = new() { Text = "Sort Z to A", Dock = DockStyle.Top, Height = 24 };
@@ -29,6 +34,7 @@ public sealed class FilterPopupControl : UserControl
     private readonly Button _clear = new() { Text = "Clear", Dock = DockStyle.Top, Height = 24, AccessibleName = "df-clear" };
     private readonly Panel _advancedPanel = new() { Dock = DockStyle.Top, Height = 92, Visible = false };
 
+    private bool _syncingCustomValues;
     public ColumnFilterViewModel? ViewModel { get; private set; }
     public event Action? RequestClose;
 
@@ -41,8 +47,12 @@ public sealed class FilterPopupControl : UserControl
         sortPanel.Controls.Add(_sortDesc);
         sortPanel.Controls.Add(_sortAsc);
 
-        _advancedPanel.Controls.Add(_custom2);
-        _advancedPanel.Controls.Add(_custom1);
+        _advancedPanel.Controls.Add(_custom2Time);
+        _advancedPanel.Controls.Add(_custom2Date);
+        _advancedPanel.Controls.Add(_custom2Text);
+        _advancedPanel.Controls.Add(_custom1Time);
+        _advancedPanel.Controls.Add(_custom1Date);
+        _advancedPanel.Controls.Add(_custom1Text);
         _advancedPanel.Controls.Add(_operator);
 
         var buttons = new Panel { Dock = DockStyle.Bottom, Height = 38 };
@@ -104,11 +114,15 @@ public sealed class FilterPopupControl : UserControl
             if (_operator.SelectedItem is LocalizedItem { Value: FilterOperator op })
             {
                 ViewModel.SelectedCustomOperator = op;
-                _custom2.Visible = op == FilterOperator.Between;
+                UpdateCustomValue2Visibility(op == FilterOperator.Between);
             }
         };
-        _custom1.TextChanged += (_, _) => { if (ViewModel != null) ViewModel.CustomValue1 = _custom1.Text; };
-        _custom2.TextChanged += (_, _) => { if (ViewModel != null) ViewModel.CustomValue2 = _custom2.Text; };
+        _custom1Text.TextChanged += (_, _) => { if (ViewModel != null && !_syncingCustomValues) ViewModel.CustomValue1 = _custom1Text.Text; };
+        _custom2Text.TextChanged += (_, _) => { if (ViewModel != null && !_syncingCustomValues) ViewModel.CustomValue2 = _custom2Text.Text; };
+        _custom1Date.ValueChanged += (_, _) => SyncDatePickerToViewModel(_custom1Date, v => ViewModel!.CustomValue1 = v);
+        _custom2Date.ValueChanged += (_, _) => SyncDatePickerToViewModel(_custom2Date, v => ViewModel!.CustomValue2 = v);
+        _custom1Time.ValueChanged += (_, _) => SyncTimePickerToViewModel(_custom1Time, v => ViewModel!.CustomValue1 = v);
+        _custom2Time.ValueChanged += (_, _) => SyncTimePickerToViewModel(_custom2Time, v => ViewModel!.CustomValue2 = v);
 
         _sortAsc.Click += (_, _) => ViewModel?.SortAscendingCommand.Execute(null);
         _sortDesc.Click += (_, _) => ViewModel?.SortDescendingCommand.Execute(null);
@@ -138,8 +152,74 @@ public sealed class FilterPopupControl : UserControl
         _operator.ValueMember = nameof(LocalizedItem.Value);
         foreach (var op in ViewModel.AvailableOperators)
             _operator.Items.Add(new LocalizedItem(op, LocalizationManager.Instance[$"FilterOperator_{op}"]));
+        ConfigureValueEditors(ViewModel.DataType);
         await ViewModel.InitializeAsync(distinctValues);
+        SyncCustomValuesFromViewModel();
         ReloadTree();
+    }
+
+    private void ConfigureValueEditors(FilterDataType dataType)
+    {
+        _custom1Text.Visible = dataType is not FilterDataType.Date and not FilterDataType.Time;
+        _custom1Date.Visible = dataType == FilterDataType.Date;
+        _custom1Time.Visible = dataType == FilterDataType.Time;
+        _custom2Text.Visible = false;
+        _custom2Date.Visible = false;
+        _custom2Time.Visible = false;
+    }
+
+    private void UpdateCustomValue2Visibility(bool visible)
+    {
+        if (ViewModel == null) return;
+        switch (ViewModel.DataType)
+        {
+            case FilterDataType.Date:
+                _custom2Date.Visible = visible;
+                break;
+            case FilterDataType.Time:
+                _custom2Time.Visible = visible;
+                break;
+            default:
+                _custom2Text.Visible = visible;
+                break;
+        }
+    }
+
+    private void SyncCustomValuesFromViewModel()
+    {
+        if (ViewModel == null) return;
+
+        _syncingCustomValues = true;
+        try
+        {
+            _custom1Text.Text = ViewModel.CustomValue1;
+            _custom2Text.Text = ViewModel.CustomValue2;
+
+            if (FilterCustomValueFormats.TryParseDate(ViewModel.CustomValue1, out var date1))
+                _custom1Date.Value = date1;
+            if (FilterCustomValueFormats.TryParseDate(ViewModel.CustomValue2, out var date2))
+                _custom2Date.Value = date2;
+            if (FilterCustomValueFormats.TryParseTime(ViewModel.CustomValue1, out var time1))
+                _custom1Time.Value = DateTime.Today.Add(time1);
+            if (FilterCustomValueFormats.TryParseTime(ViewModel.CustomValue2, out var time2))
+                _custom2Time.Value = DateTime.Today.Add(time2);
+
+            UpdateCustomValue2Visibility(ViewModel.SelectedCustomOperator == FilterOperator.Between);
+        }
+        finally
+        {
+            _syncingCustomValues = false;
+        }
+    }
+
+    private static void SyncDatePickerToViewModel(DateTimePicker picker, Action<string> assign)
+    {
+        assign(FilterCustomValueFormats.FormatDate(picker.Value.Date));
+    }
+
+    private static void SyncTimePickerToViewModel(DateTimePicker picker, Action<string> assign)
+    {
+        assign(FilterCustomValueFormats.FormatTime(picker.Value.TimeOfDay));
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -153,6 +233,10 @@ public sealed class FilterPopupControl : UserControl
         {
             _loading.Visible = ViewModel.IsLoading;
             _values.Visible = !ViewModel.IsLoading;
+        }
+        else if (e.PropertyName is nameof(ColumnFilterViewModel.CustomValue1) or nameof(ColumnFilterViewModel.CustomValue2))
+        {
+            SyncCustomValuesFromViewModel();
         }
     }
 
@@ -190,8 +274,8 @@ public sealed class FilterPopupControl : UserControl
         _ok.Text = LocalizationManager.Instance["Ok"];
         _cancel.Text = LocalizationManager.Instance["Cancel"];
         _clear.Text = LocalizationManager.Instance["Clear"];
-        _custom1.PlaceholderText = LocalizationManager.Instance["ValueText"];
-        _custom2.PlaceholderText = LocalizationManager.Instance["ToText"];
+        _custom1Text.PlaceholderText = LocalizationManager.Instance["ValueText"];
+        _custom2Text.PlaceholderText = LocalizationManager.Instance["ToText"];
 
         for (int i = 0; i < _accumulationMode.Items.Count; i++)
         {
@@ -235,7 +319,7 @@ public sealed class FilterPopupControl : UserControl
         var primary = FilterThemeApplier.ToDrawingColor(theme.PrimaryColor);
         var primaryFg = FilterThemeApplier.ToDrawingColor(theme.PrimaryButtonForeground);
 
-        foreach (var input in new Control[] { _search, _custom1, _custom2, _values, _operator, _accumulationMode })
+        foreach (var input in new Control[] { _search, _custom1Text, _custom2Text, _values, _operator, _accumulationMode, _custom1Date, _custom2Date, _custom1Time, _custom2Time })
         {
             input.BackColor = surface;
             input.ForeColor = ForeColor;

@@ -4,6 +4,7 @@
 @using DataFilter.Filtering.ExcelLike.Models
 @using System.ComponentModel
 @using Microsoft.JSInterop
+@using DataFilter.PlatformShared.FilterValues
 @using DataFilter.Localization
 @implements IDisposable
 @inject IJSRuntime JSRuntime
@@ -66,11 +67,53 @@
                             }
                         </select>
 
-                        <input type="text" @bind="ViewModel.CustomValue1" class="df-custom-input" placeholder="@LocalizationManager.Instance["ValueText"]" />
+                        @if (ViewModel.DataType == FilterDataType.Date)
+                        {
+                            <input type="date"
+                                   value="@GetHtmlDateValue(ViewModel.CustomValue1)"
+                                   @onchange="e => ViewModel.CustomValue1 = e.Value?.ToString() ?? string.Empty"
+                                   class="df-custom-input"
+                                   data-testid="df-custom-value-1-date" />
+                        }
+                        else if (ViewModel.DataType == FilterDataType.Time)
+                        {
+                            <input type="time"
+                                   value="@GetHtmlTimeValue(ViewModel.CustomValue1)"
+                                   step="1"
+                                   @onchange="e => ViewModel.CustomValue1 = e.Value?.ToString() ?? string.Empty"
+                                   class="df-custom-input"
+                                   data-testid="df-custom-value-1-time" />
+                        }
+                        else
+                        {
+                            <input type="text" @bind="ViewModel.CustomValue1" class="df-custom-input" placeholder="@LocalizationManager.Instance["ValueText"]" data-testid="df-custom-value-1" />
+                        }
 
                         @if (ViewModel.SelectedCustomOperator == FilterOperator.Between)
                         {
-                            <input type="text" @bind="ViewModel.CustomValue2" class="df-custom-input" placeholder="@LocalizationManager.Instance["ToText"]" />
+                            @if (ViewModel.DataType == FilterDataType.Date)
+                            {
+                                <input type="date"
+                                       value="@GetHtmlDateValue(ViewModel.CustomValue2)"
+                                       @onchange="e => ViewModel.CustomValue2 = e.Value?.ToString() ?? string.Empty"
+                                       class="df-custom-input"
+                                       placeholder="@LocalizationManager.Instance["ToText"]"
+                                       data-testid="df-custom-value-2-date" />
+                            }
+                            else if (ViewModel.DataType == FilterDataType.Time)
+                            {
+                                <input type="time"
+                                       value="@GetHtmlTimeValue(ViewModel.CustomValue2)"
+                                       step="1"
+                                       @onchange="e => ViewModel.CustomValue2 = e.Value?.ToString() ?? string.Empty"
+                                       class="df-custom-input"
+                                       placeholder="@LocalizationManager.Instance["ToText"]"
+                                       data-testid="df-custom-value-2-time" />
+                            }
+                            else
+                            {
+                                <input type="text" @bind="ViewModel.CustomValue2" class="df-custom-input" placeholder="@LocalizationManager.Instance["ToText"]" data-testid="df-custom-value-2" />
+                            }
                         }
                     </div>
                 }
@@ -208,6 +251,17 @@
     {
         Visible = false;
         VisibleChanged.InvokeAsync(false);
+    }
+
+    private static string GetHtmlDateValue(string? text) =>
+        FilterCustomValueFormats.TryParseDate(text, out var date) ? FilterCustomValueFormats.FormatDate(date) : string.Empty;
+
+    private static string GetHtmlTimeValue(string? text)
+    {
+        if (!FilterCustomValueFormats.TryParseTime(text, out var time))
+            return string.Empty;
+
+        return time.ToString(@"hh\:mm\:ss", System.Globalization.CultureInfo.InvariantCulture);
     }
 
 }

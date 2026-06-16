@@ -98,18 +98,44 @@ public sealed class FilterPopupControl : UserControl
         _advancedValueLabel.Text = LocalizationManager.Instance["ValueText"];
         _advancedValueLabel.Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"];
         advancedContent.Children.Add(_advancedValueLabel);
-        var val1 = new TextBox();
-        val1.SetBinding(TextBox.TextProperty, new Binding { Path = new PropertyPath("CustomValue1"), Mode = BindingMode.TwoWay });
-        advancedContent.Children.Add(val1);
+
+        var val1Text = new TextBox();
+        val1Text.SetBinding(TextBox.TextProperty, new Binding { Path = new PropertyPath("CustomValue1"), Mode = BindingMode.TwoWay });
+        val1Text.SetBinding(UIElement.VisibilityProperty, new Binding { Path = new PropertyPath("DataType"), Converter = new FilterDataTypeToVisibilityConverter(), ConverterParameter = "Text" });
+        advancedContent.Children.Add(val1Text);
+
+        var val1Date = new DatePicker();
+        val1Date.SetBinding(DatePicker.DateProperty, new Binding { Path = new PropertyPath("CustomValue1"), Mode = BindingMode.TwoWay, Converter = new StringToDateConverter() });
+        val1Date.SetBinding(UIElement.VisibilityProperty, new Binding { Path = new PropertyPath("DataType"), Converter = new FilterDataTypeToVisibilityConverter(), ConverterParameter = "Date" });
+        advancedContent.Children.Add(val1Date);
+
+        var val1Time = new TimePicker();
+        val1Time.ClockIdentifier = "24HourClock";
+        val1Time.SetBinding(TimePicker.TimeProperty, new Binding { Path = new PropertyPath("CustomValue1"), Mode = BindingMode.TwoWay, Converter = new StringToTimeConverter() });
+        val1Time.SetBinding(UIElement.VisibilityProperty, new Binding { Path = new PropertyPath("DataType"), Converter = new FilterDataTypeToVisibilityConverter(), ConverterParameter = "Time" });
+        advancedContent.Children.Add(val1Time);
 
         var val2Panel = new StackPanel();
         val2Panel.SetBinding(UIElement.VisibilityProperty, new Binding { Path = new PropertyPath("SelectedCustomOperator"), Converter = new OperatorToVisibilityConverter(), ConverterParameter = FilterOperator.Between });
         _advancedToLabel.Text = LocalizationManager.Instance["ToText"];
         _advancedToLabel.Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"];
         val2Panel.Children.Add(_advancedToLabel);
-        var val2 = new TextBox();
-        val2.SetBinding(TextBox.TextProperty, new Binding { Path = new PropertyPath("CustomValue2"), Mode = BindingMode.TwoWay });
-        val2Panel.Children.Add(val2);
+
+        var val2Text = new TextBox();
+        val2Text.SetBinding(TextBox.TextProperty, new Binding { Path = new PropertyPath("CustomValue2"), Mode = BindingMode.TwoWay });
+        val2Text.SetBinding(UIElement.VisibilityProperty, new Binding { Path = new PropertyPath("DataType"), Converter = new FilterDataTypeToVisibilityConverter(), ConverterParameter = "Text" });
+        val2Panel.Children.Add(val2Text);
+
+        var val2Date = new DatePicker();
+        val2Date.SetBinding(DatePicker.DateProperty, new Binding { Path = new PropertyPath("CustomValue2"), Mode = BindingMode.TwoWay, Converter = new StringToDateConverter() });
+        val2Date.SetBinding(UIElement.VisibilityProperty, new Binding { Path = new PropertyPath("DataType"), Converter = new FilterDataTypeToVisibilityConverter(), ConverterParameter = "Date" });
+        val2Panel.Children.Add(val2Date);
+
+        var val2Time = new TimePicker();
+        val2Time.ClockIdentifier = "24HourClock";
+        val2Time.SetBinding(TimePicker.TimeProperty, new Binding { Path = new PropertyPath("CustomValue2"), Mode = BindingMode.TwoWay, Converter = new StringToTimeConverter() });
+        val2Time.SetBinding(UIElement.VisibilityProperty, new Binding { Path = new PropertyPath("DataType"), Converter = new FilterDataTypeToVisibilityConverter(), ConverterParameter = "Time" });
+        val2Panel.Children.Add(val2Time);
         advancedContent.Children.Add(val2Panel);
 
         _advancedExpander.Content = advancedContent;

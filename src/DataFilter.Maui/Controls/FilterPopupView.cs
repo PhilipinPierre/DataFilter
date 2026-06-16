@@ -26,6 +26,8 @@ public sealed class FilterPopupView : ContentView
     private readonly Button _advancedToggle;
     private readonly Label _operatorLabel;
     private readonly Label _valueLabel;
+    private readonly Label _toLabel;
+    private readonly VerticalStackLayout _customValue2Layout;
     private Label? _selectAllLabel;
     private readonly Entry _searchEntry;
     private readonly Button _okButton;
@@ -106,9 +108,43 @@ public sealed class FilterPopupView : ContentView
 
         _valueLabel = new Label { FontSize = 10 };
         _advancedLayout.Add(_valueLabel);
-        var val1 = new Entry();
-        val1.SetBinding(Entry.TextProperty, new Binding("CustomValue1", BindingMode.TwoWay));
-        _advancedLayout.Add(val1);
+
+        var val1Text = new Entry();
+        val1Text.SetBinding(Entry.TextProperty, new Binding("CustomValue1", BindingMode.TwoWay));
+        val1Text.SetBinding(VisualElement.IsVisibleProperty, new Binding("DataType", converter: new FilterDataTypeToBoolConverter(), converterParameter: "Text"));
+        _advancedLayout.Add(val1Text);
+
+        var val1Date = new DatePicker();
+        val1Date.SetBinding(DatePicker.DateProperty, new Binding("CustomValue1", BindingMode.TwoWay, converter: new StringToDateConverter()));
+        val1Date.SetBinding(VisualElement.IsVisibleProperty, new Binding("DataType", converter: new FilterDataTypeToBoolConverter(), converterParameter: "Date"));
+        _advancedLayout.Add(val1Date);
+
+        var val1Time = new TimePicker();
+        val1Time.SetBinding(TimePicker.TimeProperty, new Binding("CustomValue1", BindingMode.TwoWay, converter: new StringToTimeConverter()));
+        val1Time.SetBinding(VisualElement.IsVisibleProperty, new Binding("DataType", converter: new FilterDataTypeToBoolConverter(), converterParameter: "Time"));
+        _advancedLayout.Add(val1Time);
+
+        _customValue2Layout = new VerticalStackLayout { Spacing = 4, IsVisible = false };
+        _customValue2Layout.SetBinding(VisualElement.IsVisibleProperty, new Binding("SelectedCustomOperator", converter: new OperatorBetweenVisibilityConverter()));
+        _toLabel = new Label { FontSize = 10 };
+        _customValue2Layout.Add(_toLabel);
+
+        var val2Text = new Entry();
+        val2Text.SetBinding(Entry.TextProperty, new Binding("CustomValue2", BindingMode.TwoWay));
+        val2Text.SetBinding(VisualElement.IsVisibleProperty, new Binding("DataType", converter: new FilterDataTypeToBoolConverter(), converterParameter: "Text"));
+        _customValue2Layout.Add(val2Text);
+
+        var val2Date = new DatePicker();
+        val2Date.SetBinding(DatePicker.DateProperty, new Binding("CustomValue2", BindingMode.TwoWay, converter: new StringToDateConverter()));
+        val2Date.SetBinding(VisualElement.IsVisibleProperty, new Binding("DataType", converter: new FilterDataTypeToBoolConverter(), converterParameter: "Date"));
+        _customValue2Layout.Add(val2Date);
+
+        var val2Time = new TimePicker();
+        val2Time.SetBinding(TimePicker.TimeProperty, new Binding("CustomValue2", BindingMode.TwoWay, converter: new StringToTimeConverter()));
+        val2Time.SetBinding(VisualElement.IsVisibleProperty, new Binding("DataType", converter: new FilterDataTypeToBoolConverter(), converterParameter: "Time"));
+        _customValue2Layout.Add(val2Time);
+
+        _advancedLayout.Add(_customValue2Layout);
 
         root.Add(_advancedLayout);
         root.Add(new BoxView { HeightRequest = 1 });
@@ -296,6 +332,7 @@ public sealed class FilterPopupView : ContentView
         _advancedToggle.Text = LocalizationManager.Instance["AdvancedFilter"];
         _operatorLabel.Text = LocalizationManager.Instance["OperatorText"];
         _valueLabel.Text = LocalizationManager.Instance["ValueText"];
+        _toLabel.Text = LocalizationManager.Instance["ToText"];
         if (_selectAllLabel != null)
             _selectAllLabel.Text = LocalizationManager.Instance["SelectAll"];
         _okButton.Text = LocalizationManager.Instance["Ok"];
@@ -316,5 +353,14 @@ public sealed class FilterPopupView : ContentView
         public object Value { get; }
         public string Text { get; }
         public override string ToString() => Text;
+    }
+
+    private sealed class OperatorBetweenVisibilityConverter : IValueConverter
+    {
+        public object? Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture) =>
+            value is FilterOperator op && op == FilterOperator.Between;
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture) =>
+            throw new NotSupportedException();
     }
 }
