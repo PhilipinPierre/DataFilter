@@ -24,11 +24,11 @@ jobs:
       with:
         global-json-file: global.json
 
-    - name: Restore dependencies
-      run: dotnet restore DataFilter.slnx
-
     - name: Restore workloads (MAUI/Blazor)
       run: dotnet workload restore DataFilter.slnx
+
+    - name: Restore dependencies
+      run: dotnet restore DataFilter.slnx
 
     - name: Get Version from Tag
       shell: pwsh
